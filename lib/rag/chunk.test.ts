@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { chunkText } from "./chunk";
+import { chunkText, isTableBlock, pecahTabel } from "./chunk";
 
 describe("chunkText", () => {
   it("teks kosong menghasilkan daftar kosong", () => {
@@ -44,5 +44,52 @@ describe("chunkText", () => {
     expect(() => chunkText("x", { size: 0 })).toThrow();
     expect(() => chunkText("x", { size: 10, overlap: 10 })).toThrow();
     expect(() => chunkText("x", { size: 10, overlap: -1 })).toThrow();
+  });
+});
+
+describe("tabel markdown", () => {
+  const tabel = [
+    "| Item | Implementasi | Dicek oleh |",
+    "|---|---|---|",
+    ...Array.from(
+      { length: 12 },
+      (_, i) => `| baris ${i} | nilai yang cukup panjang untuk mengisi ruang ${i} | manual |`,
+    ),
+  ].join("\n");
+
+  it("mengenali blok tabel", () => {
+    expect(isTableBlock(tabel)).toBe(true);
+    expect(isTableBlock("cuma paragraf biasa")).toBe(false);
+    expect(isTableBlock("| a | b |\n| c | d |")).toBe(false);
+  });
+
+  it("setiap potongan membawa baris judul dan garis pemisah", () => {
+    const hasil = pecahTabel(tabel, 300);
+    expect(hasil.length).toBeGreaterThan(1);
+    for (const p of hasil) {
+      expect(p.startsWith("| Item | Implementasi | Dicek oleh |")).toBe(true);
+      expect(p.split("\n")[1]).toContain("---");
+    }
+  });
+
+  it("tidak memecah satu baris tabel di tengah", () => {
+    const hasil = pecahTabel(tabel, 300);
+    for (const p of hasil) {
+      for (const b of p.split("\n")) {
+        expect(b.trim().startsWith("|")).toBe(true);
+        expect(b.trim().endsWith("|")).toBe(true);
+      }
+    }
+  });
+
+  it("chunkText memakai jalur tabel sehingga fakta dalam tabel jadi potongan sendiri", () => {
+    const isi = `Pendahuluan singkat.\n\n${tabel}\n\nPenutup singkat.`;
+    const hasil = chunkText(isi, { size: 300, overlap: 40 });
+    const adaJudulTabel = hasil.filter((p) => p.includes("| Item | Implementasi |"));
+    expect(adaJudulTabel.length).toBeGreaterThan(1);
+    // semua baris data tabel tetap ada
+    for (let i = 0; i < 12; i += 1) {
+      expect(hasil.some((p) => p.includes(`| baris ${i} |`))).toBe(true);
+    }
   });
 });

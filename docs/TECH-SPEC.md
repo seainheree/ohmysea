@@ -150,6 +150,7 @@ koneksi non-pooler.
 | `pnpm rag:ingest <file\|url>` | skrip CLI | Panggil route ingest dengan kunci sesi dev |
 | `pnpm exec tsx scripts/rag-replace.mts <file> [judul]` | skrip CLI | Ganti dokumen yang isinya berubah: hapus dokumen berjudul sama (chunk cascade), lalu ingest ulang |
 | `pnpm rag:query "<kata kunci>"` | skrip CLI | Cetak chunk + skor |
+| `pnpm exec tsx scripts/rag-diagnose.mts <kata> "<query>" [k]` | skrip CLI | Cari potongan yang memuat kata kunci dan lihat peringkatnya untuk sebuah query (alat diagnosa FR-4) |
 | `bash scripts/smoke.sh` | skrip | Uji cepat semua rute API, cetak status per kriteria FR |
 
 Setiap rute baru **wajib** didaftarkan di tabel ini.
@@ -159,7 +160,7 @@ Setiap rute baru **wajib** didaftarkan di tabel ini.
 | Item | Implementasi | Dicek oleh |
 |---|---|---|
 | Memori percakapan | Kirim 20 pesan terakhir + ringkasan sistem bila lebih | manual (FR-2) + test unit pembentuk konteks |
-| RAG relevan | Chunk 1000 karakter, overlap 150; top-k 6; ambang skor kosinus ≥ 0.30 | `pnpm rag:query` (FR-4) |
+| RAG relevan | Chunk 1000 karakter, overlap 150; tabel markdown dipecah per baris dengan baris judul diulang (`lib/rag/chunk.ts`); top-k 6; ambang kosinus ≥ 0.30; maksimal 2 potongan per dokumen (kandidat diambil 4× k lalu disaring) | `pnpm rag:query` + `scripts/rag-diagnose.mts` (FR-4) |
 | Jawaban jujur | Prompt sistem: "kalau konteks tidak memuat jawaban, bilang tidak ada di dokumen, jangan mengarang" + sumber ditampilkan di UI | manual, 5 pertanyaan uji di PROGRESS-LOG |
 | Curhat aman | System prompt curhat: empati dulu, tanpa diagnosis, tanpa nasihat medis; tautan bantuan bila ada indikasi krisis | manual (FR-5) |
 | Kontras & keyboard | Token warna DESIGN.md; semua kontrol fokusabel | checklist visual + uji keyboard |

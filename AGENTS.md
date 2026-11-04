@@ -25,7 +25,7 @@ Dokumen acuan: `docs/PRD.md` (kenapa/apa), `docs/TECH-SPEC.md` (bagaimana),
 | Driver DB | postgres (postgres.js) | 4.0.0 |
 | Database | Supabase Postgres + pgvector | project `vuxltppwzjgqrefgfuxs` |
 | Storage | Supabase Storage (bucket `images`) | @supabase/supabase-js 2.118.0 |
-| LLM chat/curhat | Groq — `llama-3.3-70b-versatile` | via AI SDK `@ai-sdk/groq` 4.0.76 (SDK `ai` 7.0.162) |
+| LLM chat/curhat | Groq — `openai/gpt-oss-120b` (chat), `qwen/qwen3.8-27b` (curhat) | via AI SDK `@ai-sdk/groq` 4.0.76 (SDK `ai` 7.0.162) |
 | Embedding | Cloudflare Workers AI `@cf/baai/bge-m3` (1024 dim) | REST v4 |
 | Generate gambar | Cloudflare Workers AI `@cf/black-forest-labs/flux-2-klein-4b` | REST v4 |
 | Scrape URL | Firecrawl | REST v1 |
@@ -33,7 +33,7 @@ Dokumen acuan: `docs/PRD.md` (kenapa/apa), `docs/TECH-SPEC.md` (bagaimana),
 | Uji | vitest + skrip curl | vitest 5.1.0, tsx 4.23.15 |
 | Deploy | Vercel | — |
 
-Manajer paket: **pnpm 12.16.1**. Jangan pakai npm/yarn tanpa tanya.
+Manajer paket: **pnpm 12.16.1** (setelan `allowBuilds` untuk esbuild ada di `pnpm-workspace.yaml` — bukan di `package.json`). Node: **24.x**. Jangan pakai npm/yarn tanpa tanya.
 
 ## Command
 
@@ -48,8 +48,10 @@ Jalankan dari root repo.
 | Test | `pnpm test` |
 | Migrasi DB | `pnpm db:generate` lalu `pnpm db:migrate` |
 | Ingest dokumen | `pnpm rag:ingest <file\|url>` |
+| Ganti dokumen yang berubah | `pnpm exec tsx scripts/rag-replace.mts <file> [judul]` |
 | Cek retrieval | `pnpm rag:query "<kata kunci>"` |
-| Uji API cepat | `bash scripts/smoke.sh` |
+| Diagnosa peringkat retrieval | `pnpm exec tsx scripts/rag-diagnose.mts <kata-kunci> "<query>" [k]` |
+| Uji API cepat | `BASE=http://localhost:3000 bash scripts/smoke.sh` |
 
 **Sebelum menyatakan tugas selesai**, jalankan `pnpm build` dan `pnpm test`,
 tunjukkan output aslinya. Jangan menyimpulkan dari pembacaan kode.
@@ -90,6 +92,7 @@ drizzle/             # file migrasi hasil generate
 - Semua jawaban chat/curhat berbahasa Indonesia, ringkas, tidak bertele-tele.
 - Jawaban RAG wajib menyebut sumber (nama dokumen/URL). Kalau konteks tidak memuat jawabannya, jawab jujur "tidak ada di dokumen" — jangan mengarang.
 - Field wajib di DB tidak boleh null; tipe kolom mengikuti `docs/TECH-SPEC.md` §4.
+- Parameter RAG dikunci di `lib/rag/retrieve.ts`: top-k 6, ambang kosinus 0.30, maksimal 2 potongan per dokumen (cegah satu dokumen memenuhi semua slot). Chunk 1000 karakter / overlap 150, dan tabel markdown dipecah per baris dengan baris judul diulang (`lib/rag/chunk.ts`).
 - Kegagalan provider AI harus tampil sebagai pesan error di UI, bukan layar kosong.
 - Gambar hasil disimpan ke Storage; yang masuk DB adalah URL + metadata, bukan base64.
 

@@ -35,7 +35,11 @@ export function chunkText(text: string, options: ChunkOptions = {}): string[] {
   };
 
   for (const p of paragraf) {
-    const bagian = p.length > size ? pecahPanjang(p, size) : [p];
+    const bagian = isTableBlock(p)
+      ? pecahTabel(p, size)
+      : p.length > size
+        ? pecahPanjang(p, size)
+        : [p];
     for (const b of bagian) {
       if (!buffer) {
         buffer = b;
@@ -50,6 +54,53 @@ export function chunkText(text: string, options: ChunkOptions = {}): string[] {
     }
   }
   dorong();
+
+  return potongan;
+}
+
+/** Blok berbentuk tabel markdown: baris judul, garis pemisah, lalu baris data. */
+export function isTableBlock(blok: string): boolean {
+  const baris = blok
+    .split("\n")
+    .map((b) => b.trim())
+    .filter((b) => b.length > 0);
+  if (baris.length < 3) return false;
+  if (!/^\|.*\|$/.test(baris[0]!)) return false;
+  return /^\|[\s:|-]+\|$/.test(baris[1]!);
+}
+
+/**
+ * Pecah tabel markdown per beberapa baris, dan **ulangi baris judul + garis
+ * pemisah** di setiap potongan. Tanpa ini, satu fakta di dalam tabel (mis.
+ * "top-k 6") tenggelam di blok besar dan sulit ditemukan retrieval.
+ */
+export function pecahTabel(blok: string, size: number, maksBaris = 8): string[] {
+  const baris = blok
+    .split("\n")
+    .map((b) => b.trimEnd())
+    .filter((b) => b.trim().length > 0);
+
+  const judul = baris.slice(0, 2);
+  const data = baris.slice(2);
+  if (data.length === 0) return [blok.trim()];
+
+  const potongan: string[] = [];
+  let i = 0;
+
+  while (i < data.length) {
+    const ambil: string[] = [];
+    let panjang = judul.join("\n").length;
+
+    while (i < data.length && ambil.length < maksBaris) {
+      const kandidat = data[i]!;
+      if (ambil.length > 0 && panjang + kandidat.length + 1 > size) break;
+      ambil.push(kandidat);
+      panjang += kandidat.length + 1;
+      i += 1;
+    }
+
+    potongan.push([...judul, ...ambil].join("\n"));
+  }
 
   return potongan;
 }
