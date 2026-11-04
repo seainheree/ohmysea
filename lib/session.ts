@@ -4,7 +4,8 @@ import type { NextRequest } from "next/server";
 import { getEnv } from "@/lib/env";
 
 export const SESSION_COOKIE = "ohmysea_sesi";
-const MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 hari (ADR-004)
+/** Masa berlaku sesi: 24 jam. Sesudah itu kode akses harus dimasukkan lagi. */
+const MAX_AGE_SECONDS = 60 * 60 * 24;
 
 /** Nilai cookie = HMAC dari kode akses. Kode tidak pernah dikirim ke browser. */
 function expectedValue(): string {

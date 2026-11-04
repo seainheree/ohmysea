@@ -17,9 +17,12 @@ bisa menghabiskan kuota dan membaca isi percakapan.
 ## Keputusan
 
 Gerbang akses tunggal: satu kode rahasia di `APP_ACCESS_CODE` (env), ditukar
-lewat `POST /api/unlock` menjadi cookie sesi httpOnly (masa berlaku 30 hari).
+lewat `POST /api/unlock` menjadi cookie sesi httpOnly (masa berlaku 24 jam,
+diperbarui 2026-11-04 dari 30 hari atas permintaan pemilik: sesi harian lebih
+aman untuk perangkat yang dipakai bergantian).
 Semua route API selain `/api/unlock` dan `/api/health` menolak permintaan tanpa
-cookie yang sah (401).
+cookie yang sah (401). Nilai cookie = HMAC-SHA256(kode) sehingga mengganti kode
+otomatis membatalkan semua sesi lama.
 
 ## Alternatif yang dipertimbangkan
 

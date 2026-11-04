@@ -256,7 +256,7 @@ pnpm dev                    # buka http://localhost:3000, masukkan APP_ACCESS_CO
 - [ ] `.env` tidak pernah ikut commit (sudah gitignored); `.env.example` hanya placeholder
 - [ ] Tidak ada kunci di kode yang di-bundle ke browser; hanya `NEXT_PUBLIC_SUPABASE_URL` + publishable key yang publik
 - [ ] Semua route API kecuali `/api/unlock` dan `/api/health` menolak tanpa cookie sesi (401)
-- [ ] Cookie sesi: httpOnly, sameSite=lax, secure di produksi, masa berlaku 30 hari
+- [ ] Cookie sesi: httpOnly, sameSite=lax, secure di produksi, masa berlaku 24 jam
 - [ ] Batas laju sederhana di `/api/chat` dan `/api/images` (mis. 30 permintaan/menit per cookie) agar kuota tidak habis karena kecelakaan
 - [ ] Batas jumlah gambar per permintaan (maks 4) dan panjang prompt (maks 2000 karakter)
 - [ ] Isi curhat tidak dikirim ke layanan selain Groq

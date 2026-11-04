@@ -93,6 +93,22 @@ letakkan entri terbaru paling atas.
 - **Blocker**: tidak ada
 - **Next**: kandidat lanjutan = CI GitHub Actions, sambungkan repo ke Vercel, batas laju berbasis Redis, retensi gambar (D3), ringkasan percakapan panjang (D4)
 
+### 2026-11-04 — T-506: sesi dipendekkan ke 24 jam + kode akses produksi diperbarui
+
+- **Sesi**: lanjutan (pemilik memperbarui `APP_ACCESS_CODE` di `.env` dan meminta sesi 24 jam)
+- **Dikerjakan**:
+  - `lib/session.ts`: `MAX_AGE_SECONDS` 30 hari → **24 jam** (`Max-Age=86400`); nilai cookie tetap HMAC-SHA256(kode), jadi mengganti kode otomatis membatalkan semua sesi lama
+  - Env Vercel **Production** `APP_ACCESS_CODE` dihapus lalu ditambahkan ulang dengan nilai baru dari `.env` (nilai tidak pernah ditampilkan/di-commit), lalu produksi di-deploy ulang
+  - Dokumen diselaraskan: `docs/TECH-SPEC.md` (checklist keamanan) dan `docs/adr/ADR-004-akses-kode-tunggal.md`
+- **Verifikasi** (output asli, produksi https://ohmysea.vercel.app setelah deploy ulang):
+  - kode salah → `401`; kode baru (dari `.env`) → `200`
+  - header: `Set-Cookie: ohmysea_sesi=…; Expires=Thu, 05 Nov 2026 09:58:24 GMT; Max-Age=86400; Secure; HttpOnly; SameSite=lax`
+  - cookie baru: `GET /api/conversations` → `200`, `POST /api/chat` → `200`
+  - cookie asal-asalan → `401`; HMAC lokal dari kode baru (`13ed264e7495d27e…`) sama dengan nilai cookie yang diterima produksi → produksi benar-benar memakai kode baru
+  - Lokal: `pnpm lint` bersih · `pnpm test` 41 lulus · `pnpm build` exit 0
+- **Catatan**: semua sesi lama (cookie dari kode sebelumnya) otomatis tidak berlaku → perangkat lain harus memasukkan kode akses baru, dan sesi berakhir tiap 24 jam
+- **Blocker**: tidak ada
+
 ### 2026-11-04 — M5: tema, sidebar bisa ditutup, footer rapi, identitas Kirby, memori otomatis
 
 - **Sesi**: lanjutan (permintaan pemilik: tema light/night, sidebar bisa ditutup, footer jangan terpotong, AI bernama Kirby dengan avatar, sembunyikan daftar dokumen dan tampilkan durasi jawaban, Kirby menyimpan memori sendiri dengan penyaring yang bagus)

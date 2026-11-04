@@ -11,7 +11,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M2 | Generate image (text-to-image, image-to-image), galeri | T-201..T-204 | done |
 | M3 | Kualitas, responsif, deploy Vercel, uji semua kriteria FR | T-301..T-304 | done |
 | M4 | Memori AI (Pengaturan), hapus riwayat, perapian UI/UX responsif | T-401..T-404 | done |
-| M5 | Tema gelap/terang, sidebar bisa ditutup, footer rapi, identitas Kirby, memori otomatis | T-501..T-505 | done |
+| M5 | Tema gelap/terang, sidebar bisa ditutup, footer rapi, identitas Kirby, memori otomatis | T-501..T-506 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -49,6 +49,7 @@ Jangan lompat milestone.
 | T-503 | done | Produksi: label "Kirby · 8,0 detik · 16.50", 3 titik + "Kirby sedang menjawab...", chip dokumen 0 |
 | T-504 | done | Produksi (`onFinish`): 2 memori tersimpan otomatis + catatan di UI; pesan sesaat & data sensitif tidak tersimpan; `autoMemori:false` dihormati |
 | T-505 | done | Sapaan "Hi Sasha, Kirby di sini poyoo~" saat memori panggilan ada; tanpa memori → "Hi, Kirby di sini poyoo~" |
+| T-506 | done | Sesi 24 jam + kode baru: `Set-Cookie … Max-Age=86400`; kode baru di `.env` → produksi 200 dan HMAC cookie sama dengan HMAC lokal; kode salah & cookie asal-asalan → 401 |
 
 ---
 
@@ -122,6 +123,13 @@ Jangan lompat milestone.
 - **Cakupan**: `lib/panggilan.ts`, `components/chat/MessageList.tsx` (EmptyState)
 - **Kriteria**: sapaan "Hi {panggilan}, Kirby di sini poyoo~"; tanpa memori panggilan → tampa nama; memori nonaktif diabaikan
 - **Verifikasi**: `lib/panggilan.test.ts` + uji browser
+
+### T-506 — Sesi 24 jam + ganti kode akses di produksi
+
+- **Status**: done
+- **Cakupan**: `lib/session.ts` (`MAX_AGE_SECONDS` = 24 jam), env Vercel `APP_ACCESS_CODE` (Production), ADR-004 + TECH-SPEC
+- **Kriteria**: cookie sesi `Max-Age=86400`; nilai cookie = HMAC kode baru sehingga sesi lama otomatis tidak sah; kode lama tidak berlaku lagi di produksi
+- **Verifikasi**: `curl -i -X POST /api/unlock` (cek `Set-Cookie`) + `GET /api/conversations` dengan cookie lama → 401
 
 ---
 
