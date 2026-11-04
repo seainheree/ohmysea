@@ -10,7 +10,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M1 | Chat + memori + RAG sederhana + mode curhat | T-101..T-106 | done |
 | M2 | Generate image (text-to-image, image-to-image), galeri | T-201..T-204 | done |
 | M3 | Kualitas, responsif, deploy Vercel, uji semua kriteria FR | T-301..T-304 | done |
-| M4 | Memori AI (Pengaturan), hapus riwayat, perapian UI/UX responsif | T-401..T-404 | doing |
+| M4 | Memori AI (Pengaturan), hapus riwayat, perapian UI/UX responsif | T-401..T-404 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -39,6 +39,10 @@ Jangan lompat milestone.
 | T-302 | done | Uji browser: urutan Tab (drawer tertutup tidak lagi bisa difokus — `inert`), kontras 6.78:1 / 17.22:1 / 5.15:1, hint keyboard disembunyikan < sm, batas laju aktif |
 | T-303 | done | Deploy produksi **Ready**: https://ohmysea.vercel.app ; health produksi 200; chat/gambar/image-to-image jalan |
 | T-304 | done | Uji produksi: 7 pertanyaan RAG (hasil di PROGRESS-LOG) + uji browser 360 px & 1440 px semua sesuai harapan |
+| T-401 | done | Memori AI: POST 201, duplikat 409, jawaban memakai memori di chat & curhat, nonaktif → tidak dipakai; `lib/memory.test.ts` lulus; `/pengaturan` produksi 200 |
+| T-402 | done | `DELETE /api/conversations` (semua) di lokal & `?mode=curhat` di produksi → jumlah benar, pesan ikut terhapus, dialog konfirmasi (bukan `window.confirm`) |
+| T-403 | done | Browser 360/768/1440 px: tanpa overflow, tombol ≥ 44 px, input 16 px, header & komposer sticky, ikon SVG, drawer 310 px + pencarian |
+| T-404 | done | Semua di atas dijalankan di produksi setelah deploy `62c0800`; `pnpm lint`/`test` (24 lulus)/`build` hijau |
 
 ---
 

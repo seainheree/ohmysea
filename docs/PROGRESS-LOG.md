@@ -74,6 +74,25 @@ letakkan entri terbaru paling atas.
 - **Blocker**: tidak ada
 - **Next**: v1 selesai; kandidat lanjutan = CI GitHub Actions, sambungkan repo ke Vercel, perapian `window.prompt/confirm` jadi komponen, batas laju berbasis Redis
 
+### 2026-11-04 — M4: Memori AI, hapus riwayat, UI/UX responsif
+
+- **Sesi**: lanjutan (permintaan pemilik: perbaiki UI/UX responsive & profesional, tambah hapus riwayat, tambah fitur Pengaturan berisi memori AI)
+- **Dikerjakan**:
+  - Tabel `memories` + migrasi `0001` + API `GET/POST /api/memories`, `PATCH/DELETE /api/memories/[id]` (duplikat ditolak 409, nonaktif tanpa dihapus, maks 500 karakter/memori dan 60 memori aktif)
+  - `lib/memory.ts`: memori aktif disuntikkan ke prompt sistem di **kedua mode** (chat & curhat) — "Yang kamu ingat tentang pengguna… jangan mengarang di luar daftar ini"
+  - `DELETE /api/conversations?mode=` → hapus riwayat semua atau per mode (pesan ikut via cascade)
+  - Halaman `/pengaturan`: Memori AI (tambah/ubah/hapus/aktif-nonaktif + penghitung), Riwayat percakapan (hapus semua/per mode), Status layanan dari `/api/health`, bagian Tentang
+  - UI/UX: ikon SVG (bukan emoji), `ConfirmDialog` menggantikan `window.confirm`/`window.prompt`, sidebar dengan nav Chat/Gambar/Pengaturan + pencarian riwayat + rename inline + hapus satuan/semua, header & komposer sticky, area aman (safe-area), target sentuh ≥ 44 px, input 16 px di < 640 px (cegah zoom iOS), scrollbar ramping, stempel waktu pesan, badge jumlah memori
+- **Verifikasi** (output asli):
+  - Lokal: `pnpm lint` bersih · `pnpm test` **24 lulus** · `pnpm build` exit 0
+  - Lokal (API): memori 201, duplikat 409, chat menjawab "Kode rahasia kamu = 4821. Namamu Sasha, panggil Sha." (mode chat) dan mode curhat juga ingat; memori dinonaktifkan → "Tidak ada di dokumen" (tidak lagi dipakai); `DELETE /api/conversations` → 38 dihapus, 0 tersisa
+  - Lokal (browser 360 px): tanpa overflow · textarea 262×47 font 16 px · tombol kirim 44×44 · header `sticky` · drawer 310 px berisi menu Chat/Gambar/Pengaturan + pencarian + logo
+  - Lokal (browser): tambah memori lewat form → muncul di daftar, konfirmasi tampil, penghitung "1 aktif / 1 total"; 768 px sidebar tetap & `inert=false`; 1440 px tanpa overflow, 2 gelembung pesan, stempel waktu ada, header memuat judul percakapan
+  - Produksi (https://ohmysea.vercel.app): health 200; `/pengaturan` 200 dan memuat "Memori AI"; FR-12 → 201, duplikat 409, jawaban "Hijau laut (teal).", setelah dinonaktifkan tidak lagi tahu; FR-13 → `DELETE ?mode=curhat` menghapus 2 percakapan, 3 percakapan chat tetap utuh
+- **Catatan penting (jujur)**: pengujian FR-13 di lokal menghapus **semua** percakapan di database yang dipakai bersama produksi (38 percakapan, semuanya data uji dari sesi ini). Verifikasi di produksi sesudahnya sengaja dibatasi ke mode curhat saja.
+- **Blocker**: tidak ada
+- **Next**: kandidat lanjutan = CI GitHub Actions, sambungkan repo ke Vercel, batas laju berbasis Redis, retensi gambar (D3), ringkasan percakapan panjang (D4)
+
 ### 2026-11-04 — Dokumentasi awal: PRD, TECH-SPEC, ADR, DESIGN, TASKS
 
 - **Sesi**: baru
