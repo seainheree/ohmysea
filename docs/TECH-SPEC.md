@@ -93,6 +93,14 @@ documents
   checksum    text       (wajib, unique — cegah ingest ganda)
   created_at  timestamptz(wajib)
 
+memories                     -- fitur Pengaturan: memori AI
+  id          uuid       (pk)
+  content     text       (wajib, 3–500 karakter, dicek unik tanpa beda besar/kecil huruf)
+  aktif       boolean    (wajib, default true — nonaktif = tidak dikirim ke model)
+  created_at  timestamptz(wajib)
+  updated_at  timestamptz(wajib)
+  index: (aktif, created_at)
+
 chunks
   id           uuid       (pk)
   document_id  uuid       (wajib, fk → documents.id, on delete cascade)
@@ -135,7 +143,13 @@ koneksi non-pooler.
 | Rute / perintah / API | Sumber | Catatan |
 |---|---|---|
 | `GET /` | halaman | Chat: sidebar percakapan, area pesan, input, pemilih mode |
-| `GET /gallery` | halaman | Galeri gambar + prompt-nya |
+| `GET /gambar` | halaman | Galeri gambar + prompt-nya |
+| `GET /pengaturan` | halaman | Memori AI, hapus riwayat, status layanan |
+| `GET /api/memories` | route | Daftar memori (aktif & nonaktif) |
+| `POST /api/memories` | route | Body `{content}` → simpan memori baru (tolak duplikat 409) |
+| `PATCH /api/memories/[id]` | route | Body `{content?, aktif?}` → ubah isi / aktifkan-nonaktifkan |
+| `DELETE /api/memories/[id]` | route | Hapus satu memori |
+| `DELETE /api/conversations?mode=` | route | Hapus seluruh riwayat (opsional satu mode); pesan ikut terhapus |
 | `POST /api/unlock` | route | Body `{code}` → set cookie sesi (httpOnly) kalau cocok dengan `APP_ACCESS_CODE` |
 | `POST /api/chat` | route | Body `{conversationId?, mode, message}` → respons streaming teks; menyimpan 2 pesan |
 | `GET /api/conversations` | route | Daftar percakapan (id, title, mode, updatedAt) |
@@ -160,7 +174,9 @@ Setiap rute baru **wajib** didaftarkan di tabel ini.
 | Item | Implementasi | Dicek oleh |
 |---|---|---|
 | Memori percakapan | Kirim 20 pesan terakhir + ringkasan sistem bila lebih | manual (FR-2) + test unit pembentuk konteks |
-| RAG relevan | Chunk 1000 karakter, overlap 150; tabel markdown dipecah per baris dengan baris judul diulang (`lib/rag/chunk.ts`); top-k 6; ambang kosinus ≥ 0.30; maksimal 2 potongan per dokumen (kandidat diambil 4× k lalu disaring) | `pnpm rag:query` + `scripts/rag-diagnose.mts` (FR-4) |
+| Memori AI (Pengaturan) | Tabel `memories` aktif disuntikkan ke prompt sistem di **kedua mode** (chat & curhat) lewat `buildMemoryBlock`, maks 60 memori × 500 karakter | `lib/memory.test.ts` + FR-12 |
+| Riwayat bisa dibersihkan | `DELETE /api/conversations` (semua/satu mode) dan `DELETE /api/conversations/[id]`; pesan ikut lewat cascade FK | FR-13 + `smoke.sh` |
+| RAG relevan | Chunk 1000 karakter, overlap 150; tabel markdown dipecah per baris dengan baris judul diulang (`lib/rag/chunk.ts`); top-k 8; ambang kosinus ≥ 0.30; maksimal 3 potongan per dokumen (kandidat diambil 4× k lalu disaring) | `pnpm rag:query` + `scripts/rag-diagnose.mts` (FR-4) |
 | Jawaban jujur | Prompt sistem: "kalau konteks tidak memuat jawaban, bilang tidak ada di dokumen, jangan mengarang" + sumber ditampilkan di UI | manual, 5 pertanyaan uji di PROGRESS-LOG |
 | Curhat aman | System prompt curhat: empati dulu, tanpa diagnosis, tanpa nasihat medis; tautan bantuan bila ada indikasi krisis | manual (FR-5) |
 | Kontras & keyboard | Token warna DESIGN.md; semua kontrol fokusabel | checklist visual + uji keyboard |

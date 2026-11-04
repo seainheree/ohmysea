@@ -71,6 +71,8 @@ inti utuh, murah, tidak rapuh.
 | US-05 | Sebagai pemilik, saya ingin memberi gambar referensi ke generator (image-to-image), agar hasil mengikuti gaya gambar itu | Should |
 | US-06 | Sebagai pemilik, saya ingin melihat kembali gambar yang pernah dibuat, agar tidak perlu generate ulang | Should |
 | US-07 | Sebagai pemilik, saya ingin mengganti judul atau menghapus percakapan, agar daftar chat tetap rapi | Should |
+| US-08 | Sebagai pemilik, saya ingin menyimpan fakta tentang diriku sebagai memori AI, agar tidak mengulang konteks di setiap percakapan | Must |
+| US-09 | Sebagai pemilik, saya ingin menghapus riwayat percakapan (satuan atau semua), agar data lama bisa dibersihkan | Must |
 
 ## 6. Kebutuhan fungsional
 
@@ -87,6 +89,8 @@ inti utuh, murah, tidak rapuh.
 | FR-9 | Galeri gambar | US-06 | Halaman galeri menampilkan semua gambar yang pernah dibuat beserta prompt-nya; grid tidak pecah di 360 px |
 | FR-10 | Kelola percakapan | US-07 | `curl -s -X PATCH localhost:3000/api/conversations/<id> -d '{"title":"x"}'` → 200 + judul berubah di DB; `DELETE` → 200 + baris dan pesannya hilang |
 | FR-11 | Halaman chat satu layar | US-01..04 | `pnpm build` exit 0; halaman memuat sidebar percakapan, area pesan, input, dan pemilih mode (chat/curhat/gambar) |
+| FR-12 | Memori AI (Pengaturan) | US-08 | `POST /api/memories` → 201; memori aktif muncul di `GET /api/memories`; tanya hal yang hanya ada di memori di percakapan **baru** → balasan memuat fakta itu; memori dinonaktifkan → tidak lagi dipakai |
+| FR-13 | Hapus riwayat percakapan | US-09 | `DELETE /api/conversations` → 200 + jumlah; sesudah itu `GET /api/conversations` kosong; `DELETE /api/conversations?mode=curhat` hanya menghapus mode itu; hapus satu percakapan juga menghapus pesannya |
 
 Aturan: setiap kriteria penerimaan **harus bisa dijalankan sebagai command** atau
 diperiksa dengan mata tanpa menebak. Kriteria yang berupa penilaian rasa (G3,

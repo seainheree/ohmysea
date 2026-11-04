@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -88,8 +89,22 @@ export const images = pgTable(
   (t) => [index("images_created_idx").on(t.createdAt)],
 );
 
+/** Memori AI: fakta yang diingat tentang pengguna, disuntikkan ke prompt sistem. */
+export const memories = pgTable(
+  "memories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    content: text("content").notNull(),
+    aktif: boolean("aktif").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("memories_aktif_idx").on(t.aktif, t.createdAt)],
+);
+
 export type Conversation = typeof conversations.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type Chunk = typeof chunks.$inferSelect;
 export type ImageRow = typeof images.$inferSelect;
+export type Memory = typeof memories.$inferSelect;

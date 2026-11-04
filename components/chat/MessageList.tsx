@@ -2,7 +2,16 @@
 
 import { useEffect, useRef } from "react";
 
+import { Icon } from "@/components/ui/Icon";
 import type { Pesan } from "@/lib/api";
+
+function waktu(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
 
 export function MessageList({
   pesan,
@@ -39,13 +48,19 @@ export function MessageList({
                   <span
                     key={s.documentId}
                     title={`skor kemiripan ${s.score}`}
-                    className="rounded-penuh border border-border-kuat px-2 py-0.5 text-[11px] text-teks-muted"
+                    className="inline-flex items-center gap-1 rounded-penuh border border-border-kuat bg-surface px-2 py-0.5 text-[11px] text-teks-muted"
                   >
+                    <Icon name="berkas" size={11} />
                     {s.title} · {s.score.toFixed(2)}
                   </span>
                 ))}
               </div>
             )}
+            <p
+              className={`mt-1 text-[10px] text-teks-muted-2 ${m.role === "user" ? "text-right" : ""}`}
+            >
+              {waktu(m.createdAt)}
+            </p>
           </div>
         </div>
       ))}

@@ -23,9 +23,9 @@ export function Composer({
   }
 
   return (
-    <div className="border-t border-border bg-bg-topbar">
-      <div className="mx-auto w-full max-w-[760px] px-sedang py-sedang">
-        <div className="flex items-end gap-2 rounded-besar border border-border bg-surface p-2">
+    <div className="sticky bottom-0 border-t border-border bg-bg-topbar/95 backdrop-blur">
+      <div className="mx-auto w-full max-w-[760px] px-sedang pb-aman pt-sedang">
+        <div className="flex items-end gap-2 rounded-besar border border-border bg-surface p-1.5">
           <textarea
             ref={area}
             value={teks}
@@ -42,13 +42,14 @@ export function Composer({
               }
             }}
             placeholder={mode === "curhat" ? "Ceritakan apa yang kamu rasakan..." : "Tulis pesan..."}
-            className="max-h-[200px] flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-teks-muted-2"
+            aria-label="Tulis pesan"
+            className="max-h-[200px] min-h-[44px] flex-1 resize-none bg-transparent px-2.5 py-3 text-sm outline-none placeholder:text-teks-muted-2"
           />
           <button
             onClick={kirim}
             disabled={sibuk || teks.trim().length === 0}
             aria-label="Kirim pesan"
-            className={`mb-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-penuh transition-colors ${
+            className={`mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-penuh transition-colors ${
               sibuk || teks.trim().length === 0
                 ? "bg-border text-teks-muted"
                 : "bg-aksen text-white hover:bg-aksen-terang"

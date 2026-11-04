@@ -40,7 +40,55 @@ body {
   color-scheme: dark;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 *:focus-visible {
   outline: 2px solid var(--color-aksen);
   outline-offset: 2px;
+}
+
+/* Di HP, input berukuran < 16px membuat Safari iOS memperbesar halaman saat fokus.
+   Utilitas Tailwind (text-sm) menang atas selektor elemen, jadi aturan ini perlu
+   !important — hanya berlaku di bawah 640px. */
+@media (max-width: 639px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Area aman perangkat berponi/gesture bar */
+.pb-aman {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pt-aman {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Scrollbar ramping agar tidak mengganggu tampilan gelap */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-kuat) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-kuat);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
 }

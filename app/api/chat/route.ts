@@ -8,6 +8,7 @@ import { SYSTEM_CHAT, SYSTEM_CURHAT, buildContextBlock } from "@/lib/ai/prompts"
 import { getDb } from "@/lib/db/client";
 import { conversations, messages } from "@/lib/db/schema";
 import { kunciRateLimit, pesanError, rateLimit, requireSession } from "@/lib/guard";
+import { ambilMemoriAktif, buildMemoryBlock } from "@/lib/memory";
 import { retrieve, toSources } from "@/lib/rag/retrieve";
 
 export const runtime = "nodejs";
@@ -82,7 +83,10 @@ export async function POST(request: NextRequest) {
     const potongan = body.mode === "chat" ? await retrieve(body.message) : [];
     const sources = toSources(potongan);
 
-    // 4. Susun riwayat untuk model.
+    // 4. Memori AI (fitur Pengaturan) — dipakai di kedua mode.
+    const ingatan = await ambilMemoriAktif();
+
+    // 5. Susun riwayat untuk model.
     const riwayat = await db
       .select({ role: messages.role, content: messages.content })
       .from(messages)
@@ -96,7 +100,9 @@ export async function POST(request: NextRequest) {
       .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
     const system =
-      (body.mode === "curhat" ? SYSTEM_CURHAT : SYSTEM_CHAT) + buildContextBlock(potongan);
+      (body.mode === "curhat" ? SYSTEM_CURHAT : SYSTEM_CHAT) +
+      buildContextBlock(potongan) +
+      buildMemoryBlock(ingatan);
 
     const hasil = streamText({
       model: body.mode === "curhat" ? curhatModel() : chatModel(),

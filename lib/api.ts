@@ -72,6 +72,68 @@ export async function hapusPercakapan(id: string): Promise<void> {
   await baca(res);
 }
 
+/** Hapus seluruh riwayat (opsional: hanya satu mode). */
+export async function hapusSemuaPercakapan(mode?: Mode): Promise<number> {
+  const q = mode ? `?mode=${mode}` : "";
+  const res = await fetch(`/api/conversations${q}`, { method: "DELETE" });
+  const data = await baca<{ jumlah: number }>(res);
+  return data.jumlah;
+}
+
+export type Memori = {
+  id: string;
+  content: string;
+  aktif: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function daftarMemori(): Promise<Memori[]> {
+  const res = await fetch("/api/memories", { cache: "no-store" });
+  const data = await baca<{ memori: Memori[] }>(res);
+  return data.memori;
+}
+
+export async function tambahMemori(content: string): Promise<Memori> {
+  const res = await fetch("/api/memories", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ content }),
+  });
+  const data = await baca<{ memori: Memori }>(res);
+  return data.memori;
+}
+
+export async function ubahMemori(
+  id: string,
+  perubahan: { content?: string; aktif?: boolean },
+): Promise<Memori> {
+  const res = await fetch(`/api/memories/${id}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(perubahan),
+  });
+  const data = await baca<{ memori: Memori }>(res);
+  return data.memori;
+}
+
+export async function hapusMemori(id: string): Promise<void> {
+  const res = await fetch(`/api/memories/${id}`, { method: "DELETE" });
+  await baca(res);
+}
+
+export type RingkasanSehat = {
+  ok: boolean;
+  env: { ok: boolean; hilang: string[] };
+  db: { ok: boolean; detail: string };
+  model: Record<string, string>;
+};
+
+export async function cekSehat(): Promise<RingkasanSehat> {
+  const res = await fetch("/api/health", { cache: "no-store" });
+  return baca<RingkasanSehat>(res);
+}
+
 export async function buka(kode: string): Promise<void> {
   const res = await fetch("/api/unlock", {
     method: "POST",

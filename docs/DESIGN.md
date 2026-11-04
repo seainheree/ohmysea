@@ -48,6 +48,10 @@ Jangan tulis ulang nilai hex di komponen.
 | Huruf | display (dekoratif) | Instrument Serif, 400 |
 | Huruf | UI (semua teks antarmuka) | DM Sans, 400–700 |
 | Radius | kecil / sedang / besar / penuh | 8px / 12px / 16px / 999px |
+| Tap target minimum | tombol & kontrol | 44×44 px di HP |
+| Area aman | padding bawah komposer | `calc(0.75rem + env(safe-area-inset-bottom))` |
+| Media query | breakpoint utama | 640 px (sm), 768 px (md drawer → sidebar tetap) |
+| Zoom iOS | ukuran huruf input di < 640 px | 16 px (wajib, kalau kurang Safari memperbesar halaman) |
 | Ukuran huruf | judul hero / judul kartu / isi / label kecil | 32–40px / 15px / 14px / 11px (uppercase, letter-spacing 0.08em) |
 | Berat huruf | judul / isi | 700–800 / 400–500 |
 | Radius kartu chat | — | 16px |
@@ -77,6 +81,11 @@ Implementasi: dimuat lewat `next/font/google` di `app/layout.tsx` sebagai CSS va
 | Hasil gambar | Preview besar, tombol unduh, metadata (prompt, style, ratio, model) | jadi |
 | Galeri | Grid gambar responsif + prompt tiap gambar | jadi |
 | Layar kunci | Input kode akses + logo | jadi |
+| Navigasi sidebar | Chat / Gambar / Pengaturan + pencarian riwayat | jadi |
+| Pengaturan — Memori AI | Tambah/ubah/hapus/aktif-nonaktif memori, penghitung aktif | jadi |
+| Pengaturan — Riwayat | Hapus riwayat (semua mode / per mode) dengan dialog konfirmasi | jadi |
+| Pengaturan — Status | Hasil `GET /api/health` (env, DB, model) tanpa membocorkan nilai | jadi |
+| Dialog konfirmasi | Pengganti `window.confirm`, bisa difokus & ditutup dengan Escape | jadi |
 | Footer | "Ohmysea By Sasha" — tampil di semua halaman | jadi |
 
 ## 4b. Aset merek

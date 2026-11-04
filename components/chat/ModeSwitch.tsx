@@ -23,7 +23,7 @@ export function ModeSwitch({
           aria-selected={mode === m.nilai}
           title={m.ket}
           onClick={() => onChange(m.nilai)}
-          className={`rounded-penuh px-sedang py-1.5 text-sm transition-colors ${
+          className={`rounded-penuh px-sedang py-2 min-h-[40px] text-sm transition-colors ${
             mode === m.nilai
               ? "bg-aksen/15 text-aksen-lembut border border-aksen"
               : "border border-border-kuat text-teks-muted hover:text-teks"

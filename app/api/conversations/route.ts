@@ -59,3 +59,34 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+/**
+ * DELETE /api/conversations?mode=chat|curhat
+ * Hapus riwayat percakapan (semua, atau hanya satu mode). Pesan ikut terhapus (cascade).
+ */
+export async function DELETE(request: NextRequest) {
+  const tolak = requireSession(request);
+  if (tolak) return tolak;
+
+  try {
+    const mode = request.nextUrl.searchParams.get("mode");
+    const db = getDb();
+
+    const dasar = db.delete(conversations).$dynamic();
+    const dihapus = await (mode === "chat" || mode === "curhat"
+      ? dasar.where(eq(conversations.mode, mode))
+      : dasar
+    ).returning({ id: conversations.id });
+
+    return NextResponse.json({
+      ok: true,
+      pesan: `${dihapus.length} percakapan dihapus${mode ? ` (mode ${mode})` : ""}.`,
+      jumlah: dihapus.length,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { ok: false, pesan: `Gagal menghapus riwayat: ${pesanError(err)}` },
+      { status: 502 },
+    );
+  }
+}

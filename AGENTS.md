@@ -92,7 +92,8 @@ drizzle/             # file migrasi hasil generate
 - Semua jawaban chat/curhat berbahasa Indonesia, ringkas, tidak bertele-tele.
 - Jawaban RAG wajib menyebut sumber (nama dokumen/URL). Kalau konteks tidak memuat jawabannya, jawab jujur "tidak ada di dokumen" — jangan mengarang.
 - Field wajib di DB tidak boleh null; tipe kolom mengikuti `docs/TECH-SPEC.md` §4.
-- Parameter RAG dikunci di `lib/rag/retrieve.ts`: top-k 6, ambang kosinus 0.30, maksimal 2 potongan per dokumen (cegah satu dokumen memenuhi semua slot). Chunk 1000 karakter / overlap 150, dan tabel markdown dipecah per baris dengan baris judul diulang (`lib/rag/chunk.ts`).
+- Parameter RAG dikunci di `lib/rag/retrieve.ts`: top-k 8, ambang kosinus 0.30, maksimal 3 potongan per dokumen (cegah satu dokumen memenuhi semua slot). Chunk 1000 karakter / overlap 150, dan tabel markdown dipecah per baris dengan baris judul diulang (`lib/rag/chunk.ts`).
+- Memori AI (`memories`) disuntikkan ke prompt sistem lewat `lib/memory.ts` dan berlaku di **kedua** mode. Maks 60 memori aktif; satu memori maks 500 karakter. Jangan menambah jalur lain yang menulis prompt sistem tanpa memakai helper ini.
 - Kegagalan provider AI harus tampil sebagai pesan error di UI, bukan layar kosong.
 - Gambar hasil disimpan ke Storage; yang masuk DB adalah URL + metadata, bukan base64.
 

@@ -10,6 +10,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M1 | Chat + memori + RAG sederhana + mode curhat | T-101..T-106 | done |
 | M2 | Generate image (text-to-image, image-to-image), galeri | T-201..T-204 | done |
 | M3 | Kualitas, responsif, deploy Vercel, uji semua kriteria FR | T-301..T-304 | done |
+| M4 | Memori AI (Pengaturan), hapus riwayat, perapian UI/UX responsif | T-401..T-404 | doing |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -38,6 +39,40 @@ Jangan lompat milestone.
 | T-302 | done | Uji browser: urutan Tab (drawer tertutup tidak lagi bisa difokus — `inert`), kontras 6.78:1 / 17.22:1 / 5.15:1, hint keyboard disembunyikan < sm, batas laju aktif |
 | T-303 | done | Deploy produksi **Ready**: https://ohmysea.vercel.app ; health produksi 200; chat/gambar/image-to-image jalan |
 | T-304 | done | Uji produksi: 7 pertanyaan RAG (hasil di PROGRESS-LOG) + uji browser 360 px & 1440 px semua sesuai harapan |
+
+---
+
+## M4 — Memori AI, hapus riwayat, perapian UI/UX
+
+### T-401 — Memori AI (fitur Pengaturan)
+
+- **Status**: doing
+- **Dependency**: T-002, T-101
+- **Cakupan**: `lib/memory.ts`, `lib/db/schema.ts` (tabel `memories`), `app/api/memories/*`, `components/settings/MemoryPanel.tsx`, `app/api/chat/route.ts`
+- **Kriteria penerimaan** (FR-12): memori aktif disuntikkan ke prompt sistem di kedua mode; duplikat ditolak 409; memori nonaktif tidak dipakai; maks 500 karakter/memori & 60 memori aktif
+- **Verifikasi**: uji API lokal + `lib/memory.test.ts` (hasil di PROGRESS-LOG)
+
+### T-402 — Hapus riwayat percakapan
+
+- **Status**: doing
+- **Dependency**: T-102
+- **Cakupan**: `app/api/conversations/route.ts` (DELETE), `components/chat/Sidebar.tsx` (hapus satuan & semua), `app/pengaturan/page.tsx`
+- **Kriteria penerimaan** (FR-13): hapus semua / per mode; pesan ikut terhapus; dialog konfirmasi (bukan `window.confirm`)
+- **Verifikasi**: uji API + `bash scripts/smoke.sh`
+
+### T-403 — Perapian UI/UX responsif
+
+- **Status**: doing
+- **Cakupan**: `components/ui/Icon.tsx`, `components/ui/ConfirmDialog.tsx`, `components/chat/*`, `app/globals.css`, `app/page.tsx`
+- **Kriteria penerimaan**: ikon SVG (bukan emoji); semua kontrol ≥ 44 px di HP; header & komposer sticky dengan area aman; input 16 px di HP (cegah zoom iOS); tidak ada overflow 320–1440 px
+- **Verifikasi**: uji browser 360/768/1440 px + screenshot
+
+### T-404 — Verifikasi akhir M4 di produksi
+
+- **Status**: todo
+- **Dependency**: T-401, T-402, T-403
+- **Kriteria penerimaan**: FR-12 & FR-13 terverifikasi di produksi; uji browser ulang; `pnpm build` & `pnpm test` hijau
+- **Verifikasi**: hasil di PROGRESS-LOG
 
 ---
 
