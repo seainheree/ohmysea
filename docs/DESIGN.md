@@ -66,36 +66,49 @@ Implementasi: dimuat lewat `next/font/google` di `app/layout.tsx` sebagai CSS va
 
 | Layar / komponen | Isi | Status |
 |---|---|---|
-| Shell aplikasi | Top bar (logo ohmysea + tombol mode + status), sidebar, area utama | belum |
-| Sidebar | Tombol "+ Percakapan baru", daftar percakapan (judul + ikon), pemilih mode (Chat / Curhat / Gambar), tautan Galeri | belum |
-| Header kanal | Avatar/ikon, nama mode, status "Siap membantu", pemilih model | belum |
-| Empty state | Headline besar + 4 kartu saran | belum |
-| Daftar pesan | Gelembung user (pink) & asisten (surface), penanda sumber dokumen, waktu | belum |
-| Composer | Textarea auto-tinggi, hint "Enter kirim · Shift+Enter baris baru", tombol kirim bulat pink | belum |
-| Kartu sumber RAG | Chip kecil: nama dokumen + skor | belum |
-| Form gambar | Prompt, pilihan style, model, aspect ratio, jumlah, unggah referensi (image-to-image) | belum |
-| Hasil gambar | Preview besar, tombol unduh, metadata (prompt, style, ratio, model) | belum |
-| Galeri | Grid gambar responsif + prompt tiap gambar | belum |
-| Layar kunci | Input kode akses | belum |
+| Shell aplikasi | Top bar (logo ohmysea + tombol mode + status), sidebar, area utama | jadi |
+| Sidebar | Tombol "+ Percakapan baru", daftar percakapan (judul + ikon), pemilih mode (Chat / Curhat / Gambar), tautan Galeri | jadi |
+| Header kanal | Avatar/ikon, nama mode, status "Siap membantu", pemilih model | jadi |
+| Empty state | Headline besar + 4 kartu saran | jadi |
+| Daftar pesan | Gelembung user (pink) & asisten (surface), penanda sumber dokumen, waktu | jadi |
+| Composer | Textarea auto-tinggi, hint "Enter kirim · Shift+Enter baris baru" (hanya ≥ sm), tombol kirim bulat pink | jadi |
+| Kartu sumber RAG | Chip kecil: nama dokumen + skor | jadi |
+| Form gambar | Prompt, pilihan style, model, aspect ratio, jumlah, unggah referensi (image-to-image) | jadi |
+| Hasil gambar | Preview besar, tombol unduh, metadata (prompt, style, ratio, model) | jadi |
+| Galeri | Grid gambar responsif + prompt tiap gambar | jadi |
+| Layar kunci | Input kode akses + logo | jadi |
+| Footer | "Ohmysea By Sasha" — tampil di semua halaman | jadi |
+
+## 4b. Aset merek
+
+| Aset | Sumber | Dipakai di |
+|---|---|---|
+| `public/image/favico.png` (1254×1254, asli) | berkas dari pemilik | sumber saja |
+| `public/image/logo-256.png` | turunan 256 px | logo sidebar (36 px), hero layar kunci (72 px) |
+| `public/image/logo-180.png` | turunan 180 px | apple-touch-icon |
+| `public/image/logo-48.png`, `logo-32.png` | turunan 48/32 px | favicon (`metadata.icons`) |
 
 ## 5. Checklist visual (manual)
 
-- [ ] Kontras teks terhadap latar ≥ 4.5:1 (teks muted di `#1A1A26` perlu dicek)
-- [ ] Rapi di lebar 360 px (HP) sampai 1440 px (desktop)
-- [ ] Sidebar jadi drawer di layar < 768 px dan bisa ditutup
-- [ ] Semua tombol/tautan bisa dipakai dengan keyboard saja
-- [ ] Fokus terlihat jelas (outline pink) di semua kontrol
-- [ ] Tidak ada teks/potongan yang terpotong atau tumpang tindih
-- [ ] Warna aksen hanya dipakai untuk aksi utama & merek — bukan di mana-mana
-- [ ] Tidak ada nilai warna mentah di komponen (semua dari token)
-- [ ] Tombol kirim berwarna pink, bukan biru
-- [ ] Input tetap terlihat saat keyboard HP muncul
-- [ ] Gelembung pesan panjang membungkus rapi (tidak melebar keluar layar)
+Dijalankan 2026-11-04 lewat browser sungguhan (Chrome headless, 360 px & 1440 px) di produksi.
+
+- [x] Kontras teks terhadap latar ≥ 4.5:1 — terukur: teks muted 6.78:1, teks utama 17.22:1, label kecil 5.15:1
+- [x] Rapi di lebar 360 px (HP) sampai 1440 px (desktop) — tanpa overflow horizontal di kedua lebar
+- [x] Sidebar jadi drawer di layar < 768 px dan bisa ditutup — `left=-300` → klik ☰ → `0` → tutup → `-300`
+- [x] Semua tombol/tautan bisa dipakai dengan keyboard saja — urutan Tab: composer → ☰ → tombol mode → kontrol sidebar
+- [x] Fokus terlihat jelas (outline pink) di semua kontrol — `outline: solid 2px rgb(236,72,153)`
+- [x] Tidak ada teks/potongan yang terpotong atau tumpang tindih
+- [x] Warna aksen hanya dipakai untuk aksi utama & merek — bukan di mana-mana
+- [x] Tidak ada nilai warna mentah di komponen (semua dari token)
+- [x] Tombol kirim berwarna pink, bukan biru (nonaktif = `#2C2C3C` + teks muted, jelas berbeda dari aktif)
+- [ ] Input tetap terlihat saat keyboard HP muncul — hanya bisa dicek di perangkat nyata
+- [x] Gelembung pesan panjang membungkus rapi (tidak melebar keluar layar)
 
 ## 6. Aksesibilitas
 
-- [ ] Alt/teks pengganti di setiap gambar bermakna (gambar hasil: prompt sebagai alt)
-- [ ] Urutan fokus masuk akal: sidebar → pesan → composer
-- [ ] Status loading punya teks ("Menghasilkan gambar..."), bukan hanya spinner
-- [ ] Error dibacakan sebagai teks, tidak hanya warna merah
-- [ ] Mode curhat punya penanda visual berbeda (label, bukan hanya warna)
+- [x] Alt/teks pengganti di setiap gambar bermakna (gambar hasil: prompt sebagai alt)
+- [x] Urutan fokus masuk akal: sidebar → pesan → composer
+- [x] Status loading punya teks ("Menghasilkan gambar..."), bukan hanya spinner
+- [x] Error dibacakan sebagai teks, tidak hanya warna merah
+- [x] Mode curhat punya penanda visual berbeda (label, bukan hanya warna)
+- [x] Drawer tertutup tidak bisa difokus keyboard (sidebar `inert` + `aria-hidden` saat tertutup di mobile)

@@ -19,7 +19,9 @@ dimiliki mendukung ekstensi pgvector.
 
 Embedding memakai **Cloudflare Workers AI `@cf/baai/bge-m3`** (1024 dimensi,
 multibahasa). Vektor disimpan di tabel `chunks` pada Postgres Supabase sebagai
-`vector(1024)` dengan indeks HNSW kosinus. Retrieval: top-k 4, ambang skor ≥ 0.35.
+`vector(1024)` dengan indeks HNSW kosinus. Retrieval: kandidat diambil `4 × k`
+lalu disaring — top-k **8**, ambang skor kosinus **≥ 0.30**, maksimal **3
+potongan per dokumen** (satu dokumen tidak boleh memenuhi semua slot).
 
 Sudah diuji dengan kunci yang ada: pemanggilan embedding mengembalikan
 `success: true`, panjang vektor 1024.
@@ -30,9 +32,9 @@ Sudah diuji dengan kunci yang ada: pemanggilan embedding mengembalikan
 |---|---|---|---|
 | **Cloudflare bge-m3 + pgvector** (dipilih) | Kunci Cloudflare sudah ada (dipakai juga untuk gambar); multibahasa (Indonesia); satu DB untuk relasi + vektor; tidak ada vendor baru | Beban embedding masuk ke kuota Workers AI; pgvector perlu dirawat di DB yang sama | — |
 | Cloudflare Vectorize | Ditujukan khusus vektor, skalanya bagus | Vendor & lapisan baru; data terpisah dari relasi; dua tempat untuk dijaga | Berlebihan untuk skala v1 (< 50k chunk) — lihat D1 di TECH-SPEC |
+| Pencarian kata kunci (BM25 / `ILIKE`) sebagai pengganti vektor | Tanpa kunci API, hasil pasti untuk kata persis | Tidak menangkap parafrase; tidak menjawab "chunk besar mana yang mirip" | Hanya dipakai sebagai alat diagnosa (`scripts/rag-diagnose.mts`), bukan retrieval utama |
 | Embedding lewat gateway pihak ketiga (mis. TokenHarbor) | Bisa satu kunci | Tidak dipakai pemilik (ADR-001); kuota/biaya tidak jelas | Ditolak pemilik |
 | Embedding lokal (model di mesin/worker sendiri) | Tanpa biaya API, data tidak keluar | Perlu waktu setup & RAM; deploy Vercel tidak bisa menjalankan model lokal | Tidak sepadan untuk v1 |
-| Tanpa vektor: pencarian kata kunci BM25/`ILIKE` | Paling sederhana | Kualitas retrieval jauh lebih buruk untuk parafrase | RAG jadi tidak berguna |
 
 ## Konsekuensi
 

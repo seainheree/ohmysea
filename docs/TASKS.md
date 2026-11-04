@@ -9,7 +9,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M0 | Fondasi: scaffold, DB, skema, gerbang akses, shell UI | T-001..T-004 | done |
 | M1 | Chat + memori + RAG sederhana + mode curhat | T-101..T-106 | done |
 | M2 | Generate image (text-to-image, image-to-image), galeri | T-201..T-204 | done |
-| M3 | Kualitas, responsif, deploy Vercel, uji semua kriteria FR | T-301..T-304 | doing |
+| M3 | Kualitas, responsif, deploy Vercel, uji semua kriteria FR | T-301..T-304 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -23,21 +23,21 @@ Jangan lompat milestone.
 | T-001 | done | `pnpm build` exit 0; `lib/env.ts` menolak env kurang |
 | T-002 | done | `pnpm db:migrate` → pgvector 0.8.2, 5 tabel, kolom `vector(1024)`, indeks HNSW `vector_cosine_ops` |
 | T-003 | done | `scripts/smoke.sh` bagian gerbang akses semua OK (401 tanpa cookie, 200 dengan) |
-| T-004 | review | shell UI + token desain selesai; checklist 360 px / keyboard belum dijalankan |
+| T-004 | done | Uji browser 360 px: tanpa overflow horizontal (scrollWidth 360 = innerWidth), sidebar drawer (left −300, klik ☰ → 0), teks hero & kartu rata kiri 16 px |
 | T-101 | done | smoke: `POST /api/chat` balas non-kosong |
 | T-102 | done | smoke + `PATCH`/`DELETE` diuji; judul otomatis dari 6 kata pertama |
 | T-103 | done | mode curhat diuji: empati dulu, tanpa diagnosis |
-| T-104 | done | ingest 2 berkas repo (16 + 21 potongan) + URL Firecrawl (10 potongan); ingest ulang → 409 |
-| T-105 | done | retrieval top-k 6 / ambang 0.30; jawaban menyebut 1024 dimensi dari TECH-SPEC.md |
-| T-106 | review | UI ↔ API tersambung (chat, sidebar, refresh memuat riwayat); belum diuji mata |
+| T-104 | done | 11 dokumen ter-ingest (PRD, TECH-SPEC, DESIGN, README, 4 ADR, Groq Models); ingest ulang → 409 |
+| T-105 | done | top-k 8 / ambang 0.30 / maks 3 per dokumen; jawaban menyebut sumber yang benar |
+| T-106 | done | Uji browser: chat balas streaming, sidebar memuat riwayat, urutan Tab masuk akal |
 | T-201 | done | smoke: `POST /api/images` → 201 + URL Supabase Storage bisa diakses (HTTP 200) |
-| T-202 | done | image-to-image dengan mockup 956×793 → 201, `source_image` terisi, 1344×768, 5,8 s |
+| T-202 | done | image-to-image dengan mockup 956×793 → 201, `source_image` terisi, 1344×768 |
 | T-203 | done | `pnpm test` (pemetaan ratio & style) + uji nyata klein & schnell |
-| T-204 | review | galeri + `alt` + unduh selesai; grid 360 px belum diuji mata |
-| T-301 | done | gempa provider (schnell menolak width/height) → HTTP 502 + pesan Bahasa Indonesia, baris `error` dicatat |
-| T-302 | review | batas laju 30/menit (chat) & 10/menit (gambar) aktif; checklist aksesibilitas manual belum |
-| T-303 | done | Deploy produksi **Ready** (24 s): https://ohmysea-iy4k3iv29-itz12.vercel.app ; `GET /api/health` produksi 200 (`db.ok: true`, model benar); 401 tanpa cookie; chat & image-to-image jalan di produksi |
-| T-304 | review | smoke dev lulus semua; produksi diuji: health/unlock/chat/gambar/image-to-image lolos; checklist manual (360 px, keyboard, 5 pertanyaan uji RAG) belum |
+| T-204 | done | galeri + `alt` + unduh; uji browser 360 px & 1440 px (grid 1 → 2/3 kolom) |
+| T-301 | done | kegagalan provider (schnell menolak width/height) → HTTP 502 + pesan Bahasa Indonesia, baris `error` dicatat |
+| T-302 | done | Uji browser: urutan Tab (drawer tertutup tidak lagi bisa difokus — `inert`), kontras 6.78:1 / 17.22:1 / 5.15:1, hint keyboard disembunyikan < sm, batas laju aktif |
+| T-303 | done | Deploy produksi **Ready**: https://ohmysea.vercel.app ; health produksi 200; chat/gambar/image-to-image jalan |
+| T-304 | done | Uji produksi: 7 pertanyaan RAG (hasil di PROGRESS-LOG) + uji browser 360 px & 1440 px semua sesuai harapan |
 
 ---
 

@@ -54,6 +54,26 @@ letakkan entri terbaru paling atas.
 - **Blocker**: auto-deploy dari GitHub belum bisa (akun Vercel `itzfebryhcx-7686` tidak punya akses tulis ke repo `seainheree/ohmysea`) → deploy manual lewat CLI
 - **Next**: T-304 checklist manual (360 px, keyboard, 5 pertanyaan uji RAG) + centang `docs/DESIGN.md` §5–6
 
+### 2026-11-04 — Verifikasi lewat browser + perbaikan yang ditemukan
+
+- **Sesi**: lanjutan
+- **Tujuan**: ubah checklist manual (360 px, keyboard, RAG) jadi bukti nyata, lalu perbaiki temuan
+- **Dikerjakan**:
+  - `lib/rag/chunk.ts`: tabel markdown dipecah per maks 8 baris, baris judul + garis pemisah diulang di setiap potongan (dulu satu fakta tabel tenggelam di blok besar)
+  - `lib/rag/retrieve.ts`: kandidat 4×k lalu disaring, top-k 6 → **8**, maks **3** potongan per dokumen
+  - `scripts/rag-diagnose.mts` + `scripts/rag-replace.mts` (alat diagnosa & ganti snapshot dokumen)
+  - UI: sidebar `inert` + `aria-hidden` saat drawer tertutup (temuan Tab), hero & kartu rata kiri 16 px (dulu selisih 12 px), hint "Shift + Enter" hanya ≥ sm, tombol kirim punya state nonaktif yang jelas, kartu pakai `border-kuat`
+  - Logo & favicon dari `public/image/favico.png` (turunan 32/48/180/256 px lewat System.Drawing), footer "Ohmysea By Sasha" di semua halaman
+  - Basis pengetahuan ditambah 4 ADR + DESIGN.md + README.md (total 11 dokumen); ADR-002 diselaraskan (dulu masih menulis top-k 4 / 0.35 → jawaban sempat salah)
+- **Verifikasi** (produksi https://ohmysea.vercel.app, output asli):
+  - Browser 360 px: `overflowHorizontal: false`, hero & kartu `left=16` (`selisih 0`), footer "Ohmysea By Sasha" terlihat, favicon `/image/logo-32/48/180.png` terpasang, hint keyboard `display:none`, tombol kirim nonaktif `bg=rgb(44,44,60) warna=rgb(156,163,175)`, drawer `left=-300 inert=true aria-hidden=true`
+  - Urutan Tab (drawer tertutup): `Tulis pesan… → BODY → Buka menu → BUTTON → BUTTON` — kontrol drawer tidak lagi masuk urutan fokus
+  - Browser 1440 px: tanpa overflow, sidebar terlihat (`inert=false`), kartu 2 kolom (`356px 356px`), hint keyboard tampil
+  - Kontras: teks muted 6.78:1, teks utama 17.22:1, label kecil 5.15:1 (semua ≥ 4.5)
+  - RAG 7 pertanyaan: Q1 1024 ✓ · Q2 top-k 8 & ambang 0.30 ✓ (3× ulangan konsisten) · Q3 chunk 1000/overlap 150 ✓ · Q4 alasan TokenHarbor ✓ · Q5 flux-2-klein-4b + image-to-image ✓ · Q6 curhat empatik tanpa diagnosis ✓ · Q7 di luar dokumen dijawab jujur ✓
+- **Blocker**: tidak ada
+- **Next**: v1 selesai; kandidat lanjutan = CI GitHub Actions, sambungkan repo ke Vercel, perapian `window.prompt/confirm` jadi komponen, batas laju berbasis Redis
+
 ### 2026-11-04 — Dokumentasi awal: PRD, TECH-SPEC, ADR, DESIGN, TASKS
 
 - **Sesi**: baru
