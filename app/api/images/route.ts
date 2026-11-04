@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
     model: z.string().min(1).default(DEFAULT_MODEL),
     aspectRatio: z.string().min(1).default(DEFAULT_RATIO),
     seed: z.coerce.number().int().optional(),
+    transparan: z.coerce.boolean().optional(),
   });
 
   const mentah = {
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
     model: String(form.get("model") ?? DEFAULT_MODEL),
     aspectRatio: String(form.get("aspectRatio") ?? DEFAULT_RATIO),
     seed: form.get("seed") ?? undefined,
+    transparan: form.get("transparan") ?? undefined,
   };
 
   let input: z.infer<typeof schema>;
@@ -138,6 +140,7 @@ export async function POST(request: NextRequest) {
       model: input.model,
       width: ukuran.width,
       height: ukuran.height,
+      transparan: input.transparan === true,
       reference: referensi,
       seed: input.seed,
     });

@@ -210,6 +210,7 @@ export async function buatGambar(input: {
   style: string;
   model: string;
   aspectRatio: string;
+  transparan?: boolean;
   reference?: File | null;
 }): Promise<Gambar> {
   const form = new FormData();
@@ -217,6 +218,7 @@ export async function buatGambar(input: {
   form.set("style", input.style);
   form.set("model", input.model);
   form.set("aspectRatio", input.aspectRatio);
+  form.set("transparan", input.transparan ? "1" : "0");
   if (input.reference) form.set("reference", input.reference);
 
   const res = await fetch("/api/images", { method: "POST", body: form });

@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 import { LockScreen } from "@/components/LockScreen";
+import { UnduhTransparan } from "@/components/image/UnduhTransparan";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Card";
+import { TRANSISI } from "@/lib/motion";
 import {
   DEFAULT_MODEL,
   DEFAULT_RATIO,
@@ -26,6 +29,7 @@ export default function HalamanGambar() {
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [ratio, setRatio] = useState<string>(DEFAULT_RATIO);
   const [referensi, setReferensi] = useState<File | null>(null);
+  const [transparan, setTransparan] = useState(false);
   const [sibuk, setSibuk] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +55,20 @@ export default function HalamanGambar() {
     setError(null);
     setStatus("Menghasilkan gambar... ini bisa sampai 30 detik.");
     try {
-      const gambar = await buatGambar({ prompt, style, model, aspectRatio: ratio, reference: referensi });
+      const gambar = await buatGambar({
+        prompt,
+        style,
+        model,
+        aspectRatio: ratio,
+        transparan,
+        reference: referensi,
+      });
       setGaleri((g) => [gambar, ...g]);
-      setStatus("Gambar selesai.");
+      setStatus(
+        transparan
+          ? "Gambar selesai. Klik “Unduh PNG transparan” untuk latar bening."
+          : "Gambar selesai.",
+      );
       setPrompt("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal membuat gambar");
@@ -171,6 +186,24 @@ export default function HalamanGambar() {
           </span>
         </label>
 
+        <label className="flex items-start gap-2 rounded-sedang border border-border bg-bg-main p-sedang">
+          <input
+            type="checkbox"
+            checked={transparan}
+            onChange={(e) => setTransparan(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-aksen"
+            aria-label="Latar transparan"
+          />
+          <span className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium">Latar transparan</span>
+            <span className="text-[11px] text-teks-muted-2">
+              Model gambar selalu mengembalikan JPEG tanpa kanal alfa, jadi subjek
+              diminta tampil di atas latar putih rata; latarnya dibuang di browser
+              saat kamu klik “Unduh PNG transparan”.
+            </span>
+          </span>
+        </label>
+
         {status && <p className="text-sm text-teks-muted">{status}</p>}
         {error && <p className="text-sm text-danger">{error}</p>}
 
@@ -181,35 +214,47 @@ export default function HalamanGambar() {
 
       <section className="flex flex-col gap-sedang">
         <Label>Galeri ({galeri.filter((g) => !g.url.startsWith("gagal://")).length})</Label>
-        <div className="grid grid-cols-1 gap-sedang sm:grid-cols-2 lg:grid-cols-3">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: TRANSISI.sedang }}
+          className="grid grid-cols-1 gap-sedang sm:grid-cols-2 lg:grid-cols-3"
+        >
           {galeri
             .filter((g) => !g.url.startsWith("gagal://"))
-            .map((g) => (
-              <figure key={g.id} className="overflow-hidden rounded-besar border border-border bg-surface">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={g.url}
-                  alt={g.prompt}
-                  className="aspect-square w-full object-cover"
-                  loading="lazy"
-                />
-                <figcaption className="flex flex-col gap-1 p-sedang">
-                  <span className="line-clamp-2 text-sm">{g.prompt}</span>
-                  <span className="text-[11px] text-teks-muted-2">
-                    {g.style} · {g.model.split("/").pop()} · {g.aspectRatio} · {g.width}×{g.height}
-                    {g.sourceImage ? " · image-to-image" : ""}
-                  </span>
-                  <a
-                    href={g.url}
-                    download
-                    className="mt-1 w-fit text-xs text-aksen-terang hover:underline"
-                  >
-                    Unduh
-                  </a>
-                </figcaption>
-              </figure>
-            ))}
-        </div>
+            .map((g, i) => (
+              <motion.figure
+                key={g.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0, transition: TRANSISI.sedang }}
+                className="overflow-hidden rounded-besar border border-border bg-surface"
+              >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={g.url}
+                    alt={g.prompt}
+                    className="aspect-square w-full object-cover"
+                    loading="lazy"
+                  />
+                  <figcaption className="flex flex-col gap-1 p-sedang">
+                    <span className="line-clamp-2 text-sm">{g.prompt}</span>
+                    <span className="text-[11px] text-teks-muted-2">
+                      {g.style} · {g.model.split("/").pop()} · {g.aspectRatio} · {g.width}×{g.height}
+                      {g.sourceImage ? " · image-to-image" : ""}
+                    </span>
+                    <div className="mt-1 flex flex-wrap items-center gap-3">
+                      <UnduhTransparan id={g.id} prompt={g.prompt} utama={i === 0} />
+                      <a
+                        href={g.url}
+                        download
+                        className="w-fit text-xs text-aksen-terang hover:underline"
+                      >
+                        Unduh asli
+                      </a>
+                    </div>
+                  </figcaption>
+                </motion.figure>
+              ))}
+        </motion.div>
         {galeri.length === 0 && (
           <p className="text-sm text-teks-muted">Belum ada gambar. Coba buat satu di atas.</p>
         )}

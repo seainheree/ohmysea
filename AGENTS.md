@@ -19,6 +19,7 @@ Dokumen acuan: `docs/PRD.md` (kenapa/apa), `docs/TECH-SPEC.md` (bagaimana),
 | Runtime | Node.js | 24.18.0 |
 | Framework | Next.js (App Router) | 16.4.5 |
 | UI | React / React DOM | 19.3.1 |
+| Animasi | framer-motion / lenis | 14.9.0 / 1.3.27 |
 | Styling | Tailwind CSS | 4.3.4 |
 | Bahasa | TypeScript | 7.0.2 |
 | ORM | drizzle-orm / drizzle-kit | 0.45.4 / 0.31.11 |

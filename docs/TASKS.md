@@ -12,6 +12,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M3 | Kualitas, responsif, deploy Vercel, uji semua kriteria FR | T-301..T-304 | done |
 | M4 | Memori AI (Pengaturan), hapus riwayat, perapian UI/UX responsif | T-401..T-404 | done |
 | M5 | Tema gelap/terang, sidebar bisa ditutup, footer rapi, identitas Kirby, memori otomatis | T-501..T-506 | done |
+| M6 | Perbaikan indikator ganda, latar transparan gambar, jawaban tanpa penolakan kaku, gerak UI (Framer Motion + Lenis) | T-601..T-604 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -50,6 +51,10 @@ Jangan lompat milestone.
 | T-504 | done | Produksi (`onFinish`): 2 memori tersimpan otomatis + catatan di UI; pesan sesaat & data sensitif tidak tersimpan; `autoMemori:false` dihormati |
 | T-505 | done | Sapaan "Hi Sasha, Kirby di sini poyoo~" saat memori panggilan ada; tanpa memori → "Hi, Kirby di sini poyoo~" |
 | T-506 | done | Sesi 24 jam + kode baru: `Set-Cookie … Max-Age=86400`; kode baru di `.env` → produksi 200 dan HMAC cookie sama dengan HMAC lokal; kode salah & cookie asal-asalan → 401 |
+| T-601 | done | Timeline browser: titik menunggu 3 → 0 saat balasan masuk, dan tetap 0 setelah 6 detik (tidak berulang); `sibuk` dilepas sebelum pemeriksaan memori |
+| T-602 | done | Latar transparan: API menerima `transparan=1`; uji alfa pada gambar asli 1024×1024 → 851.640 dari 1.048.576 piksel transparan (81,2%); tombol "Unduh PNG transparan" melaporkan "PNG transparan diunduh." |
+| T-603 | done | Prompt baru: jawaban di luar dokumen tetap dijawab dari pengetahuan umum + catatan singkat; frasa "tidak ada di dokumen yang kamu tambahkan" dilarang eksplisit |
+| T-604 | done | Framer Motion: pesan/kartu/dialog beranimasi (9 elemen `style` inline, 8 kartu galeri); token `lib/motion.ts`; dialog buka→Batal hilang total (overlay 0); Lenis aktif (`main` class `lenis`) dan berhenti otomatis saat `prefers-reduced-motion` |
 
 ---
 
@@ -130,6 +135,41 @@ Jangan lompat milestone.
 - **Cakupan**: `lib/session.ts` (`MAX_AGE_SECONDS` = 24 jam), env Vercel `APP_ACCESS_CODE` (Production), ADR-004 + TECH-SPEC
 - **Kriteria**: cookie sesi `Max-Age=86400`; nilai cookie = HMAC kode baru sehingga sesi lama otomatis tidak sah; kode lama tidak berlaku lagi di produksi
 - **Verifikasi**: `curl -i -X POST /api/unlock` (cek `Set-Cookie`) + `GET /api/conversations` dengan cookie lama → 401
+
+---
+
+## M6 — Indikator ganda, latar transparan, jawaban tidak kaku, gerak UI
+
+### T-601 — Perbaikan indikator "sedang menjawab" berulang
+
+- **Status**: done
+- **Cakupan**: `app/page.tsx` (`setSibuk(false)` sebelum pemeriksaan memori), `components/chat/MessageList.tsx`
+- **Penyebab**: `sibuk` masih `true` selama jeda 2,5 detik pengecekan memori padahal `streaming` sudah dikosongkan → `menunggu` jadi `true` lagi sehingga indikator muncul ulang setelah balasan tampil
+- **Kriteria**: indikator hanya tampil sekali saat menunggu; hilang saat balasan masuk dan tidak muncul lagi
+- **Verifikasi**: timeline browser (0,7 detik: 3 titik → 3,6 detik: 0 titik, tetap 0 sampai 15 detik)
+
+### T-602 — Latar transparan pada fitur gambar
+
+- **Status**: done
+- **Cakupan**: `lib/ai/styles.ts` (`PETUNJUK_TRANSPARAN`), `lib/ai/image.ts`, `app/api/images/route.ts`, `app/api/images/file/route.ts`, `components/image/UnduhTransparan.tsx`, `app/gambar/page.tsx`
+- **Keputusan**: model Workers AI selalu membalas JPEG (tanpa alfa) — dicek langsung, `flux-2-klein-4b` mengembalikan JPEG 1024×1024 dan tidak ada model `remove-background` di akun. Jadi latar dibuat putih rata lewat prompt, lalu dibuang di browser (flood-fill dari tepi + penghalusan tepi) dan diunduh sebagai PNG.
+- **Kriteria**: checkbox tersedia; hasil unduhan PNG punya piksel transparan nyata
+- **Verifikasi**: uji alfa di browser → 81,2% piksel transparan
+
+### T-603 — Hapus jawaban penolakan kaku
+
+- **Status**: done
+- **Cakupan**: `lib/ai/prompts.ts` (`SYSTEM_CHAT`), `docs/PRD.md` FR-4
+- **Kriteria**: pertanyaan di luar dokumen tetap dijawab + catatan "bukan dari dokumen"; frasa "tidak ada di dokumen yang kamu tambahkan" dilarang di prompt
+- **Verifikasi**: uji percakapan (jawaban tidak lagi menolak) + tinjauan prompt
+
+### T-604 — Gerak UI: Framer Motion + Lenis
+
+- **Status**: done
+- **Cakupan**: `lib/motion.ts` (token durasi 150–400 ms + kurva standar), `components/chat/MessageList.tsx`, `components/ui/ConfirmDialog.tsx`, `components/chat/useLenis.ts`, `app/page.tsx`, `app/gambar/page.tsx`
+- **Catatan penting**: animasi *exit* lewat `AnimatePresence` pada elemen `fixed`/bubble menyisakan node tak terlihat di DOM (indikator tetap ada, overlay dialog menutupi layar). Karena itu animasi hanya dipakai untuk masuk (enter); elemen keluar di-unmount langsung.
+- **Kriteria**: pesan & kartu beranimasi dengan token yang sama; dialog tertutup bersih; Lenis aktif pada wadah gulir chat; `prefers-reduced-motion` mematikan animasi/lenis
+- **Verifikasi**: hitungan elemen beranimasi, dialog buka→Batal (overlay 0), `main` punya class `lenis`
 
 ---
 

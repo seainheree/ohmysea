@@ -79,10 +79,21 @@ export function dukungDimensi(modelId: string): boolean {
   return IMAGE_MODELS.find((m) => m.id === modelId)?.dukungDimensi ?? false;
 }
 
-/** Gabungkan prompt pengguna dengan potongan gaya. */
-export function susunPrompt(prompt: string, styleSlug: string): string {
+/**
+ * Petunjuk tambahan saat pengguna memilih latar transparan. Model gambar di
+ * Workers AI selalu mengembalikan JPEG (tanpa kanal alfa), jadi kita minta
+ * subjek bersih di atas latar putih rata; latar itu dibuang di browser
+ * (components/image/UnduhTransparan.tsx) supaya hasil unduhan benar-benar PNG
+ * transparan.
+ */
+export const PETUNJUK_TRANSPARAN =
+  "subject isolated on a plain pure white background (#ffffff), no shadow, no gradient, no floor, no props, cutout style, sharp clean edges";
+
+/** Gabungkan prompt pengguna dengan potongan gaya (dan petunjuk latar transparan). */
+export function susunPrompt(prompt: string, styleSlug: string, transparan = false): string {
   const gaya = gayaDari(styleSlug);
-  return `${prompt.trim()}, ${gaya.potonganPrompt}`;
+  const dasar = `${prompt.trim()}, ${gaya.potonganPrompt}`;
+  return transparan ? `${dasar}, ${PETUNJUK_TRANSPARAN}` : dasar;
 }
 
 export const MAKS_PANJANG_PROMPT = 2000;

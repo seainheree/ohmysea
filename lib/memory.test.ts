@@ -90,6 +90,14 @@ describe("layakDisimpan (saringan memori otomatis)", () => {
     expect(hasil.ok).toBe(false);
   });
 
+  it("menolak nama asisten sendiri (Kirby) sebagai identitas pengguna", () => {
+    const hasil = layakDisimpan(
+      { teks: "Namaku Kirby, panggil aku Kirby", kategori: "identitas", keyakinan: 0.9 },
+      kosong,
+    );
+    expect(hasil.ok).toBe(false);
+  });
+
   it("menolak terlalu pendek, terlalu panjang, dan keyakinan rendah", () => {
     expect(layakDisimpan({ teks: "aku suka", kategori: "preferensi" }, kosong).ok).toBe(false);
     expect(

@@ -56,6 +56,7 @@ Jangan tulis ulang nilai hex di komponen.
 | Ukuran huruf | judul hero / judul kartu / isi / label kecil | 32–40px / 15px / 14px / 11px (uppercase, letter-spacing 0.08em) |
 | Berat huruf | judul / isi | 700–800 / 400–500 |
 | Radius kartu chat | — | 16px |
+| Gerak | durasi & kurva | `lib/motion.ts`: 150/220/300/400 ms, kurva `[0.22, 1, 0.36, 1]`, spring `stiffness 380 damping 34`; animasi hanya untuk masuk (exit via unmount) |
 | Lebar sidebar | — | 300px (desktop), jadi drawer di < 768px |
 | Lebar maks area pesan | — | 760px, tengah |
 | Glow merek | — | `0 0 24px rgba(236,72,153,.35)` pada logo & tombol utama |

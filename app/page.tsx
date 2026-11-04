@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 
 import { LockScreen } from "@/components/LockScreen";
@@ -8,9 +9,11 @@ import { Composer } from "@/components/chat/Composer";
 import { MessageList, type PesanTampil } from "@/components/chat/MessageList";
 import { ModeSwitch } from "@/components/chat/ModeSwitch";
 import { Sidebar } from "@/components/chat/Sidebar";
+import { useLenis } from "@/components/chat/useLenis";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Icon } from "@/components/ui/Icon";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { TRANSISI } from "@/lib/motion";
 import {
   ambilPesan,
   daftarMemori,
@@ -42,6 +45,10 @@ export default function Home() {
   const [autoMemori, setAutoMemori] = useState(true);
   const [catatanMemori, setCatatanMemori] = useState<string | null>(null);
   const [panggilan, setPanggilan] = useState<string | null>(null);
+  const [wadahGulir, setWadahGulir] = useState<HTMLElement | null>(null);
+  const [isiGulir, setIsiGulir] = useState<HTMLDivElement | null>(null);
+
+  useLenis(wadahGulir, isiGulir);
 
   useEffect(() => {
     try {
@@ -157,6 +164,9 @@ export default function Home() {
       setAktif(data.percakapan);
       setStreaming("");
       await muatDaftar(mode);
+      // Balasan sudah tampil — lepaskan status sibuk SEKARANG, jangan tunggu
+      // pengecekan memori, kalau tidak indikator "sedang menjawab" muncul lagi.
+      setSibuk(false);
 
       // Memori otomatis disimpan setelah balasan selesai (server) — beri jeda
       // sebentar lalu bandingkan jumlahnya supaya pengguna tahu apa yang diingat.
@@ -175,7 +185,6 @@ export default function Home() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mengirim pesan");
       setStreaming("");
-    } finally {
       setSibuk(false);
     }
   }
@@ -314,25 +323,32 @@ export default function Home() {
           <ModeSwitch mode={mode} onChange={gantiMode} />
         </div>
 
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {error && (
-            <p className="mx-auto mt-sedang max-w-[760px] rounded-sedang border border-danger/40 bg-danger/10 px-sedang py-2 text-sm text-danger">
-              {error}
-            </p>
-          )}
-          <MessageList
-            pesan={pesan}
-            streaming={streaming}
-            mode={mode}
-            nama={panggilan}
-            menunggu={sibuk && streaming.length === 0}
-          />
+        <main ref={(el) => setWadahGulir(el)} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div ref={(el) => setIsiGulir(el)}>
+            {error && (
+              <p className="mx-auto mt-sedang max-w-[760px] rounded-sedang border border-danger/40 bg-danger/10 px-sedang py-2 text-sm text-danger">
+                {error}
+              </p>
+            )}
+            <MessageList
+              pesan={pesan}
+              streaming={streaming}
+              mode={mode}
+              nama={panggilan}
+              menunggu={sibuk && streaming.length === 0}
+            />
+          </div>
         </main>
 
         {catatanMemori && (
-          <p className="shrink-0 border-t border-border bg-surface px-sedang py-2 text-center text-[11px] text-teks-muted">
+          <motion.p
+            key={catatanMemori}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0, transition: TRANSISI.cepat }}
+            className="shrink-0 border-t border-border bg-surface px-sedang py-2 text-center text-[11px] text-teks-muted"
+          >
             {catatanMemori}
-          </p>
+          </motion.p>
         )}
 
         <Composer onKirim={kirim} sibuk={sibuk} mode={mode} />

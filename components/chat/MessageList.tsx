@@ -1,7 +1,9 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 
+import { TRANSISI } from "@/lib/motion";
 import type { Pesan } from "@/lib/api";
 
 /** Pesan ditambah durasi balasan (dihitung klien, hanya untuk ditampilkan). */
@@ -76,9 +78,15 @@ export function MessageList({
 
   return (
     <div className="mx-auto flex w-full max-w-[760px] flex-col gap-sedang px-sedang py-besar">
-      {pesan.map((m) =>
-        m.role === "assistant" ? (
-          <div key={m.id} className="flex w-full items-start gap-2.5">
+      <AnimatePresence initial={false}>
+        {pesan.map((m) =>
+          m.role === "assistant" ? (
+            <motion.div
+              key={m.id}
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1, transition: TRANSISI.sedang }}
+              className="flex w-full items-start gap-2.5"
+            >
             <AvatarAsisten />
             <div className="min-w-0 flex-1">
               <div className="whitespace-pre-wrap rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed text-teks">
@@ -89,49 +97,78 @@ export function MessageList({
                 {durasi(m.durasiMs) ? ` · ${durasi(m.durasiMs)}` : ""} · {waktu(m.createdAt)}
               </p>
             </div>
-          </div>
-        ) : (
-          <div key={m.id} className="flex justify-end">
-            <div className="max-w-[85%]">
-              <div className="whitespace-pre-wrap rounded-besar rounded-br-kecil bg-aksen px-sedang py-3 text-sm leading-relaxed text-white">
-                {m.content}
+            </motion.div>
+          ) : (
+            <motion.div
+              key={m.id}
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1, transition: TRANSISI.sedang }}
+              className="flex justify-end"
+            >
+              <div className="max-w-[85%]">
+                <div className="whitespace-pre-wrap rounded-besar rounded-br-kecil bg-aksen px-sedang py-3 text-sm leading-relaxed text-white">
+                  {m.content}
+                </div>
+                <p className="mt-1 text-right text-[10px] text-teks-muted-2">{waktu(m.createdAt)}</p>
               </div>
-              <p className="mt-1 text-right text-[10px] text-teks-muted-2">{waktu(m.createdAt)}</p>
-            </div>
-          </div>
-        ),
-      )}
+            </motion.div>
+          ),
+        )}
+      </AnimatePresence>
 
-      {sedangMenulis && (
-        <div className="flex w-full items-start gap-2.5" aria-live="polite">
-          <AvatarAsisten />
-          <div className="min-w-0 flex-1">
-            <div className="inline-flex max-w-full items-start rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed">
-              {streaming ? (
-                <>
-                  <span className="whitespace-pre-wrap">{streaming}</span>
-                  <span className="kursor-menulis ml-0.5 inline-block h-4 w-[2px] self-end bg-aksen-lembut" />
-                </>
-              ) : (
-                <span className="flex items-center gap-2 text-teks-muted">
-                  <TitikMenulis />
-                  <span className="text-xs">
-                    {mode === "curhat" ? "Kirby sedang menyimak..." : "Kirby sedang menjawab..."}
+      <AnimatePresence>
+        {sedangMenulis && (
+          <motion.div
+            key="menunggu"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0, transition: TRANSISI.cepat }}
+            className="flex w-full items-start gap-2.5"
+            aria-live="polite"
+          >
+            <AvatarAsisten />
+            <div className="min-w-0 flex-1">
+              <div className="inline-flex max-w-full items-start rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed">
+                {streaming ? (
+                  <>
+                    <span className="whitespace-pre-wrap">{streaming}</span>
+                    <motion.span
+                      animate={{ opacity: [1, 0.2, 1] }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="ml-0.5 inline-block h-4 w-[2px] self-end bg-aksen-lembut"
+                    />
+                  </>
+                ) : (
+                  <span className="flex items-center gap-2 text-teks-muted">
+                    <TitikMenulis />
+                    <span className="text-xs">
+                      {mode === "curhat" ? "Kirby sedang menyimak..." : "Kirby sedang menjawab..."}
+                    </span>
                   </span>
-                </span>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {pesan.length === 0 && !sedangMenulis && <EmptyState mode={mode} nama={nama} />}
+      <AnimatePresence>
+        {pesan.length === 0 && !sedangMenulis && (
+          <motion.div
+            key="sapaan"
+            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1, transition: TRANSISI.sedang }}
+          >
+            <EmptyState mode={mode} nama={nama} />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div ref={bawah} />
     </div>
   );
 }
 
 function EmptyState({ mode, nama }: { mode: "chat" | "curhat"; nama?: string | null }) {
+  const panggilan = nama ? nama.charAt(0).toUpperCase() + nama.slice(1) : null;
   const kartu =
     mode === "curhat"
       ? [
@@ -152,7 +189,7 @@ function EmptyState({ mode, nama }: { mode: "chat" | "curhat"; nama?: string | n
       <div className="flex flex-col items-start sm:items-center">
         <AvatarAsisten size={64} />
         <h2 className="mt-sedang font-display text-4xl leading-tight">
-          Hi{nama ? ` ${nama}` : ""}, Kirby <span className="text-aksen-terang">di sini</span> poyoo~
+          Hi{panggilan ? ` ${panggilan}` : ""}, Kirby <span className="text-aksen-terang">di sini</span> poyoo~
         </h2>
         <p className="mt-2 text-sm text-teks-muted">
           Mau ngapain hari ini?{" "}

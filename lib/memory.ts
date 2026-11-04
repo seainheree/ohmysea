@@ -89,6 +89,9 @@ const POLA_SEMENTARA =
 const POLA_TENTANG_PENGGUNA =
   /\b(aku|saya|ku|milikku|punyaku|namaku|umurku|favoritku|kesukaanku|rumahku|kerjaku|kantorku|hobiku|panggilanku|keluargaku|pengguna|user)\b/i;
 
+/** Nama asisten sendiri tidak boleh ikut tersimpan sebagai identitas pengguna. */
+const POLA_NAMA_ASISTEN = /\bkirby\b/i;
+
 export function normalkanTeks(teks: string): string {
   return teks
     .toLowerCase()
@@ -173,6 +176,7 @@ export function layakDisimpan(
     return { ok: false, alasan: "keyakinan rendah" };
   }
   if (POLA_SENSITIF.test(teks)) return { ok: false, alasan: "data sensitif" };
+  if (POLA_NAMA_ASISTEN.test(teks)) return { ok: false, alasan: "nama asisten, bukan fakta pengguna" };
   if (POLA_SEMENTARA.test(teks)) return { ok: false, alasan: "peristiwa sesaat" };
   if (!POLA_TENTANG_PENGGUNA.test(teks)) return { ok: false, alasan: "bukan tentang pengguna" };
   if (sudahAda.some((lama) => terlaluMirip(lama, teks))) {

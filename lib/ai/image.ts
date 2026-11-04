@@ -21,12 +21,13 @@ export async function generateImage(input: {
   model: string;
   width: number;
   height: number;
+  transparan?: boolean;
   reference?: { bytes: Uint8Array; contentType: string; nama: string } | null;
   seed?: number;
 }): Promise<HasilGambar> {
   const env = getEnv();
   const url = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/ai/run/${input.model}`;
-  const prompt = susunPrompt(input.prompt, input.style);
+  const prompt = susunPrompt(input.prompt, input.style, input.transparan === true);
   const headers: Record<string, string> = { Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}` };
 
   let body: BodyInit;

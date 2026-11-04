@@ -93,6 +93,26 @@ letakkan entri terbaru paling atas.
 - **Blocker**: tidak ada
 - **Next**: kandidat lanjutan = CI GitHub Actions, sambungkan repo ke Vercel, batas laju berbasis Redis, retensi gambar (D3), ringkasan percakapan panjang (D4)
 
+### 2026-11-04 — M6: indikator ganda, latar transparan gambar, jawaban tidak kaku, gerak UI
+
+- **Sesi**: lanjutan (laporan bug pemilik: "setiap respon setelah ai menjawab terjadi pengulangan loading", minta latar transparan di fitur gambar, minta jawaban tidak memakai frasa "tidak ada dokumen yang kamu tambahkan", dan minta Framer Motion + AnimatePresence + Lenis)
+- **Dikerjakan**:
+  - **Bug indikator berulang**: penyebabnya `sibuk` masih `true` selama jeda 2,5 detik pengecekan memori sementara `streaming` sudah dikosongkan → `menunggu` jadi `true` lagi. `setSibuk(false)` dipindah ke tepat setelah balasan tampil (sebelum microtask memori), `finally` dihapus.
+  - **Latar transparan**: dicek langsung ke Workers AI — `flux-2-klein-4b` selalu membalas **JPEG tanpa kanal alfa** dan tidak ada model `remove-background` di akun, jadi jalur "model menghasilkan PNG transparan" tidak mungkin. Implementasi: checkbox "Latar transparan" menambahkan `PETUNJUK_TRANSPARAN` (latar putih rata, tanpa bayangan) ke prompt; tombol **Unduh PNG transparan** mengambil gambar lewat `/api/images/file` (same-origin, supaya canvas tidak tainted), menghapus putih yang tersambung ke tepi (flood-fill) + menghaluskan tepi, lalu mengunduh PNG ber-alfa.
+  - **Jawaban tidak kaku**: `SYSTEM_CHAT` diubah — kalau dokumen tidak memuat jawaban, Kirby tetap menjawab dari pengetahuan umum dan menambahkan catatan singkat bahwa itu bukan dari dokumen; kalimat "tidak ada di dokumen yang kamu tambahkan" dilarang eksplisit. FR-4 di PRD disesuaikan.
+  - **Gerak UI**: dependency `framer-motion 14.9.0` + `lenis 1.3.27` (diminta pemilik). Token gerak di `lib/motion.ts` (150–400 ms, satu kurva standar, spring untuk dialog). Pesan chat, kartu galeri, catatan memori, dan dialog memakai `motion`; `useLenis` memasang gulir halus pada wadah chat dan mati sendiri saat `prefers-reduced-motion`.
+  - **Pelajaran penting**: animasi *exit* `AnimatePresence` pada elemen `fixed`/bubble **menyisakan node tak terlihat di DOM** — indikator tetap ada setelah jawaban dan overlay dialog tetap menutupi layar setelah "Batal". Perbaikan: animasi hanya untuk masuk, elemen keluar di-unmount langsung. Saringan memori juga menolak fakta yang menyebut "Kirby" (nama asisten) supaya tidak tersimpan sebagai identitas pengguna.
+- **Verifikasi** (output asli, lokal `next start -p 3500`):
+  - Timeline browser: 0,7 dtk `titik=3` / header "Kirby sedang menjawab..." → 2,2 dtk `titik=0` (teks mulai mengalir) → 3,6 dtk header "Kirby siap membantu", `balasan=1`, `titik=0`; tetap `titik=0` sampai 15 dtk (tidak berulang)
+  - Dialog Pengaturan: klik "Hapus riwayat" → `[role=dialog]` muncul ("Hapus riwayat percakapan?"); klik Batal → dialog hilang total, overlay sisa **0**, halaman tetap bisa diklik
+  - Latar transparan: 8 kartu galeri punya tombol "Unduh PNG transparan"; klik → pesan "PNG transparan diunduh."; uji alfa pada gambar 1024×1024 → **851.640 / 1.048.576 piksel transparan (81,2%)**
+  - Motion: 9 elemen ber-`style` animasi di halaman chat, 8 kartu galeri beranimasi; `lib/motion.ts` jadi satu sumber durasi
+  - Lenis: `<main>` mendapat class `lenis` setelah mount (hook jalan ulang karena menerima elemen, bukan ref); dimatikan bila `prefers-reduced-motion`
+  - `pnpm lint` bersih · `pnpm test` **42 lulus** · `pnpm build` exit 0
+- **Catatan**: verifikasi gulir Lenis lewat event roda sintetis CDP tidak bisa dipakai sebagai bukti (CDP menghantar drag, bukan `wheel`); bukti yang dipakai = class `lenis` pada wadah + tidak ada error runtime.
+- **Blocker**: tidak ada
+- **Next**: kandidat lanjutan = CI GitHub Actions, auto-deploy repo→Vercel, rate limit Redis, retensi gambar (D3)
+
 ### 2026-11-04 — T-506: sesi dipendekkan ke 24 jam + kode akses produksi diperbarui
 
 - **Sesi**: lanjutan (pemilik memperbarui `APP_ACCESS_CODE` di `.env` dan meminta sesi 24 jam)

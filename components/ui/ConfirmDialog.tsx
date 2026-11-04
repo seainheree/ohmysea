@@ -1,10 +1,16 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
+
+import { TRANSISI } from "@/lib/motion";
 
 /**
  * Dialog konfirmasi sendiri — menggantikan window.confirm yang tidak bisa
  * digayakan, tidak responsif, dan memblokir di beberapa browser mobile.
+ *
+ * Catatan: keluar tanpa AnimatePresence (unmount langsung) karena animasi exit
+ * pada elemen fixed menyisakan node tak terlihat yang masih menutupi layar.
  */
 export function ConfirmDialog({
   terbuka,
@@ -38,13 +44,22 @@ export function ConfirmDialog({
   if (!terbuka) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={judul}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1, transition: TRANSISI.cepat }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-sedang"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onBatal();
+      }}
     >
-      <div className="w-full max-w-[420px] rounded-besar border border-border-kuat bg-surface p-besar shadow-xl">
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={judul}
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0, transition: TRANSISI.pegas }}
+        className="w-full max-w-[420px] rounded-besar border border-border-kuat bg-surface p-besar shadow-xl"
+      >
         <h2 className="text-base font-semibold">{judul}</h2>
         {deskripsi && <p className="mt-2 text-sm text-teks-muted">{deskripsi}</p>}
         <div className="mt-besar flex justify-end gap-2">
@@ -64,7 +79,7 @@ export function ConfirmDialog({
             {labelKonfirmasi}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
