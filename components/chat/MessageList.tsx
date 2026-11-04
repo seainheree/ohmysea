@@ -81,7 +81,7 @@ function EmptyState({ mode }: { mode: "chat" | "curhat" }) {
         ];
 
   return (
-    <div className="flex flex-col items-center gap-besar py-besar text-center">
+    <div className="flex flex-col items-start gap-besar py-besar text-left sm:items-center sm:text-center">
       <div>
         <h2 className="font-display text-4xl leading-tight">
           Mau <span className="text-aksen-terang">ngapain</span> hari ini?
@@ -94,7 +94,7 @@ function EmptyState({ mode }: { mode: "chat" | "curhat" }) {
       </div>
       <div className="grid w-full grid-cols-1 gap-sedang sm:grid-cols-2">
         {kartu.map((k) => (
-          <div key={k.judul} className="rounded-besar border border-border bg-surface p-sedang text-left">
+          <div key={k.judul} className="rounded-besar border border-border-kuat bg-surface p-sedang text-left">
             <p className="text-sm font-semibold">{k.judul}</p>
             <p className="mt-1 text-xs text-teks-muted">{k.isi}</p>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { Label } from "@/components/ui/Card";
 import type { Mode, Percakapan } from "@/lib/api";
@@ -26,6 +27,20 @@ export function Sidebar({
   terbuka: boolean;
   onTutup: () => void;
 }) {
+  // Di mobile sidebar adalah drawer: saat tertutup, isinya TIDAK boleh bisa
+  // difokus dengan Tab (dulu bisa — kontrol tak terlihat tetap masuk urutan fokus).
+  const [layarLebar, setLayarLebar] = useState(true);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const terapkan = () => setLayarLebar(mq.matches);
+    terapkan();
+    mq.addEventListener("change", terapkan);
+    return () => mq.removeEventListener("change", terapkan);
+  }, []);
+
+  const tersembunyi = !terbuka && !layarLebar;
+
   return (
     <>
       {terbuka && (
@@ -36,19 +51,22 @@ export function Sidebar({
         />
       )}
       <aside
+        aria-hidden={tersembunyi}
+        inert={tersembunyi}
         className={`fixed inset-y-0 left-0 z-30 flex w-[300px] shrink-0 flex-col border-r border-border bg-bg-sidebar transition-transform md:static md:translate-x-0 ${
           terbuka ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex items-center gap-2 border-b border-border px-sedang py-sedang">
-          <span className="grid h-9 w-9 place-items-center rounded-[12px] bg-gradient-to-br from-aksen to-aksen-lembut text-white shadow-[0_0_18px_rgb(236_72_153_/_0.35)]">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"
-                fill="currentColor"
-              />
-            </svg>
-          </span>
+          {/* Logo website — bersumber dari public/image/favico.png (versi 256 px) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/image/logo-256.png"
+            alt=""
+            width={36}
+            height={36}
+            className="h-9 w-9 shrink-0 rounded-[12px]"
+          />
           <span className="font-display text-2xl leading-none">
             oh<span className="text-aksen-terang">my</span>sea
           </span>

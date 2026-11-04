@@ -77,7 +77,7 @@ export default function HalamanGambar() {
   const bolehReferensi = dukungGambarReferensi(model);
 
   return (
-    <div className="mx-auto flex w-full max-w-[900px] flex-col gap-besar px-sedang py-besar">
+    <div className="mx-auto flex w-full max-w-[900px] flex-1 flex-col gap-besar px-sedang py-besar">
       <header className="flex items-center justify-between">
         <h1 className="font-display text-4xl leading-none">
           oh<span className="text-aksen-terang">my</span>sea · gambar

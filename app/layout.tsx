@@ -20,6 +20,14 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   title: "ohmysea",
   description: "Chatbot pribadi dengan RAG sederhana, mode curhat, dan generator gambar.",
+  icons: {
+    icon: [
+      { url: "/image/logo-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/image/logo-48.png", sizes: "48x48", type: "image/png" },
+    ],
+    shortcut: "/image/logo-48.png",
+    apple: [{ url: "/image/logo-180.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
@@ -31,7 +39,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id" className={`${dmSans.variable} ${instrumentSerif.variable}`}>
-      <body className="min-h-dvh bg-bg-main font-sans text-teks antialiased">{children}</body>
+      <body className="flex min-h-dvh flex-col bg-bg-main font-sans text-teks antialiased">
+        {children}
+        <footer className="shrink-0 border-t border-border px-sedang py-sedang text-center text-xs text-teks-muted-2">
+          <span className="font-display text-sm text-aksen-lembut">Ohmysea</span> By Sasha
+        </footer>
+      </body>
     </html>
   );
 }

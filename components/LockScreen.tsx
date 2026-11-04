@@ -27,6 +27,14 @@ export function LockScreen({ onBuka }: { onBuka: () => void }) {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[420px] flex-col items-center justify-center gap-besar px-sedang">
       <div className="text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/image/logo-256.png"
+          alt="Logo ohmysea"
+          width={72}
+          height={72}
+          className="mx-auto mb-sedang h-[72px] w-[72px] rounded-[20px]"
+        />
         <h1 className="font-display text-5xl leading-none">
           oh<span className="text-aksen-terang">my</span>sea
         </h1>

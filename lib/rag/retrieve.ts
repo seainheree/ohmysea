@@ -11,7 +11,7 @@ export type RetrievedChunk = {
   score: number;
 };
 
-export const TOP_K = 6;
+export const TOP_K = 8;
 export const MIN_SCORE = 0.3;
 
 type Row = {
@@ -28,7 +28,7 @@ export async function retrieve(
 ): Promise<RetrievedChunk[]> {
   const k = options.k ?? TOP_K;
   const minScore = options.minScore ?? MIN_SCORE;
-  const maksPerDokumen = options.maksPerDokumen ?? 2;
+  const maksPerDokumen = options.maksPerDokumen ?? 3;
 
   const vector = await embedOne(query);
   const literal = toVectorLiteral(vector);

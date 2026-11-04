@@ -48,7 +48,11 @@ export function Composer({
             onClick={kirim}
             disabled={sibuk || teks.trim().length === 0}
             aria-label="Kirim pesan"
-            className="mb-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-penuh bg-aksen text-white transition-colors hover:bg-aksen-terang disabled:opacity-40"
+            className={`mb-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-penuh transition-colors ${
+              sibuk || teks.trim().length === 0
+                ? "bg-border text-teks-muted"
+                : "bg-aksen text-white hover:bg-aksen-terang"
+            }`}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
@@ -61,7 +65,7 @@ export function Composer({
             </svg>
           </button>
         </div>
-        <p className="mt-2 text-center text-[11px] text-teks-muted-2">
+        <p className="mt-2 hidden text-center text-[11px] text-teks-muted-2 sm:block">
           Enter kirim · Shift + Enter baris baru
         </p>
       </div>

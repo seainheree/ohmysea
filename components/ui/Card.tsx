@@ -8,7 +8,7 @@ export function Card({
   return (
     <div
       {...sisa}
-      className={`rounded-besar border border-border bg-surface p-sedang ${className}`}
+      className={`rounded-besar border border-border-kuat bg-surface p-sedang ${className}`}
     >
       {children}
     </div>

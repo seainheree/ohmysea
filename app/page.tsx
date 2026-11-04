@@ -153,7 +153,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex flex-1">
       <Sidebar
         percakapan={percakapan}
         aktifId={aktif?.id ?? null}
