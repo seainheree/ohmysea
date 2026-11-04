@@ -1,0 +1,37 @@
+# Environment — nilai asli hanya di .env (jangan pernah commit)
+.env
+.env.*
+!.env.example
+# Token sementara untuk CLI (jangan pernah commit)
+.supabase-token
+.vercel-token
+
+# Dependensi & hasil build
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# Log
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# File sementara
+*.tmp
+*.bak
+

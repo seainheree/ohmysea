@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/* Token desain ohmysea — satu sumber. Jangan tulis hex mentah di komponen.
+   Sumber nilai: docs/DESIGN.md §3 */
+@theme {
+  --color-bg-topbar: #12121c;
+  --color-bg-sidebar: #141420;
+  --color-bg-main: #1a1a26;
+  --color-surface: #1e1e2a;
+  --color-border: #2c2c3c;
+  --color-border-kuat: #33334a;
+  --color-aksen: #ec4899;
+  --color-aksen-terang: #f472b6;
+  --color-aksen-lembut: #f9a8d4;
+  --color-teks: #ffffff;
+  --color-teks-muted: #9ca3af;
+  --color-teks-muted-2: #8b8b9e;
+  --color-online: #22c55e;
+  --color-danger: #f87171;
+
+  --radius-kecil: 8px;
+  --radius-sedang: 12px;
+  --radius-besar: 16px;
+  --radius-penuh: 999px;
+
+  --spacing-kecil: 8px;
+  --spacing-sedang: 16px;
+  --spacing-besar: 24px;
+
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;
+
+  --shadow-glow: 0 0 24px rgb(236 72 153 / 0.35);
+}
+
+html,
+body {
+  background-color: var(--color-bg-main);
+  color: var(--color-teks);
+  color-scheme: dark;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-aksen);
+  outline-offset: 2px;
+}
