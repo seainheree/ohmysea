@@ -38,10 +38,20 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${dmSans.variable} ${instrumentSerif.variable}`}>
-      <body className="flex min-h-dvh flex-col bg-bg-main font-sans text-teks antialiased">
+    <html lang="id" className={`${dmSans.variable} ${instrumentSerif.variable}`} data-tema="gelap">
+      <head>
+        {/* Tentukan tema sebelum halaman dilukis supaya tidak ada kedipan warna. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('ohmysea-tema');if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'terang':'gelap';}document.documentElement.dataset.tema=t;}catch(e){}})();`,
+          }}
+        />
+      </head>
+      {/* grid-rows-[1fr_auto]: isi aplikasi (termasuk sidebar & chat) menggulir di baris pertama,
+          footer selalu duduk di bawah viewport — tidak terpotong dan tidak menimpa kolom chat. */}
+      <body className="grid h-dvh grid-rows-[1fr_auto] overflow-hidden bg-bg-main font-sans text-teks antialiased">
         {children}
-        <footer className="shrink-0 border-t border-border px-sedang py-sedang text-center text-xs text-teks-muted-2">
+        <footer className="w-full shrink-0 border-t border-border bg-bg-topbar px-sedang py-2.5 text-center text-xs text-teks-muted-2">
           <span className="font-display text-sm text-aksen-lembut">Ohmysea</span> By Sasha
         </footer>
       </body>

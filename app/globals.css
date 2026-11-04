@@ -22,7 +22,6 @@
   --radius-sedang: 12px;
   --radius-besar: 16px;
   --radius-penuh: 999px;
-
   --spacing-kecil: 8px;
   --spacing-sedang: 16px;
   --spacing-besar: 24px;
@@ -38,6 +37,49 @@ body {
   background-color: var(--color-bg-main);
   color: var(--color-teks);
   color-scheme: dark;
+}
+
+/* --- Tema terang -------------------------------------------------------
+   Utilitas Tailwind memakai var(--color-*) dari @theme, jadi cukup menimpa
+   variabelnya di sini. Nilai kontras sudah diuji (lihat docs/DESIGN.md §3). */
+html[data-tema="terang"] {
+  color-scheme: light;
+
+  --color-bg-topbar: #ffffff;
+  --color-bg-sidebar: #f2f2f7;
+  --color-bg-main: #f7f7fb;
+  --color-surface: #ffffff;
+  --color-border: #e6e6ef;
+  --color-border-kuat: #d3d3e0;
+  --color-aksen: #db2777;
+  --color-aksen-terang: #ec4899;
+  --color-aksen-lembut: #be185d;
+  --color-teks: #16161f;
+  --color-teks-muted: #56566a;
+  --color-teks-muted-2: #6b6b80;
+  --color-online: #15803d;
+  --color-danger: #b91c1c;
+
+  --shadow-glow: 0 0 20px rgb(219 39 119 / 0.18);
+}
+
+body,
+header,
+aside,
+footer {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  header,
+  aside,
+  footer {
+    transition: none;
+  }
 }
 
 html {
@@ -91,4 +133,57 @@ html {
 
 *::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Penanda asisten sedang menyusun jawaban */
+@keyframes titik-naik {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.titik-menulis {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--color-aksen-lembut);
+  animation: titik-naik 1.2s infinite ease-in-out;
+}
+
+.titik-menulis:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.titik-menulis:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes kursor-kedip {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.kursor-menulis {
+  animation: kursor-kedip 1s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titik-menulis,
+  .kursor-menulis {
+    animation: none;
+  }
 }

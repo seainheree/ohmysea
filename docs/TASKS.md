@@ -11,6 +11,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M2 | Generate image (text-to-image, image-to-image), galeri | T-201..T-204 | done |
 | M3 | Kualitas, responsif, deploy Vercel, uji semua kriteria FR | T-301..T-304 | done |
 | M4 | Memori AI (Pengaturan), hapus riwayat, perapian UI/UX responsif | T-401..T-404 | done |
+| M5 | Tema gelap/terang, sidebar bisa ditutup, footer rapi, identitas Kirby, memori otomatis | T-501..T-505 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -43,6 +44,11 @@ Jangan lompat milestone.
 | T-402 | done | `DELETE /api/conversations` (semua) di lokal & `?mode=curhat` di produksi → jumlah benar, pesan ikut terhapus, dialog konfirmasi (bukan `window.confirm`) |
 | T-403 | done | Browser 360/768/1440 px: tanpa overflow, tombol ≥ 44 px, input 16 px, header & komposer sticky, ikon SVG, drawer 310 px + pencarian |
 | T-404 | done | Semua di atas dijalankan di produksi setelah deploy `62c0800`; `pnpm lint`/`test` (24 lulus)/`build` hijau |
+| T-501 | done | Tema: produksi `data-tema` gelap→terang, `body` `rgb(247,247,251)`, footer putih, pilihan tersimpan; `prefers-color-scheme` jadi bawaan |
+| T-502 | done | Produksi: tombol panel → `aside display: none`, area chat melebar; footer `bottom <= innerHeight` di 360/768/1440 px |
+| T-503 | done | Produksi: label "Kirby · 8,0 detik · 16.50", 3 titik + "Kirby sedang menjawab...", chip dokumen 0 |
+| T-504 | done | Produksi (`onFinish`): 2 memori tersimpan otomatis + catatan di UI; pesan sesaat & data sensitif tidak tersimpan; `autoMemori:false` dihormati |
+| T-505 | done | Sapaan "Hi Sasha, Kirby di sini poyoo~" saat memori panggilan ada; tanpa memori → "Hi, Kirby di sini poyoo~" |
 
 ---
 
@@ -77,6 +83,45 @@ Jangan lompat milestone.
 - **Dependency**: T-401, T-402, T-403
 - **Kriteria penerimaan**: FR-12 & FR-13 terverifikasi di produksi; uji browser ulang; `pnpm build` & `pnpm test` hijau
 - **Verifikasi**: hasil di PROGRESS-LOG
+
+---
+
+## M5 — Tema, sidebar bisa ditutup, footer, identitas Kirby, memori otomatis
+
+### T-501 — Tema terang & gelap
+
+- **Status**: doing
+- **Cakupan**: `app/globals.css` (token tema terang), `app/layout.tsx` (skrip anti-kedip), `components/ui/ThemeToggle.tsx`, `app/pengaturan/page.tsx`
+- **Kriteria** (FR-14): sakelar mengubah `data-tema` + warna; pilihan diingat (`localStorage`); bawaan ikut `prefers-color-scheme`; tidak ada kedipan warna saat muat pertama
+- **Verifikasi**: uji browser (warna terhitung di 1440 px & 360 px)
+
+### T-502 — Sidebar bisa ditutup + footer rapi
+
+- **Status**: doing
+- **Cakupan**: `app/page.tsx` (tombol panel, `sidebarRingkas`), `components/chat/Sidebar.tsx`, `app/layout.tsx` (grid `1fr auto`)
+- **Kriteria** (FR-15): sidebar bisa disembunyikan di ≥ 768 px dan diingat; footer selalu terlihat penuh, tidak tertimpa sidebar/komposer di 360/768/1440 px
+- **Verifikasi**: uji browser (rect footer + `display` sidebar)
+
+### T-503 — Identitas Kirby + durasi jawaban
+
+- **Status**: doing
+- **Cakupan**: `components/chat/MessageList.tsx`, `lib/api.ts` (durasi), `lib/ai/prompts.ts` (nama persona), `public/image/kirby-{64,96}.png`
+- **Kriteria** (FR-16): avatar + label "Kirby · X,X detik · jam"; teks "Kirby sedang menjawab..."; chip dokumen dihapus dari tampilan
+- **Verifikasi**: uji browser (jumlah avatar, ada/tidak chip, format label)
+
+### T-504 — Memori otomatis dengan penyaring
+
+- **Status**: doing
+- **Cakupan**: `lib/memory.ts` (`ekstrakKandidatMemori`, `layakDisimpan`, `saringKandidat`, `simpanMemoriOtomatis`), `app/api/chat/route.ts` (`onFinish`), `components/settings/MemoryAutoToggle.tsx`, `lib/env.ts` (`GROQ_MODEL_MEMORI`)
+- **Kriteria** (FR-12): fakta tahan lama tersimpan otomatis; keluhan sesaat & data sensitif ditolak; maks 2 per pertukaran, total maks 90 baris; `autoMemori:false` tidak menyimpan
+- **Verifikasi**: `lib/memory.test.ts` + uji API di lokal & produksi
+
+### T-505 — Sapaan awal memakai panggilan dari memori
+
+- **Status**: doing
+- **Cakupan**: `lib/panggilan.ts`, `components/chat/MessageList.tsx` (EmptyState)
+- **Kriteria**: sapaan "Hi {panggilan}, Kirby di sini poyoo~"; tanpa memori panggilan → tampa nama; memori nonaktif diabaikan
+- **Verifikasi**: `lib/panggilan.test.ts` + uji browser
 
 ---
 

@@ -22,4 +22,12 @@ export function curhatModel(): LanguageModel {
   return getProvider().languageModel(getEnv().GROQ_MODEL_CURHAT);
 }
 
+/**
+ * Model murah untuk menyaring memori otomatis — pekerjaannya kecil (ubah satu
+ * pertukaran pesan jadi daftar fakta), jadi tidak perlu model besar.
+ */
+export function memoriModel(): LanguageModel {
+  return getProvider().languageModel(getEnv().GROQ_MODEL_MEMORI);
+}
+
 export const HISTORY_LIMIT = 20;

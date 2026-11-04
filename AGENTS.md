@@ -25,7 +25,7 @@ Dokumen acuan: `docs/PRD.md` (kenapa/apa), `docs/TECH-SPEC.md` (bagaimana),
 | Driver DB | postgres (postgres.js) | 4.0.0 |
 | Database | Supabase Postgres + pgvector | project `vuxltppwzjgqrefgfuxs` |
 | Storage | Supabase Storage (bucket `images`) | @supabase/supabase-js 2.118.0 |
-| LLM chat/curhat | Groq — `openai/gpt-oss-120b` (chat), `qwen/qwen3.8-27b` (curhat) | via AI SDK `@ai-sdk/groq` 4.0.76 (SDK `ai` 7.0.162) |
+| LLM chat/curhat | Groq — `openai/gpt-oss-120b` (chat), `qwen/qwen3.8-27b` (curhat), `openai/gpt-oss-20b` (penyaring memori otomatis) | via AI SDK `@ai-sdk/groq` 4.0.76 (SDK `ai` 7.0.162) |
 | Embedding | Cloudflare Workers AI `@cf/baai/bge-m3` (1024 dim) | REST v4 |
 | Generate gambar | Cloudflare Workers AI `@cf/black-forest-labs/flux-2-klein-4b` | REST v4 |
 | Scrape URL | Firecrawl | REST v1 |
@@ -94,6 +94,10 @@ drizzle/             # file migrasi hasil generate
 - Field wajib di DB tidak boleh null; tipe kolom mengikuti `docs/TECH-SPEC.md` §4.
 - Parameter RAG dikunci di `lib/rag/retrieve.ts`: top-k 8, ambang kosinus 0.30, maksimal 3 potongan per dokumen (cegah satu dokumen memenuhi semua slot). Chunk 1000 karakter / overlap 150, dan tabel markdown dipecah per baris dengan baris judul diulang (`lib/rag/chunk.ts`).
 - Memori AI (`memories`) disuntikkan ke prompt sistem lewat `lib/memory.ts` dan berlaku di **kedua** mode. Maks 60 memori aktif; satu memori maks 500 karakter. Jangan menambah jalur lain yang menulis prompt sistem tanpa memakai helper ini.
+- Memori otomatis (Kirby menyimpan sendiri) berjalan di `onFinish` `/api/chat` lewat `simpanMemoriOtomatis()`: model `GROQ_MODEL_MEMORI` (default `openai/gpt-oss-20b`) mengekstrak kandidat, lalu `layakDisimpan()`/`saringKandidat()` menyaring kategori, panjang, data sensitif, peristiwa sesaat, dan duplikat. Jangan menurunkan saringan itu tanpa menambah test.
+- **Jangan** memakai `after()` untuk pekerjaan pasca-stream: tidak dieksekusi di Vercel. Pakai `onFinish` milik `streamText`.
+- Persona asisten bernama **Kirby** (lihat `lib/ai/prompts.ts`); sapaan awal memakai panggilan dari memori aktif (`lib/panggilan.ts`).
+- Chip nama dokumen tidak ditampilkan di balasan; durasi jawaban ("Kirby · 2,4 detik · 14.32") yang tampil. Sumber tetap disebut di dalam teks jawaban.
 - Kegagalan provider AI harus tampil sebagai pesan error di UI, bukan layar kosong.
 - Gambar hasil disimpan ke Storage; yang masuk DB adalah URL + metadata, bukan base64.
 

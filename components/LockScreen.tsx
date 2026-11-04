@@ -25,7 +25,7 @@ export function LockScreen({ onBuka }: { onBuka: () => void }) {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[420px] flex-col items-center justify-center gap-besar px-sedang">
+    <main className="flex h-full min-h-0 w-full max-w-[420px] flex-col items-center justify-center gap-besar overflow-y-auto px-sedang py-besar">
       <div className="text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

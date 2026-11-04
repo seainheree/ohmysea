@@ -8,7 +8,7 @@ import { SYSTEM_CHAT, SYSTEM_CURHAT, buildContextBlock } from "@/lib/ai/prompts"
 import { getDb } from "@/lib/db/client";
 import { conversations, messages } from "@/lib/db/schema";
 import { kunciRateLimit, pesanError, rateLimit, requireSession } from "@/lib/guard";
-import { ambilMemoriAktif, buildMemoryBlock } from "@/lib/memory";
+import { ambilMemoriAktif, buildMemoryBlock, simpanMemoriOtomatis } from "@/lib/memory";
 import { retrieve, toSources } from "@/lib/rag/retrieve";
 
 export const runtime = "nodejs";
@@ -18,6 +18,8 @@ const bodySchema = z.object({
   conversationId: z.uuid().optional(),
   mode: z.enum(["chat", "curhat"]),
   message: z.string().min(1, "Pesan tidak boleh kosong").max(4000, "Pesan terlalu panjang (maks 4000 karakter)"),
+  /** Bawaan menyala; klien bisa mematikannya dari Pengaturan. */
+  autoMemori: z.boolean().optional(),
 });
 
 function judulDari(pesan: string): string {
@@ -127,6 +129,12 @@ export async function POST(request: NextRequest) {
             .update(conversations)
             .set({ updatedAt: new Date() })
             .where(eq(conversations.id, conversationId));
+
+          // Memori otomatis dijalankan di sini (bukan after()) karena callback ini
+          // terbukti tetap dieksekusi setelah stream selesai, termasuk di Vercel.
+          if (body.autoMemori !== false && text.trim()) {
+            await simpanMemoriOtomatis(body.message, text);
+          }
         } catch (err) {
           console.error("gagal menyimpan balasan:", pesanError(err));
         }

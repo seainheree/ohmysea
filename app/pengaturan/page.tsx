@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Label } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { MemoryAutoToggle } from "@/components/settings/MemoryAutoToggle";
 import {
   cekSehat,
   hapusSemuaPercakapan,
@@ -59,7 +61,7 @@ export default function HalamanPengaturan() {
   if (terkunci) return <LockScreen onBuka={() => void muat()} />;
 
   return (
-    <div className="mx-auto flex w-full max-w-[860px] flex-1 flex-col gap-besar px-sedang py-besar">
+    <div className="mx-auto flex h-full w-full max-w-[860px] min-h-0 flex-1 flex-col gap-besar overflow-y-auto px-sedang py-besar">
       <header className="flex items-center gap-3">
         <Link
           href="/"
@@ -73,12 +75,27 @@ export default function HalamanPengaturan() {
             Pengaturan<span className="text-aksen-terang">.</span>
           </h1>
           <p className="mt-1 text-xs text-teks-muted">
-            Memori asisten, riwayat percakapan, dan status layanan.
+            Tampilan, memori asisten, riwayat percakapan, dan status layanan.
           </p>
+        </div>
+        <div className="ml-auto">
+          <ThemeToggle />
         </div>
       </header>
 
+      <section className="flex flex-col gap-2 rounded-besar border border-border-kuat bg-surface p-sedang">
+        <h2 className="text-base font-semibold">Tampilan</h2>
+        <p className="text-xs text-teks-muted">
+          Pilihanmu disimpan di perangkat ini. Ikut pengaturan sistem saat pertama kali dibuka.
+        </p>
+        <div>
+          <ThemeToggle />
+        </div>
+      </section>
+
       <MemoryPanel />
+
+      <MemoryAutoToggle />
 
       <section className="flex flex-col gap-sedang rounded-besar border border-border-kuat bg-surface p-sedang">
         <header>

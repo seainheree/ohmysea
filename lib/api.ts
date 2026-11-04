@@ -149,13 +149,15 @@ export async function daftarGambar(): Promise<Gambar[]> {
   return data.gambar;
 }
 
-/** Kirim pesan dan alirkan balasan; kembalikan sumber + conversationId. */
+/** Kirim pesan dan alirkan balasan; kembalikan conversationId + durasi. */
 export async function kirimPesan(input: {
   conversationId?: string;
   mode: Mode;
   message: string;
+  autoMemori?: boolean;
   onChunk: (teks: string) => void;
-}): Promise<{ conversationId: string; sources: Pesan["sources"] }> {
+}): Promise<{ conversationId: string; sources: Pesan["sources"]; durasiMs: number }> {
+  const mulai = Date.now();
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -163,6 +165,7 @@ export async function kirimPesan(input: {
       conversationId: input.conversationId,
       mode: input.mode,
       message: input.message,
+      autoMemori: input.autoMemori,
     }),
   });
 
@@ -199,7 +202,7 @@ export async function kirimPesan(input: {
     );
   }
 
-  return { conversationId, sources };
+  return { conversationId, sources, durasiMs: Date.now() - mulai };
 }
 
 export async function buatGambar(input: {

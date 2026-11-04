@@ -52,6 +52,7 @@ Jangan tulis ulang nilai hex di komponen.
 | Area aman | padding bawah komposer | `calc(0.75rem + env(safe-area-inset-bottom))` |
 | Media query | breakpoint utama | 640 px (sm), 768 px (md drawer → sidebar tetap) |
 | Zoom iOS | ukuran huruf input di < 640 px | 16 px (wajib, kalau kurang Safari memperbesar halaman) |
+| Huruf | durasi jawaban | 10 px, format `X,X detik` (koma, `id-ID`), hanya muncul di balasan asisten |
 | Ukuran huruf | judul hero / judul kartu / isi / label kecil | 32–40px / 15px / 14px / 11px (uppercase, letter-spacing 0.08em) |
 | Berat huruf | judul / isi | 700–800 / 400–500 |
 | Radius kartu chat | — | 16px |
@@ -82,11 +83,16 @@ Implementasi: dimuat lewat `next/font/google` di `app/layout.tsx` sebagai CSS va
 | Galeri | Grid gambar responsif + prompt tiap gambar | jadi |
 | Layar kunci | Input kode akses + logo | jadi |
 | Navigasi sidebar | Chat / Gambar / Pengaturan + pencarian riwayat | jadi |
-| Pengaturan — Memori AI | Tambah/ubah/hapus/aktif-nonaktif memori, penghitung aktif | jadi |
+| Sidebar bisa ditutup | Tombol panel di header (≥ md); di HP tetap drawer; pilihan diingat | jadi |
+| Tema terang / gelap | Sakelar di header & Pengaturan; ikut sistem saat pertama; diingat perangkat | jadi |
+| Pengaturan — Memori AI | Tambah/ubah/hapus/aktif-nonaktif memori, penghitung aktif, sakelar memori otomatis | jadi |
 | Pengaturan — Riwayat | Hapus riwayat (semua mode / per mode) dengan dialog konfirmasi | jadi |
 | Pengaturan — Status | Hasil `GET /api/health` (env, DB, model) tanpa membocorkan nilai | jadi |
 | Dialog konfirmasi | Pengganti `window.confirm`, bisa difokus & ditutup dengan Escape | jadi |
-| Footer | "Ohmysea By Sasha" — tampil di semua halaman | jadi |
+| Balasan Kirby | Avatar `public/image/kirby.png`, label "Kirby · 2,4 detik · 14.32", tanpa chip dokumen | jadi |
+| Indikator menulis | Tiga titik bergerak + teks "Kirby sedang menjawab..." (curhat: "Kirby sedang menyimak...") | jadi |
+| Sapaan awal | "Hi {panggilan}, Kirby di sini poyoo~" — panggilan dibaca dari memori aktif | jadi |
+| Footer | "Ohmysea By Sasha" — baris grid terpisah, tidak menimpa sidebar/chat | jadi |
 
 ## 4b. Aset merek
 

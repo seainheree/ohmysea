@@ -89,8 +89,11 @@ inti utuh, murah, tidak rapuh.
 | FR-9 | Galeri gambar | US-06 | Halaman galeri menampilkan semua gambar yang pernah dibuat beserta prompt-nya; grid tidak pecah di 360 px |
 | FR-10 | Kelola percakapan | US-07 | `curl -s -X PATCH localhost:3000/api/conversations/<id> -d '{"title":"x"}'` → 200 + judul berubah di DB; `DELETE` → 200 + baris dan pesannya hilang |
 | FR-11 | Halaman chat satu layar | US-01..04 | `pnpm build` exit 0; halaman memuat sidebar percakapan, area pesan, input, dan pemilih mode (chat/curhat/gambar) |
-| FR-12 | Memori AI (Pengaturan) | US-08 | `POST /api/memories` → 201; memori aktif muncul di `GET /api/memories`; tanya hal yang hanya ada di memori di percakapan **baru** → balasan memuat fakta itu; memori dinonaktifkan → tidak lagi dipakai |
+| FR-12 | Memori AI (Pengaturan) + simpan otomatis | US-08, US-10 | `POST /api/memories` → 201; memori aktif muncul di `GET /api/memories`; tanya hal yang hanya ada di memori di percakapan **baru** → balasan memuat fakta itu; memori dinonaktifkan → tidak lagi dipakai. Otomatis: kirim pesan berisi fakta tahan lama ("panggil aku Sha", "aku suka kopi hitam") → ±15 detik kemudian `GET /api/memories` memuat fakta itu; pesan keluhan sesaat dan data sensitif (kata sandi/PIN) **tidak** tersimpan; `autoMemori:false` → tidak ada baris baru |
 | FR-13 | Hapus riwayat percakapan | US-09 | `DELETE /api/conversations` → 200 + jumlah; sesudah itu `GET /api/conversations` kosong; `DELETE /api/conversations?mode=curhat` hanya menghapus mode itu; hapus satu percakapan juga menghapus pesannya |
+| FR-14 | Tema terang & gelap | US-11 | Sakelar di header & Pengaturan; `document.documentElement.dataset.tema` berubah; `getComputedStyle(document.body).backgroundColor` berubah; setelah reload pilihan tetap; tanpa pilihan → ikut `prefers-color-scheme` |
+| FR-15 | Sidebar bisa ditutup & footer rapi | US-11 | Klik tombol panel di ≥ 768 px → `getComputedStyle(aside).display === "none"` dan area chat melebar; setelah reload tetap tertutup; footer terlihat penuh (`rect.bottom <= innerHeight`) di 360/768/1440 px dan tidak tertimpa kolom chat |
+| FR-16 | Identitas & kecepatan balasan Kirby | US-12 | Balasan asisten menampilkan avatar `kirby.png` + label "Kirby · X,X detik · jam:menit"; saat menunggu tampil teks "Kirby sedang menjawab..."; chip nama dokumen tidak lagi tampil di balasan (nama dokumen tetap disebut di dalam teks jawaban) |
 
 Aturan: setiap kriteria penerimaan **harus bisa dijalankan sebagai command** atau
 diperiksa dengan mata tanpa menebak. Kriteria yang berupa penilaian rasa (G3,

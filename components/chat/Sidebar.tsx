@@ -19,6 +19,7 @@ type Props = {
   onHapus: (p: Percakapan) => void;
   onHapusSemua: (mode?: Mode) => void;
   terbuka: boolean;
+  ringkas?: boolean;
   onTutup: () => void;
 };
 
@@ -33,6 +34,7 @@ export function Sidebar({
   onHapus,
   onHapusSemua,
   terbuka,
+  ringkas = false,
   onTutup,
 }: Props) {
   // Di mobile sidebar adalah drawer: saat tertutup isinya tidak boleh difokus Tab.
@@ -81,7 +83,7 @@ export function Sidebar({
         inert={tersembunyi}
         className={`fixed inset-y-0 left-0 z-30 flex w-[86vw] max-w-[310px] shrink-0 flex-col border-r border-border bg-bg-sidebar transition-transform duration-200 md:static md:w-[310px] md:max-w-none md:translate-x-0 ${
           terbuka ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } ${ringkas ? "md:hidden" : "md:flex"}`}
       >
         <div className="flex items-center gap-2 border-b border-border px-sedang py-3">
           {/* Logo merek — sumber public/image/favico.png */}

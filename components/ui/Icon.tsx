@@ -14,7 +14,9 @@ export type NamaIkon =
   | "gambar"
   | "pengaturan"
   | "kirim"
-  | "berkas";
+  | "berkas"
+  | "matahari"
+  | "panel";
 
 const JALUR: Record<NamaIkon, string> = {
   menu: "M4 7h16M4 12h16M4 17h16",
@@ -31,6 +33,9 @@ const JALUR: Record<NamaIkon, string> = {
     "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM19.4 15a7.9 7.9 0 0 0 .1-1.2 7.9 7.9 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a8 8 0 0 0-2-1.2L14.6 4h-3.9l-.4 2.4a8 8 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.9 7.9 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a8 8 0 0 0 2 1.2l.4 2.4h3.9l.4-2.4a8 8 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6z",
   kirim: "M12 19V5M12 5l-6 6M12 5l6 6",
   berkas: "M6 3h8l4 4v14H6zM14 3v5h5",
+  matahari:
+    "M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4",
+  panel: "M4 5h16v14H4zM10 5v14",
 };
 
 export function Icon({ name, className = "", size = 18 }: Props) {

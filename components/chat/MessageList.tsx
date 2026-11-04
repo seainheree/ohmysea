@@ -2,8 +2,10 @@
 
 import { useEffect, useRef } from "react";
 
-import { Icon } from "@/components/ui/Icon";
 import type { Pesan } from "@/lib/api";
+
+/** Pesan ditambah durasi balasan (dihitung klien, hanya untuk ditampilkan). */
+export type PesanTampil = Pesan & { durasiMs?: number };
 
 function waktu(iso: string): string {
   try {
@@ -13,73 +15,123 @@ function waktu(iso: string): string {
   }
 }
 
+/** "2,4 detik" — dibulatkan ke satu angka di belakang koma. */
+function durasi(ms?: number): string | null {
+  if (typeof ms !== "number" || ms <= 0) return null;
+  const detik = ms / 1000;
+  if (detik < 60) return `${detik.toFixed(1).replace(".", ",")} detik`;
+  const menit = Math.floor(detik / 60);
+  const sisa = Math.round(detik % 60);
+  return `${menit}m ${sisa}s`;
+}
+
+/** Avatar asisten (public/image/kirby.png) — dipakai di setiap balasan & saat menulis. */
+function AvatarAsisten({ size = 36 }: { size?: number }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/image/kirby-96.png"
+      alt="ohmysea"
+      width={size}
+      height={size}
+      className="shrink-0 rounded-penuh border border-border-kuat bg-surface object-cover"
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
+/** Tiga titik bergerak — penanda asisten sedang menyusun jawaban. */
+function TitikMenulis() {
+  return (
+    <span className="inline-flex items-center gap-1" aria-hidden="true">
+      <span className="titik-menulis" />
+      <span className="titik-menulis" />
+      <span className="titik-menulis" />
+    </span>
+  );
+}
+
 export function MessageList({
   pesan,
   streaming,
   mode,
+  nama,
+  menunggu = false,
 }: {
-  pesan: Pesan[];
+  pesan: PesanTampil[];
   streaming: string;
   mode: "chat" | "curhat";
+  /** Panggilan pengguna dari memori (kalau ada), untuk sapaan awal. */
+  nama?: string | null;
+  /** true selama permintaan berjalan tapi belum ada teks yang masuk. */
+  menunggu?: boolean;
 }) {
   const bawah = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bawah.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [pesan.length, streaming]);
+  }, [pesan.length, streaming, menunggu]);
+
+  const sedangMenulis = menunggu || streaming.length > 0;
 
   return (
     <div className="mx-auto flex w-full max-w-[760px] flex-col gap-sedang px-sedang py-besar">
-      {pesan.map((m) => (
-        <div key={m.id} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-          <div className={m.role === "user" ? "max-w-[85%]" : "max-w-[90%]"}>
-            <div
-              className={`whitespace-pre-wrap rounded-besar px-sedang py-3 text-sm leading-relaxed ${
-                m.role === "user"
-                  ? "bg-aksen text-white"
-                  : "border border-border bg-surface text-teks"
-              }`}
-            >
-              {m.content}
-            </div>
-            {m.sources && m.sources.length > 0 && (
-              <div className="mt-1 flex flex-wrap gap-1">
-                {m.sources.map((s) => (
-                  <span
-                    key={s.documentId}
-                    title={`skor kemiripan ${s.score}`}
-                    className="inline-flex items-center gap-1 rounded-penuh border border-border-kuat bg-surface px-2 py-0.5 text-[11px] text-teks-muted"
-                  >
-                    <Icon name="berkas" size={11} />
-                    {s.title} · {s.score.toFixed(2)}
-                  </span>
-                ))}
+      {pesan.map((m) =>
+        m.role === "assistant" ? (
+          <div key={m.id} className="flex w-full items-start gap-2.5">
+            <AvatarAsisten />
+            <div className="min-w-0 flex-1">
+              <div className="whitespace-pre-wrap rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed text-teks">
+                {m.content}
               </div>
-            )}
-            <p
-              className={`mt-1 text-[10px] text-teks-muted-2 ${m.role === "user" ? "text-right" : ""}`}
-            >
-              {waktu(m.createdAt)}
-            </p>
+              <p className="mt-1 text-[10px] text-teks-muted-2">
+                <span className="text-aksen-lembut">Kirby</span>
+                {durasi(m.durasiMs) ? ` · ${durasi(m.durasiMs)}` : ""} · {waktu(m.createdAt)}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        ) : (
+          <div key={m.id} className="flex justify-end">
+            <div className="max-w-[85%]">
+              <div className="whitespace-pre-wrap rounded-besar rounded-br-kecil bg-aksen px-sedang py-3 text-sm leading-relaxed text-white">
+                {m.content}
+              </div>
+              <p className="mt-1 text-right text-[10px] text-teks-muted-2">{waktu(m.createdAt)}</p>
+            </div>
+          </div>
+        ),
+      )}
 
-      {streaming && (
-        <div className="flex justify-start">
-          <div className="max-w-[90%] whitespace-pre-wrap rounded-besar border border-border bg-surface px-sedang py-3 text-sm leading-relaxed">
-            {streaming}
+      {sedangMenulis && (
+        <div className="flex w-full items-start gap-2.5" aria-live="polite">
+          <AvatarAsisten />
+          <div className="min-w-0 flex-1">
+            <div className="inline-flex max-w-full items-start rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed">
+              {streaming ? (
+                <>
+                  <span className="whitespace-pre-wrap">{streaming}</span>
+                  <span className="kursor-menulis ml-0.5 inline-block h-4 w-[2px] self-end bg-aksen-lembut" />
+                </>
+              ) : (
+                <span className="flex items-center gap-2 text-teks-muted">
+                  <TitikMenulis />
+                  <span className="text-xs">
+                    {mode === "curhat" ? "Kirby sedang menyimak..." : "Kirby sedang menjawab..."}
+                  </span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {pesan.length === 0 && !streaming && <EmptyState mode={mode} />}
+      {pesan.length === 0 && !sedangMenulis && <EmptyState mode={mode} nama={nama} />}
       <div ref={bawah} />
     </div>
   );
 }
 
-function EmptyState({ mode }: { mode: "chat" | "curhat" }) {
+function EmptyState({ mode, nama }: { mode: "chat" | "curhat"; nama?: string | null }) {
   const kartu =
     mode === "curhat"
       ? [
@@ -91,17 +143,19 @@ function EmptyState({ mode }: { mode: "chat" | "curhat" }) {
       : [
           { judul: "Pakai dokumenku", isi: "Tanya apa pun soal PRD atau TECH-SPEC ohmysea." },
           { judul: "Bikin gambar", isi: "Mode gambar ada di halaman Gambar." },
-          { judul: "Lanjut besok", isi: "Percakapan ini tersimpan, bisa dilanjut kapan saja." },
+          { judul: "Ingat-ingatanku", isi: "Isi memori di Pengaturan agar aku ingat hal pentingmu." },
           { judul: "Tanya bebas", isi: "Kalau tidak ada di dokumen, aku bilang jujur." },
         ];
 
   return (
     <div className="flex flex-col items-start gap-besar py-besar text-left sm:items-center sm:text-center">
-      <div>
-        <h2 className="font-display text-4xl leading-tight">
-          Mau <span className="text-aksen-terang">ngapain</span> hari ini?
+      <div className="flex flex-col items-start sm:items-center">
+        <AvatarAsisten size={64} />
+        <h2 className="mt-sedang font-display text-4xl leading-tight">
+          Hi{nama ? ` ${nama}` : ""}, Kirby <span className="text-aksen-terang">di sini</span> poyoo~
         </h2>
         <p className="mt-2 text-sm text-teks-muted">
+          Mau ngapain hari ini?{" "}
           {mode === "curhat"
             ? "Mode curhat: aku menanggapi perasaanmu dulu, bukan menceramahi."
             : "Mode chat: aku ingat percakapan ini dan bisa memakai dokumen yang kamu tambahkan."}
@@ -109,7 +163,10 @@ function EmptyState({ mode }: { mode: "chat" | "curhat" }) {
       </div>
       <div className="grid w-full grid-cols-1 gap-sedang sm:grid-cols-2">
         {kartu.map((k) => (
-          <div key={k.judul} className="rounded-besar border border-border-kuat bg-surface p-sedang text-left">
+          <div
+            key={k.judul}
+            className="rounded-besar border border-border-kuat bg-surface p-sedang text-left"
+          >
             <p className="text-sm font-semibold">{k.judul}</p>
             <p className="mt-1 text-xs text-teks-muted">{k.isi}</p>
           </div>

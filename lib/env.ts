@@ -17,6 +17,7 @@ const schema = z.object({
   GROQ_API_KEY: z.string().min(1, "GROQ_API_KEY wajib"),
   GROQ_MODEL_CHAT: z.string().min(1).default("openai/gpt-oss-120b"),
   GROQ_MODEL_CURHAT: z.string().min(1).default("qwen/qwen3.8-27b"),
+  GROQ_MODEL_MEMORI: z.string().min(1).default("openai/gpt-oss-20b"),
 
   CLOUDFLARE_ACCOUNT_ID: z.string().min(1, "CLOUDFLARE_ACCOUNT_ID wajib"),
   CLOUDFLARE_API_TOKEN: z.string().min(1, "CLOUDFLARE_API_TOKEN wajib"),
@@ -67,6 +68,7 @@ export function envReport(): { ok: boolean; hilang: string[]; model: Record<stri
     model: {
       chat: parsed.data.GROQ_MODEL_CHAT,
       curhat: parsed.data.GROQ_MODEL_CURHAT,
+      memori: parsed.data.GROQ_MODEL_MEMORI,
       embedding: parsed.data.CF_MODEL_EMBED,
       image: parsed.data.CF_MODEL_IMAGE,
     },

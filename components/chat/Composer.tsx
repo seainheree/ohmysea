@@ -23,8 +23,8 @@ export function Composer({
   }
 
   return (
-    <div className="sticky bottom-0 border-t border-border bg-bg-topbar/95 backdrop-blur">
-      <div className="mx-auto w-full max-w-[760px] px-sedang pb-aman pt-sedang">
+    <div className="shrink-0 border-t border-border bg-bg-topbar/95 backdrop-blur">
+      <div className="mx-auto w-full max-w-[760px] px-sedang pb-aman pt-2">
         <div className="flex items-end gap-2 rounded-besar border border-border bg-surface p-1.5">
           <textarea
             ref={area}
