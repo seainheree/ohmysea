@@ -58,6 +58,40 @@ export async function ambilPesan(id: string): Promise<{ percakapan: Percakapan; 
   return baca<{ percakapan: Percakapan; pesan: Pesan[] }>(res);
 }
 
+/** Buat percakapan kosong — dipakai saat melampirkan berkas sebelum pesan pertama. */
+export async function buatPercakapan(input: { title?: string; mode: Mode }): Promise<Percakapan> {
+  const res = await fetch("/api/conversations", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const data = await baca<{ percakapan: Percakapan }>(res);
+  return data.percakapan;
+}
+
+export type HasilLampiran = {
+  documentId: string;
+  jumlahChunk: number;
+  ditimpa: boolean;
+  pesan: string;
+};
+
+/** Simpan teks lampiran ke satu percakapan. Berkas asli tidak dikirim ke server. */
+export async function unggahLampiran(input: {
+  conversationId: string;
+  filename: string;
+  mime: string;
+  size: number;
+  text: string;
+}): Promise<HasilLampiran> {
+  const res = await fetch("/api/attachments", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return baca<HasilLampiran>(res);
+}
+
 export async function gantiJudul(id: string, title: string): Promise<void> {
   const res = await fetch(`/api/conversations/${id}`, {
     method: "PATCH",

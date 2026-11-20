@@ -24,11 +24,18 @@ type Row = {
 /** Ambil potongan dokumen paling mirip (cosine similarity via pgvector). */
 export async function retrieve(
   query: string,
-  options: { k?: number; minScore?: number; maksPerDokumen?: number } = {},
+  options: {
+    k?: number;
+    minScore?: number;
+    maksPerDokumen?: number;
+    /** Kalau diisi, dokumen lampiran percakapan ini ikut dicari. */
+    conversationId?: string;
+  } = {},
 ): Promise<RetrievedChunk[]> {
   const k = options.k ?? TOP_K;
   const minScore = options.minScore ?? MIN_SCORE;
   const maksPerDokumen = options.maksPerDokumen ?? 3;
+  const conversationId = options.conversationId ?? null;
 
   const vector = await embedOne(query);
   const literal = toVectorLiteral(vector);
@@ -44,6 +51,7 @@ export async function retrieve(
            1 - (c.embedding <=> ${literal}::vector) as score
     from chunks c
     join documents d on d.id = c.document_id
+    where d.conversation_id is null or d.conversation_id = ${conversationId}::uuid
     order by c.embedding <=> ${literal}::vector
     limit ${kolam}
   `)) as unknown as Row[];

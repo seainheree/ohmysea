@@ -45,7 +45,11 @@ export const documents = pgTable("documents", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   source: text("source").notNull(),
-  checksum: text("checksum").notNull().unique(),
+  checksum: text("checksum").notNull(),
+  // null = dokumen basis pengetahuan global (CLI/URL). Terisi = lampiran satu percakapan.
+  conversationId: uuid("conversation_id").references(() => conversations.id, {
+    onDelete: "cascade",
+  }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

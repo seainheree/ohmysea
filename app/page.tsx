@@ -16,16 +16,19 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { TRANSISI } from "@/lib/motion";
 import {
   ambilPesan,
+  buatPercakapan,
   daftarMemori,
   daftarPercakapan,
   gantiJudul,
   hapusPercakapan,
   hapusSemuaPercakapan,
   kirimPesan,
+  unggahLampiran,
   type Mode,
   type Percakapan,
   type Pesan,
 } from "@/lib/api";
+import { extractText } from "@/lib/extract";
 import { tebakPanggilanPengguna } from "@/lib/panggilan";
 
 export default function Home() {
@@ -44,6 +47,8 @@ export default function Home() {
   const [sidebarRingkas, setSidebarRingkas] = useState(false);
   const [autoMemori, setAutoMemori] = useState(true);
   const [catatanMemori, setCatatanMemori] = useState<string | null>(null);
+  const [lampiran, setLampiran] = useState<{ nama: string; status: string; galat?: boolean } | null>(null);
+  const [sibukLampiran, setSibukLampiran] = useState(false);
   const [panggilan, setPanggilan] = useState<string | null>(null);
   const [wadahGulir, setWadahGulir] = useState<HTMLElement | null>(null);
   const [isiGulir, setIsiGulir] = useState<HTMLDivElement | null>(null);
@@ -127,6 +132,52 @@ export default function Home() {
     setStreaming("");
     setError(null);
     setSidebarTerbuka(false);
+  }
+
+  async function lampirkan(berkas: File) {
+    setSibukLampiran(true);
+    setLampiran({ nama: berkas.name, status: "Membaca…" });
+    try {
+      const hasil = await extractText(berkas, (pesan) =>
+        setLampiran({ nama: berkas.name, status: pesan }),
+      );
+
+      // Lampiran menempel ke percakapan: buat kosong dulu kalau ini percakapan baru.
+      let id = aktif?.id;
+      if (!id) {
+        const baru = await buatPercakapan({ mode });
+        id = baru.id;
+        setAktif(baru);
+        await muatDaftar(mode);
+      }
+
+      const simpan = await unggahLampiran({
+        conversationId: id,
+        filename: berkas.name,
+        mime: berkas.type,
+        size: berkas.size,
+        text: hasil.teks,
+      });
+
+      const catatan = [
+        simpan.pesan,
+        hasil.halaman ? `${hasil.halaman} halaman` : null,
+        hasil.ocr ? "sebagian lewat OCR" : null,
+        hasil.dipotong ? "dipotong di 500 ribu karakter" : null,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+
+      setLampiran({ nama: berkas.name, status: catatan });
+    } catch (err) {
+      setLampiran({
+        nama: berkas.name,
+        status: err instanceof Error ? err.message : "Gagal membaca berkas",
+        galat: true,
+      });
+    } finally {
+      setSibukLampiran(false);
+    }
   }
 
   async function kirim(teks: string) {
@@ -351,7 +402,15 @@ export default function Home() {
           </motion.p>
         )}
 
-        <Composer onKirim={kirim} sibuk={sibuk} mode={mode} />
+        <Composer
+          onKirim={kirim}
+          sibuk={sibuk}
+          mode={mode}
+          onLampirkan={lampirkan}
+          lampiran={lampiran}
+          sibukLampiran={sibukLampiran}
+          onHapusLampiran={() => setLampiran(null)}
+        />
       </div>
 
       <ConfirmDialog

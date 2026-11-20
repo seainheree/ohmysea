@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 3. Ambil konteks dokumen (RAG) hanya untuk mode chat.
-    const potongan = body.mode === "chat" ? await retrieve(body.message) : [];
+    const potongan = body.mode === "chat" ? await retrieve(body.message, { conversationId }) : [];
     const sources = toSources(potongan);
 
     // 4. Memori AI (fitur Pengaturan) — dipakai di kedua mode.
