@@ -25,11 +25,13 @@ export function Composer({
 
   function kirim() {
     const isi = teks.trim();
-    if (!isi || sibuk) return;
+    if (!isi || sibuk || sibukLampiran) return;
     onKirim(isi);
     setTeks("");
     if (area.current) area.current.style.height = "auto";
   }
+
+  const bisaKirim = !sibuk && !sibukLampiran && teks.trim().length > 0;
 
   return (
     <div className="shrink-0 border-t border-border bg-bg-topbar/95 backdrop-blur">
@@ -75,9 +77,9 @@ export function Composer({
           />
           <button
             onClick={() => berkas.current?.click()}
-            disabled={sibukLampiran}
+            disabled={sibukLampiran || sibuk}
             aria-label="Lampirkan dokumen"
-            title="Lampirkan dokumen — semua jenis, maks 10 MB"
+            title="Lampirkan dokumen — semua jenis, maks 10 MB, dipakai sekali"
             className={`mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-penuh transition-colors ${
               sibukLampiran ? "text-teks-muted" : "text-teks-muted hover:text-aksen"
             }`}
@@ -113,12 +115,10 @@ export function Composer({
           />
           <button
             onClick={kirim}
-            disabled={sibuk || teks.trim().length === 0}
+            disabled={!bisaKirim}
             aria-label="Kirim pesan"
             className={`mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-penuh transition-colors ${
-              sibuk || teks.trim().length === 0
-                ? "bg-border text-teks-muted"
-                : "bg-aksen text-white hover:bg-aksen-terang"
+              bisaKirim ? "bg-aksen text-white hover:bg-aksen-terang" : "bg-border text-teks-muted"
             }`}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">

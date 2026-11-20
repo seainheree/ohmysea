@@ -17,6 +17,23 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-21 — Lampiran sekali pakai, markdown rapi, regenerate, saran lanjutan
+
+- **Sesi**: lanjutan
+- **Tujuan**: permintaan pemilik — berkas dipakai sekali lalu dibuang, jawaban tampil rapi tanpa tanda markdown mentah, tombol ulangi (ikon saja), saran pertanyaan lanjutan dengan sakelar di navbar
+- **Dikerjakan**:
+  - T-701: `hapusLampiranPercakapan()` dipanggil di `onFinish` `/api/chat`; chip lampiran di komposer dilepas setelah balasan
+  - T-702: `lib/markdown.ts` + `components/chat/Markdown.tsx` — parser sendiri (tanpa HTML mentah, tautan non-http ditolak)
+  - T-703: baris "Konteks" + chip nama dokumen di bawah balasan, dari `messages.sources`
+  - T-704: `regenerate:true` di `/api/chat` + tombol ikon `ulang` di balasan terakhir
+  - T-705: `POST /api/saran` + chip saran + sakelar bintang di navbar (`localStorage: ohmysea-saran`)
+- **Keputusan**: chip nama dokumen sekarang tampil di balasan (sebelumnya dilarang di AGENTS.md) — permintaan pemilik, aturan diperbarui. Tidak ada dependensi baru.
+- **Verifikasi**: `pnpm lint` bersih; `pnpm test` 57 lulus; `pnpm build` exit 0; uji end-to-end dev :3100 — unggah `uji.txt` → jawaban `**SEA-1234**` → unggah ulang `ditimpa:false` (lampiran terhapus) → regenerate `roles: user,assistant` (assistant 1) → `/api/saran` 3 pertanyaan; uji browser: `strong` 7, `li` 11, `**` di DOM 0, chip konteks + tombol ulang + 3 chip saran tampil
+- **Blocker**: tidak ada
+- **Next**: deploy produksi (`vercel --prod`) lalu uji tombol lampiran di HP
+
+---
+
 ### 2026-11-04 — Bangun aplikasi: M0–M2 jalan, deploy Vercel
 
 - **Sesi**: lanjutan (setelah dokumen disetujui pemilik)

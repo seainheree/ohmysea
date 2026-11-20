@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react";
 
 import { TRANSISI } from "@/lib/motion";
 import type { Pesan } from "@/lib/api";
+import { Icon } from "@/components/ui/Icon";
+import { Markdown } from "@/components/chat/Markdown";
 
 /** Pesan ditambah durasi balasan (dihitung klien, hanya untuk ditampilkan). */
 export type PesanTampil = Pesan & { durasiMs?: number };
@@ -59,6 +61,10 @@ export function MessageList({
   mode,
   nama,
   menunggu = false,
+  onUlangi,
+  bisaUlangi = false,
+  saran = [],
+  onSaran,
 }: {
   pesan: PesanTampil[];
   streaming: string;
@@ -67,6 +73,12 @@ export function MessageList({
   nama?: string | null;
   /** true selama permintaan berjalan tapi belum ada teks yang masuk. */
   menunggu?: boolean;
+  /** Ulangi jawaban terakhir (ikon saja, di balasan asisten terakhir). */
+  onUlangi?: () => void;
+  bisaUlangi?: boolean;
+  /** Saran pertanyaan lanjutan; klik = langsung dikirim. */
+  saran?: string[];
+  onSaran?: (teks: string) => void;
 }) {
   const bawah = useRef<HTMLDivElement>(null);
 
@@ -75,6 +87,7 @@ export function MessageList({
   }, [pesan.length, streaming, menunggu]);
 
   const sedangMenulis = menunggu || streaming.length > 0;
+  const akhirAsisten = [...pesan].reverse().find((m) => m.role === "assistant")?.id ?? null;
 
   return (
     <div className="mx-auto flex w-full max-w-[760px] flex-col gap-sedang px-sedang py-besar">
@@ -89,13 +102,55 @@ export function MessageList({
             >
             <AvatarAsisten />
             <div className="min-w-0 flex-1">
-              <div className="whitespace-pre-wrap rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed text-teks">
-                {m.content}
+              <div className="rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed text-teks">
+                <Markdown teks={m.content} />
               </div>
-              <p className="mt-1 text-[10px] text-teks-muted-2">
-                <span className="text-aksen-lembut">Kirby</span>
-                {durasi(m.durasiMs) ? ` · ${durasi(m.durasiMs)}` : ""} · {waktu(m.createdAt)}
-              </p>
+              {m.sources && m.sources.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                  <span className="text-[10px] uppercase tracking-[0.08em] text-teks-muted-2">
+                    Konteks
+                  </span>
+                  {[...new Set(m.sources.map((s) => s.title))].map((judul) => (
+                    <span
+                      key={judul}
+                      title={judul}
+                      className="inline-flex max-w-[220px] items-center gap-1 rounded-penuh border border-border-kuat bg-bg-main px-2 py-0.5 text-[11px] text-teks-muted"
+                    >
+                      <Icon name="berkas" size={11} />
+                      <span className="truncate">{judul}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="mt-1 flex items-center gap-2">
+                <p className="text-[10px] text-teks-muted-2">
+                  <span className="text-aksen-lembut">Kirby</span>
+                  {durasi(m.durasiMs) ? ` · ${durasi(m.durasiMs)}` : ""} · {waktu(m.createdAt)}
+                </p>
+                {bisaUlangi && m.id === akhirAsisten && (
+                  <button
+                    onClick={onUlangi}
+                    aria-label="Ulangi jawaban"
+                    title="Ulangi jawaban"
+                    className="grid h-7 w-7 place-items-center rounded-penuh text-teks-muted-2 transition-colors hover:bg-border hover:text-teks"
+                  >
+                    <Icon name="ulang" size={14} />
+                  </button>
+                )}
+              </div>
+              {bisaUlangi && m.id === akhirAsisten && saran.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {saran.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => onSaran?.(s)}
+                      className="rounded-penuh border border-border-kuat bg-surface px-sedang py-1.5 text-left text-[12px] text-teks-muted transition-colors hover:border-aksen hover:text-teks"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             </motion.div>
           ) : (
@@ -130,7 +185,7 @@ export function MessageList({
               <div className="inline-flex max-w-full items-start rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed">
                 {streaming ? (
                   <>
-                    <span className="whitespace-pre-wrap">{streaming}</span>
+                    <Markdown teks={streaming} />
                     <motion.span
                       animate={{ opacity: [1, 0.2, 1] }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}

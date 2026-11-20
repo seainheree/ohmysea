@@ -13,6 +13,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M4 | Memori AI (Pengaturan), hapus riwayat, perapian UI/UX responsif | T-401..T-404 | done |
 | M5 | Tema gelap/terang, sidebar bisa ditutup, footer rapi, identitas Kirby, memori otomatis | T-501..T-506 | done |
 | M6 | Perbaikan indikator ganda, latar transparan gambar, jawaban tanpa penolakan kaku, gerak UI (Framer Motion + Lenis) | T-601..T-604 | done |
+| M7 | Lampiran sekali pakai, markdown rapi di balasan, regenerate, saran lanjutan + sakelar navbar | T-701..T-705 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -55,6 +56,11 @@ Jangan lompat milestone.
 | T-602 | done | Latar transparan: API menerima `transparan=1`; uji alfa pada gambar asli 1024×1024 → 851.640 dari 1.048.576 piksel transparan (81,2%); tombol "Unduh PNG transparan" melaporkan "PNG transparan diunduh." |
 | T-603 | done | Prompt baru: jawaban di luar dokumen tetap dijawab dari pengetahuan umum + catatan singkat; frasa "tidak ada di dokumen yang kamu tambahkan" dilarang eksplisit |
 | T-604 | done | Framer Motion: pesan/kartu/dialog beranimasi (9 elemen `style` inline, 8 kartu galeri); token `lib/motion.ts`; dialog buka→Batal hilang total (overlay 0); Lenis aktif (`main` class `lenis`) dan berhenti otomatis saat `prefers-reduced-motion` |
+| T-701 | done | Lampiran sekali pakai: setelah jawaban tersimpan, `hapusLampiranPercakapan()` membuang dokumen percakapan; unggah ulang teks sama → `ditimpa:false` (dokumen lama benar-benar hilang) |
+| T-702 | done | Balasan dirender markdown di UI: `strong` 7, `li` 11, sisa `**` di DOM 0 pada uji browser; `lib/saran.test.ts` menguji parser |
+| T-703 | done | Baris "Konteks" + chip nama dokumen di bawah balasan (bertahan setelah lampiran dihapus, diambil dari `messages.sources`) |
+| T-704 | done | Regenerate ikon saja di balasan terakhir: `regenerate:true` → roles `user,assistant`, jumlah assistant 1 (tidak dobel) |
+| T-705 | done | Saran lanjutan `/api/saran` (model `GROQ_MODEL_MEMORI`) + sakelar navbar tersimpan di `localStorage`; uji nyata: 3 chip muncul ("Apa tujuan utama ohmysea?", …) |
 
 ---
 
@@ -417,6 +423,28 @@ Jangan lompat milestone.
 
 ---
 
+## M7 — Lampiran sekali pakai, markdown rapi, regenerate, saran lanjutan
+
+### T-701 — Lampiran hanya sekali pakai
+- **Cakupan**: `lib/rag/ingest.ts` (`hapusLampiranPercakapan`), `app/api/chat/route.ts` (`onFinish`), `app/page.tsx` (chip lampiran dilepas setelah balasan)
+- **Bukti**: unggah `uji.txt` → tanya → unggah ulang teks yang sama → `ditimpa:false` (dokumen lama sudah tidak ada). Nama berkas tetap terlihat di chip "Konteks" karena diambil dari `messages.sources`.
+
+### T-702 — Markdown dirender di balasan
+- **Cakupan**: `lib/markdown.ts` (parser sendiri, tanpa HTML mentah), `components/chat/Markdown.tsx`, `components/chat/MessageList.tsx`
+- **Bukti**: `pnpm test` 57 lulus (termasuk uji tautan `javascript:` ditolak); uji browser: `strong` 7, `li` 11, sisa `**` di DOM 0.
+
+### T-703 — Chip konteks di balasan
+- Baris "Konteks" berisi nama dokumen yang dipakai menjawab (dedupe, dipotong 220 px).
+
+### T-704 — Regenerate
+- Tombol ikon (`ulang`) di balasan terakhir. Server membuang balasan terakhir lalu menjawab ulang tanpa menyimpan pesan pengguna dua kali. `autoMemori` dimatikan saat regenerate supaya memori tidak dobel.
+
+### T-705 — Saran lanjutan + sakelar navbar
+- `POST /api/saran` memakai model `GROQ_MODEL_MEMORI` (`gpt-oss-20b`): `maxOutputTokens` 700 + `reasoningEffort: low`, karena jatah kecil membuat balasan kosong (`finish_reason=length`) akibat token reasoning.
+- Sakelar ikon bintang di navbar; pilihan disimpan di `localStorage` (`ohmysea-saran`).
+
+---
+
 ## Temuan di luar cakupan
 
 | # | Temuan | Ditemukan saat | Prioritas | Jadi task? |
@@ -426,6 +454,7 @@ Jangan lompat milestone.
 | F3 | Kunci Cloudflare/Groq/Firecrawl pernah ditulis di file contoh → dulu disarankan rotasi. **Pemilik memutuskan tidak merotasi.** Risiko diterima: file contoh lama sudah dihapus dan tidak pernah ter-commit/ter-push (untracked sejak awal) | setup repo | tinggi | ditutup oleh keputusan pemilik |
 | F4 | Provider gambar pernah menolak prompt wajar dengan error NSFW (false positive) | uji provider | sedang | ya — ditangani di T-301 |
 | F5 | `flux-1-schnell` tidak mendukung image-to-image meski ada di katalog "Text-to-Image" | uji provider | rendah | ya — divalidasi di T-203 |
+| F6 | `simpanMemoriOtomatis()` memakai `gpt-oss-20b` dengan jatah token kecil; pola yang sama seperti `/api/saran` berisiko balasan kosong karena token reasoning dihabiskan lebih dulu. Kalau memori otomatis terasa tidak jalan, ini penyebab pertamanya | T-705 | sedang | belum — perlu uji terpisah |
 
 Jangan perbaiki temuan di luar cakupan saat sesi aktif. Catat saja di sini.
 

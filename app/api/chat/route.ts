@@ -9,18 +9,25 @@ import { getDb } from "@/lib/db/client";
 import { conversations, messages } from "@/lib/db/schema";
 import { kunciRateLimit, pesanError, rateLimit, requireSession } from "@/lib/guard";
 import { ambilMemoriAktif, buildMemoryBlock, simpanMemoriOtomatis } from "@/lib/memory";
+import { hapusLampiranPercakapan } from "@/lib/rag/ingest";
 import { retrieve, toSources } from "@/lib/rag/retrieve";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const bodySchema = z.object({
-  conversationId: z.uuid().optional(),
-  mode: z.enum(["chat", "curhat"]),
-  message: z.string().min(1, "Pesan tidak boleh kosong").max(4000, "Pesan terlalu panjang (maks 4000 karakter)"),
-  /** Bawaan menyala; klien bisa mematikannya dari Pengaturan. */
-  autoMemori: z.boolean().optional(),
-});
+const bodySchema = z
+  .object({
+    conversationId: z.uuid().optional(),
+    mode: z.enum(["chat", "curhat"]),
+    message: z.string().min(1, "Pesan tidak boleh kosong").max(4000, "Pesan terlalu panjang (maks 4000 karakter)"),
+    /** Bawaan menyala; klien bisa mematikannya dari Pengaturan. */
+    autoMemori: z.boolean().optional(),
+    /** Ulangi jawaban terakhir: pertanyaan terakhir dipakai ulang, tidak disimpan dobel. */
+    regenerate: z.boolean().optional(),
+  })
+  .refine((v) => !v.regenerate || Boolean(v.conversationId), {
+    message: "conversationId wajib diisi untuk regenerate",
+  });
 
 function judulDari(pesan: string): string {
   return pesan.replace(/\s+/g, " ").trim().split(" ").slice(0, 6).join(" ").slice(0, 60);
@@ -51,12 +58,28 @@ export async function POST(request: NextRequest) {
   try {
     const db = getDb();
 
-    // 1. Pastikan percakapan ada (buat baru kalau belum).
+    // 1. Percakapan: buat baru bila belum ada. Regenerate memakai percakapan yang ada
+    //    dan membuang jawaban terakhir — pertanyaan terakhir tidak disimpan ulang.
+    const pertanyaan = body.message;
     let conversationId = body.conversationId;
-    if (!conversationId) {
+    if (body.regenerate) {
+      const [akhir] = await db
+        .select({ id: messages.id, role: messages.role })
+        .from(messages)
+        .where(eq(messages.conversationId, conversationId!))
+        .orderBy(desc(messages.createdAt))
+        .limit(1);
+      if (!akhir || akhir.role !== "assistant") {
+        return NextResponse.json(
+          { ok: false, pesan: "Belum ada jawaban terakhir yang bisa diulang." },
+          { status: 400 },
+        );
+      }
+      await db.delete(messages).where(eq(messages.id, akhir.id));
+    } else if (!conversationId) {
       const [baru] = await db
         .insert(conversations)
-        .values({ title: judulDari(body.message) || "Percakapan baru", mode: body.mode })
+        .values({ title: judulDari(pertanyaan) || "Percakapan baru", mode: body.mode })
         .returning({ id: conversations.id });
       if (!baru) throw new Error("Gagal membuat percakapan");
       conversationId = baru.id;
@@ -74,15 +97,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Simpan pesan pengguna.
-    await db.insert(messages).values({
-      conversationId,
-      role: "user",
-      content: body.message,
-    });
+    if (!conversationId) throw new Error("conversationId tidak tersedia");
+
+    // 2. Simpan pesan pengguna (tidak untuk regenerate).
+    if (!body.regenerate) {
+      await db.insert(messages).values({
+        conversationId,
+        role: "user",
+        content: pertanyaan,
+      });
+    }
 
     // 3. Ambil konteks dokumen (RAG) hanya untuk mode chat.
-    const potongan = body.mode === "chat" ? await retrieve(body.message, { conversationId }) : [];
+    const potongan = body.mode === "chat" ? await retrieve(pertanyaan, { conversationId }) : [];
     const sources = toSources(potongan);
 
     // 4. Memori AI (fitur Pengaturan) — dipakai di kedua mode.
@@ -133,8 +160,12 @@ export async function POST(request: NextRequest) {
           // Memori otomatis dijalankan di sini (bukan after()) karena callback ini
           // terbukti tetap dieksekusi setelah stream selesai, termasuk di Vercel.
           if (body.autoMemori !== false && text.trim()) {
-            await simpanMemoriOtomatis(body.message, text);
+            await simpanMemoriOtomatis(pertanyaan, text);
           }
+
+          // Lampiran sekali pakai: sudah dipakai untuk jawaban ini, isinya dibuang.
+          // Nama berkas tetap tampil di chip sumber pesan (messages.sources).
+          await hapusLampiranPercakapan(conversationId);
         } catch (err) {
           console.error("gagal menyimpan balasan:", pesanError(err));
         }

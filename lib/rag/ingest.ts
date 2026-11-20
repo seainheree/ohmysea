@@ -102,6 +102,20 @@ export async function ingestDocument(input: {
   };
 }
 
+/**
+ * Hapus semua lampiran satu percakapan — lampiran bersifat sekali pakai:
+ * setelah jawaban tersimpan, isinya tidak dipakai lagi. Chunk ikut terhapus
+ * lewat cascade. Nama berkas tetap terlihat di chip sumber pesan (messages.sources).
+ */
+export async function hapusLampiranPercakapan(conversationId: string): Promise<number> {
+  const db = getDb();
+  const hapus = await db
+    .delete(documents)
+    .where(eq(documents.conversationId, conversationId))
+    .returning({ id: documents.id });
+  return hapus.length;
+}
+
 /** Ambil isi halaman dari URL lewat Firecrawl, kembalikan markdown. */
 export async function scrapeUrl(url: string, apiKey: string): Promise<string> {
   const res = await fetch("https://api.firecrawl.dev/v1/scrape", {

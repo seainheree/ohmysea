@@ -16,6 +16,8 @@ export type NamaIkon =
   | "kirim"
   | "berkas"
   | "matahari"
+  | "ulang"
+  | "saran"
   | "panel";
 
 const JALUR: Record<NamaIkon, string> = {
@@ -35,6 +37,8 @@ const JALUR: Record<NamaIkon, string> = {
   berkas: "M6 3h8l4 4v14H6zM14 3v5h5",
   matahari:
     "M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4",
+  ulang: "M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5",
+  saran: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z",
   panel: "M4 5h16v14H4zM10 5v14",
 };
 

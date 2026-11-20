@@ -206,6 +206,8 @@ export async function kirimPesan(input: {
   mode: Mode;
   message: string;
   autoMemori?: boolean;
+  /** Ulangi jawaban terakhir: pertanyaan yang sama dipakai ulang, tidak disimpan dobel. */
+  regenerate?: boolean;
   onChunk: (teks: string) => void;
 }): Promise<{ conversationId: string; sources: Pesan["sources"]; durasiMs: number }> {
   const mulai = Date.now();
@@ -217,6 +219,7 @@ export async function kirimPesan(input: {
       mode: input.mode,
       message: input.message,
       autoMemori: input.autoMemori,
+      regenerate: input.regenerate,
     }),
   });
 
@@ -254,6 +257,17 @@ export async function kirimPesan(input: {
   }
 
   return { conversationId, sources, durasiMs: Date.now() - mulai };
+}
+
+/** 3 pertanyaan lanjutan untuk percakapan ini (kosong kalau model gagal). */
+export async function ambilSaran(conversationId: string): Promise<string[]> {
+  const res = await fetch("/api/saran", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ conversationId }),
+  });
+  const data = await baca<{ saran?: string[] }>(res);
+  return data.saran ?? [];
 }
 
 export async function buatGambar(input: {

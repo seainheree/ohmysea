@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { TRANSISI } from "@/lib/motion";
 import {
   ambilPesan,
+  ambilSaran,
   buatPercakapan,
   daftarMemori,
   daftarPercakapan,
@@ -50,6 +51,8 @@ export default function Home() {
   const [catatanMemori, setCatatanMemori] = useState<string | null>(null);
   const [lampiran, setLampiran] = useState<{ nama: string; status: string; galat?: boolean } | null>(null);
   const [sibukLampiran, setSibukLampiran] = useState(false);
+  const [saran, setSaran] = useState<string[]>([]);
+  const [saranAktif, setSaranAktif] = useState(true);
   const [panggilan, setPanggilan] = useState<string | null>(null);
   const [wadahGulir, setWadahGulir] = useState<HTMLElement | null>(null);
   const [isiGulir, setIsiGulir] = useState<HTMLDivElement | null>(null);
@@ -60,11 +63,13 @@ export default function Home() {
     try {
       setSidebarRingkas(localStorage.getItem("ohmysea-sidebar") === "ringkas");
       setAutoMemori(localStorage.getItem("ohmysea-memori-otomatis") !== "mati");
+      setSaranAktif(localStorage.getItem("ohmysea-saran") !== "mati");
     } catch {
       // localStorage bisa diblokir; abaikan
     }
     function pantau(e: StorageEvent) {
       if (e.key === "ohmysea-memori-otomatis") setAutoMemori(e.newValue !== "mati");
+      if (e.key === "ohmysea-saran") setSaranAktif(e.newValue !== "mati");
     }
     window.addEventListener("storage", pantau);
     return () => window.removeEventListener("storage", pantau);
@@ -78,6 +83,19 @@ export default function Home() {
       } catch {
         // abaikan
       }
+      return baru;
+    });
+  }
+
+  function gantiSaran() {
+    setSaranAktif((s) => {
+      const baru = !s;
+      try {
+        localStorage.setItem("ohmysea-saran", baru ? "nyala" : "mati");
+      } catch {
+        // abaikan
+      }
+      if (!baru) setSaran([]);
       return baru;
     });
   }
@@ -118,6 +136,7 @@ export default function Home() {
   async function bukaPercakapan(p: Percakapan) {
     setAktif(p);
     setError(null);
+    setSaran([]);
     setSidebarTerbuka(false);
     try {
       const data = await ambilPesan(p.id);
@@ -132,6 +151,7 @@ export default function Home() {
     setPesan([]);
     setStreaming("");
     setError(null);
+    setSaran([]);
     setSidebarTerbuka(false);
   }
 
@@ -206,10 +226,12 @@ export default function Home() {
   }
 
   async function kirim(teks: string) {
+    if (sibukLampiran) return;
     setSibuk(true);
     setError(null);
     setStreaming("");
     setCatatanMemori(null);
+    setSaran([]);
 
     const sementara: PesanTampil = {
       id: `sementara-${Date.now()}`,
@@ -243,6 +265,13 @@ export default function Home() {
       // Balasan sudah tampil — lepaskan status sibuk SEKARANG, jangan tunggu
       // pengecekan memori, kalau tidak indikator "sedang menjawab" muncul lagi.
       setSibuk(false);
+      // Lampiran sekali pakai: server sudah membuangnya setelah jawaban tersimpan.
+      setLampiran(null);
+      if (saranAktif) {
+        void ambilSaran(hasil.conversationId)
+          .then(setSaran)
+          .catch(() => setSaran([]));
+      }
 
       // Memori otomatis disimpan setelah balasan selesai (server) — beri jeda
       // sebentar lalu bandingkan jumlahnya supaya pengguna tahu apa yang diingat.
@@ -260,6 +289,44 @@ export default function Home() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mengirim pesan");
+      setStreaming("");
+      setSibuk(false);
+    }
+  }
+
+  /** Ulangi jawaban terakhir: pertanyaan terakhir dikirim ulang, tidak disimpan dua kali. */
+  async function ulangi() {
+    const id = aktif?.id;
+    const terakhirTanya = [...pesan].reverse().find((m) => m.role === "user");
+    if (!id || sibuk || !terakhirTanya) return;
+
+    setSibuk(true);
+    setError(null);
+    setStreaming("");
+    setSaran([]);
+    try {
+      const hasil = await kirimPesan({
+        conversationId: id,
+        mode,
+        message: terakhirTanya.content,
+        autoMemori: false,
+        regenerate: true,
+        onChunk: (bagian) => setStreaming((s) => s + bagian),
+      });
+
+      const data = await ambilPesan(id);
+      setPesan(
+        data.pesan.map((m, i) =>
+          m.role === "assistant" && i === data.pesan.length - 1
+            ? { ...m, durasiMs: hasil.durasiMs }
+            : m,
+        ),
+      );
+      setStreaming("");
+      setSibuk(false);
+      if (saranAktif) void ambilSaran(id).then(setSaran).catch(() => setSaran([]));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengulang jawaban");
       setStreaming("");
       setSibuk(false);
     }
@@ -374,6 +441,18 @@ export default function Home() {
             <ModeSwitch mode={mode} onChange={gantiMode} />
           </div>
 
+          <button
+            onClick={gantiSaran}
+            aria-pressed={saranAktif}
+            aria-label={saranAktif ? "Matikan saran lanjutan" : "Nyalakan saran lanjutan"}
+            title={saranAktif ? "Saran lanjutan: nyala" : "Saran lanjutan: mati"}
+            className={`grid h-11 w-11 shrink-0 place-items-center rounded-penuh transition-colors hover:bg-border ${
+              saranAktif ? "text-aksen-lembut" : "text-teks-muted-2 hover:text-teks"
+            }`}
+          >
+            <Icon name="saran" />
+          </button>
+
           <ThemeToggle />
 
           {aktif && (
@@ -412,6 +491,10 @@ export default function Home() {
               mode={mode}
               nama={panggilan}
               menunggu={sibuk && streaming.length === 0}
+              onUlangi={() => void ulangi()}
+              bisaUlangi={!sibuk && pesan.some((m) => m.role === "assistant")}
+              saran={saranAktif ? saran : []}
+              onSaran={(teks) => void kirim(teks)}
             />
           </div>
         </main>
