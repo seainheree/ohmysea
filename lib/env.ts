@@ -23,6 +23,9 @@ const schema = z.object({
   CLOUDFLARE_API_TOKEN: z.string().min(1, "CLOUDFLARE_API_TOKEN wajib"),
   CF_MODEL_EMBED: z.string().min(1).default("@cf/baai/bge-m3"),
   CF_MODEL_IMAGE: z.string().min(1).default("@cf/black-forest-labs/flux-2-klein-4b"),
+  // Model vision Cloudflare (multimodal, endpoint /ai/v1/chat/completions):
+  // dipakai untuk membaca gambar lampiran di chat.
+  CF_MODEL_VISION: z.string().min(1).default("@cf/qwen/qwen3.8-27b"),
 
   FIRECRAWL_API_KEY: z.string().min(1).optional(),
 

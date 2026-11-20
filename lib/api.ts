@@ -92,6 +92,23 @@ export async function unggahLampiran(input: {
   return baca<HasilLampiran>(res);
 }
 
+/** Lampirkan gambar: server meminta deskripsi ke model vision, lalu menyimpannya. */
+export async function unggahLampiranGambar(input: {
+  conversationId: string;
+  filename: string;
+  ocrText: string;
+  image: Blob;
+}): Promise<HasilLampiran & { model: string }> {
+  const form = new FormData();
+  form.set("conversationId", input.conversationId);
+  form.set("filename", input.filename);
+  form.set("ocrText", input.ocrText);
+  form.set("image", input.image, input.filename);
+
+  const res = await fetch("/api/attachments/image", { method: "POST", body: form });
+  return baca<HasilLampiran & { model: string }>(res);
+}
+
 export async function gantiJudul(id: string, title: string): Promise<void> {
   const res = await fetch(`/api/conversations/${id}`, {
     method: "PATCH",

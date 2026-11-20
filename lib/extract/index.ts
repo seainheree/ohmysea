@@ -25,6 +25,8 @@ export type HasilEkstraksi = {
   halaman?: number;
   /** true kalau sebagian isi dibaca lewat OCR. */
   ocr: boolean;
+  /** true kalau gambar perlu dikirim ke model vision (teks saja tidak cukup). */
+  butuhVisi: boolean;
 };
 
 const EKSTENSI_TEKS = new Set([
@@ -194,16 +196,24 @@ export async function extractText(
     halaman = hasil.halaman;
     pakaiOcr = hasil.ocr;
   } else if (jenis === "gambar") {
-    lapor("OCR gambar");
-    teks = await ocr(berkas);
+    lapor("Membaca teks di gambar");
+    // OCR opsional: foto tanpa tulisan memang menghasilkan teks kosong, dan itu
+    // bukan kegagalan — model vision di server tetap bisa menjelaskan isinya.
+    try {
+      teks = await ocr(berkas);
+    } catch {
+      teks = "";
+    }
     pakaiOcr = true;
   } else {
     lapor(`Membaca ${jenis.toUpperCase()}`);
     teks = extractOoxml(bytes, jenis as OoxmlKind);
   }
 
-  if (!teks.trim()) {
-    throw new Error("Tidak ada teks yang bisa diambil — berkas mungkin hanya berisi gambar tanpa OCR");
+  const butuhVisi = jenis === "gambar";
+
+  if (!teks.trim() && !butuhVisi) {
+    throw new Error("Tidak ada teks yang bisa diambil dari berkas ini");
   }
 
   const dipotong = teks.length > BATAS_TEKS;
@@ -213,5 +223,42 @@ export async function extractText(
     dipotong,
     halaman,
     ocr: pakaiOcr,
+    butuhVisi,
   };
+}
+
+/**
+ * Perkecil gambar sebelum dikirim ke server.
+ *
+ * Body request Vercel Functions dibatasi 4,5 MB, sedangkan foto ponsel 10 MB —
+ * jadi sisi terpanjang dipotong ke 1280 px dan diubah ke JPEG.
+ *
+ * shortcut: selalu JPEG, jadi transparansi hilang. Cukup untuk model vision dan
+ * untuk membaca tulisan di tangkapan layar; kalau nanti perlu alpha, kirim PNG
+ * saat sumbernya PNG.
+ */
+export async function kecilkanGambar(
+  berkas: File,
+  maksSisi = 1280,
+  kualitas = 0.85,
+): Promise<{ blob: Blob; mime: string }> {
+  const bitmap = await createImageBitmap(berkas);
+  try {
+    const skala = Math.min(1, maksSisi / Math.max(bitmap.width, bitmap.height));
+    const kanvas = document.createElement("canvas");
+    kanvas.width = Math.max(1, Math.round(bitmap.width * skala));
+    kanvas.height = Math.max(1, Math.round(bitmap.height * skala));
+
+    const konteks = kanvas.getContext("2d");
+    if (!konteks) throw new Error("Kanvas tidak tersedia di browser ini");
+    konteks.drawImage(bitmap, 0, 0, kanvas.width, kanvas.height);
+
+    const blob = await new Promise<Blob | null>((selesai) =>
+      kanvas.toBlob(selesai, "image/jpeg", kualitas),
+    );
+    if (!blob) throw new Error("Gagal mengecilkan gambar");
+    return { blob, mime: "image/jpeg" };
+  } finally {
+    bitmap.close();
+  }
 }

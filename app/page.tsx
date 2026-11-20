@@ -24,11 +24,12 @@ import {
   hapusSemuaPercakapan,
   kirimPesan,
   unggahLampiran,
+  unggahLampiranGambar,
   type Mode,
   type Percakapan,
   type Pesan,
 } from "@/lib/api";
-import { extractText } from "@/lib/extract";
+import { extractText, jenisDari, kecilkanGambar } from "@/lib/extract";
 import { tebakPanggilanPengguna } from "@/lib/panggilan";
 
 export default function Home() {
@@ -134,25 +135,49 @@ export default function Home() {
     setSidebarTerbuka(false);
   }
 
+  async function pastikanPercakapan(): Promise<string> {
+    if (aktif?.id) return aktif.id;
+    const baru = await buatPercakapan({ mode });
+    setAktif(baru);
+    await muatDaftar(mode);
+    return baru.id;
+  }
+
   async function lampirkan(berkas: File) {
     setSibukLampiran(true);
     setLampiran({ nama: berkas.name, status: "Membaca…" });
     try {
+      if (jenisDari(berkas) === "gambar") {
+        // Gambar: OCR di browser (untuk tulisan) + deskripsi model vision di server.
+        let ocrText = "";
+        try {
+          const hasilOcr = await extractText(berkas, (pesan) =>
+            setLampiran({ nama: berkas.name, status: pesan }),
+          );
+          ocrText = hasilOcr.teks;
+        } catch {
+          // OCR bukan syarat: foto tanpa tulisan tetap bisa dijelaskan model vision.
+        }
+
+        setLampiran({ nama: berkas.name, status: "Menanyakan isi gambar…" });
+        const { blob } = await kecilkanGambar(berkas);
+        const gambar = await unggahLampiranGambar({
+          conversationId: await pastikanPercakapan(),
+          filename: berkas.name,
+          ocrText,
+          image: blob,
+        });
+
+        setLampiran({ nama: berkas.name, status: `${gambar.pesan} · ${gambar.model}` });
+        return;
+      }
+
       const hasil = await extractText(berkas, (pesan) =>
         setLampiran({ nama: berkas.name, status: pesan }),
       );
 
-      // Lampiran menempel ke percakapan: buat kosong dulu kalau ini percakapan baru.
-      let id = aktif?.id;
-      if (!id) {
-        const baru = await buatPercakapan({ mode });
-        id = baru.id;
-        setAktif(baru);
-        await muatDaftar(mode);
-      }
-
       const simpan = await unggahLampiran({
-        conversationId: id,
+        conversationId: await pastikanPercakapan(),
         filename: berkas.name,
         mime: berkas.type,
         size: berkas.size,
