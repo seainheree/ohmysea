@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { LockScreen } from "@/components/LockScreen";
 import { Composer } from "@/components/chat/Composer";
@@ -26,6 +26,7 @@ import {
   kirimPesan,
   unggahLampiran,
   unggahLampiranGambar,
+  type BerkasSesi,
   type Mode,
   type Percakapan,
   type Pesan,
@@ -49,13 +50,22 @@ export default function Home() {
   const [sidebarRingkas, setSidebarRingkas] = useState(false);
   const [autoMemori, setAutoMemori] = useState(true);
   const [catatanMemori, setCatatanMemori] = useState<string | null>(null);
-  const [lampiran, setLampiran] = useState<{ nama: string; status: string; galat?: boolean } | null>(null);
+  const [lampiran, setLampiran] = useState<{
+    nama: string;
+    status: string;
+    galat?: boolean;
+    documentId?: string;
+  } | null>(null);
+  const [berkasSesi, setBerkasSesi] = useState<BerkasSesi[]>([]);
   const [sibukLampiran, setSibukLampiran] = useState(false);
   const [saran, setSaran] = useState<string[]>([]);
   const [saranAktif, setSaranAktif] = useState(true);
   const [panggilan, setPanggilan] = useState<string | null>(null);
   const [wadahGulir, setWadahGulir] = useState<HTMLElement | null>(null);
   const [isiGulir, setIsiGulir] = useState<HTMLDivElement | null>(null);
+  // id percakapan aktif disimpan di ref juga: `aktif` (state) bisa belum ter-render
+  // saat pesan dikirim tepat setelah lampiran membuat percakapan baru.
+  const aktifIdRef = useRef<string | null>(null);
 
   useLenis(wadahGulir, isiGulir);
 
@@ -134,6 +144,7 @@ export default function Home() {
   }, [mode, muatDaftar, muatMemori]);
 
   async function bukaPercakapan(p: Percakapan) {
+    aktifIdRef.current = p.id;
     setAktif(p);
     setError(null);
     setSaran([]);
@@ -141,14 +152,17 @@ export default function Home() {
     try {
       const data = await ambilPesan(p.id);
       setPesan(data.pesan);
+      setBerkasSesi(data.berkas);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal memuat pesan");
     }
   }
 
   function percakapanBaru() {
+    aktifIdRef.current = null;
     setAktif(null);
     setPesan([]);
+    setBerkasSesi([]);
     setStreaming("");
     setError(null);
     setSaran([]);
@@ -156,11 +170,17 @@ export default function Home() {
   }
 
   async function pastikanPercakapan(): Promise<string> {
-    if (aktif?.id) return aktif.id;
+    if (aktifIdRef.current) return aktifIdRef.current;
     const baru = await buatPercakapan({ mode });
+    aktifIdRef.current = baru.id;
     setAktif(baru);
     await muatDaftar(mode);
     return baru.id;
+  }
+
+  /** Catat berkas yang tersimpan di sesi ini (ganti entri dengan judul sama). */
+  function catatBerkas(id: string, title: string) {
+    setBerkasSesi((daftar) => [...daftar.filter((b) => b.id !== id && b.title !== title), { id, title }]);
   }
 
   async function lampirkan(berkas: File) {
@@ -188,7 +208,12 @@ export default function Home() {
           image: blob,
         });
 
-        setLampiran({ nama: berkas.name, status: `${gambar.pesan} · ${gambar.model}` });
+        setLampiran({
+          nama: berkas.name,
+          status: `${gambar.pesan} · ${gambar.model}`,
+          documentId: gambar.documentId,
+        });
+        catatBerkas(gambar.documentId, berkas.name);
         return;
       }
 
@@ -213,7 +238,8 @@ export default function Home() {
         .filter(Boolean)
         .join(" · ");
 
-      setLampiran({ nama: berkas.name, status: catatan });
+      setLampiran({ nama: berkas.name, status: catatan, documentId: simpan.documentId });
+      catatBerkas(simpan.documentId, berkas.name);
     } catch (err) {
       setLampiran({
         nama: berkas.name,
@@ -233,11 +259,19 @@ export default function Home() {
     setCatatanMemori(null);
     setSaran([]);
 
+    // Lampiran yang sedang terpasang ikut jadi "Konteks" di bubble pesan ini,
+    // lalu dilepas dari komposer karena sudah pindah ke pesannya.
+    const lampiranDikirim = lampiran && !lampiran.galat ? lampiran : null;
+    setLampiran(null);
+
     const sementara: PesanTampil = {
       id: `sementara-${Date.now()}`,
-      conversationId: aktif?.id ?? "",
+      conversationId: aktifIdRef.current ?? "",
       role: "user",
       content: teks,
+      sources: lampiranDikirim?.documentId
+        ? [{ documentId: lampiranDikirim.documentId, title: lampiranDikirim.nama, score: 1 }]
+        : null,
       createdAt: new Date().toISOString(),
     };
     setPesan((p) => [...p, sementara]);
@@ -245,10 +279,11 @@ export default function Home() {
     try {
       const sebelum = jumlahMemori;
       const hasil = await kirimPesan({
-        conversationId: aktif?.id,
+        conversationId: aktifIdRef.current ?? undefined,
         mode,
         message: teks,
         autoMemori,
+        attachmentIds: lampiranDikirim?.documentId ? [lampiranDikirim.documentId] : undefined,
         onChunk: (bagian) => setStreaming((s) => s + bagian),
       });
 
@@ -259,14 +294,14 @@ export default function Home() {
           : m,
       );
       setPesan(daftar);
+      setBerkasSesi(data.berkas);
+      aktifIdRef.current = data.percakapan.id;
       setAktif(data.percakapan);
       setStreaming("");
       await muatDaftar(mode);
       // Balasan sudah tampil — lepaskan status sibuk SEKARANG, jangan tunggu
       // pengecekan memori, kalau tidak indikator "sedang menjawab" muncul lagi.
       setSibuk(false);
-      // Lampiran sekali pakai: server sudah membuangnya setelah jawaban tersimpan.
-      setLampiran(null);
       if (saranAktif) {
         void ambilSaran(hasil.conversationId)
           .then(setSaran)
@@ -291,12 +326,14 @@ export default function Home() {
       setError(err instanceof Error ? err.message : "Gagal mengirim pesan");
       setStreaming("");
       setSibuk(false);
+      // Kirim gagal: lampiran belum terpakai, kembalikan ke komposer supaya bisa diulang.
+      if (lampiranDikirim) setLampiran(lampiranDikirim);
     }
   }
 
   /** Ulangi jawaban terakhir: pertanyaan terakhir dikirim ulang, tidak disimpan dua kali. */
   async function ulangi() {
-    const id = aktif?.id;
+    const id = aktifIdRef.current;
     const terakhirTanya = [...pesan].reverse().find((m) => m.role === "user");
     if (!id || sibuk || !terakhirTanya) return;
 
@@ -518,6 +555,7 @@ export default function Home() {
           lampiran={lampiran}
           sibukLampiran={sibukLampiran}
           onHapusLampiran={() => setLampiran(null)}
+          berkasSesi={berkasSesi}
         />
       </div>
 

@@ -14,6 +14,8 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M5 | Tema gelap/terang, sidebar bisa ditutup, footer rapi, identitas Kirby, memori otomatis | T-501..T-506 | done |
 | M6 | Perbaikan indikator ganda, latar transparan gambar, jawaban tanpa penolakan kaku, gerak UI (Framer Motion + Lenis) | T-601..T-604 | done |
 | M7 | Lampiran sekali pakai, markdown rapi di balasan, regenerate, saran lanjutan + sakelar navbar | T-701..T-705 | done |
+| M8 | Konteks lampiran: chip di bubble pesan, retrieval lampiran tanpa ambang, konteks hanya dari berkas terunggah | T-801..T-804 | done |
+| M9 | Berkas per sesi chat, memori paten vs otomatis (tabel terpisah), sembunyikan chip konteks global, rapikan layar awal | T-901..T-904 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -60,6 +62,14 @@ Jangan lompat milestone.
 | T-702 | done | Balasan dirender markdown di UI: `strong` 7, `li` 11, sisa `**` di DOM 0 pada uji browser; `lib/saran.test.ts` menguji parser |
 | T-703 | done | Baris "Konteks" + chip nama dokumen di bawah balasan (bertahan setelah lampiran dihapus, diambil dari `messages.sources`) |
 | T-704 | done | Regenerate ikon saja di balasan terakhir: `regenerate:true` → roles `user,assistant`, jumlah assistant 1 (tidak dobel) |
+| T-801 | done | Chip "Konteks" tampil di bubble pesan pengguna saat membawa berkas (dari `messages.sources`; tampil juga saat streaming) |
+| T-802 | done | `/api/chat` mencatat dokumen lampiran ke `sources` pesan user; retrieval lampiran tanpa ambang skor (`pilihPotongan()` + 5 test baru) |
+| T-803 | done | `aktifIdRef` menggantikan `aktif?.id` di jalur kirim/ulang — lampiran tak lagi kehilangan percakapan saat state belum ter-render |
+| T-804 | done | Saat ada lampiran, retrieval hanya memakai dokumen percakapan (`hanyaLampiran`) — dokumen global (ADR/PRD/DESIGN) tidak ikut jadi konteks |
+| T-901 | done | Berkas unggahan tersimpan selama satu sesi percakapan (bukan sekali pakai); `GET /api/conversations/[id]` mengembalikan `berkas`, komposer menampilkan "Berkas sesi" |
+| T-902 | done | Tabel baru `permanent_memories` (memori paten) terpisah dari `memories` (otomatis); migrasi `0003_high_iron_fist.sql`; panel Pengaturan dua bagian; prompt memakai keduanya |
+| T-903 | done | Chip "Konteks" di balasan hanya berisi berkas unggahan; dokumen global tetap dipakai menjawab tapi tidak ditampilkan |
+| T-904 | done | Empat kartu saran di layar awal chat dihapus; hanya sapaan Kirby yang tersisa |
 | T-705 | done | Saran lanjutan `/api/saran` (model `GROQ_MODEL_MEMORI`) + sakelar navbar tersimpan di `localStorage`; uji nyata: 3 chip muncul ("Apa tujuan utama ohmysea?", …) |
 
 ---
@@ -442,6 +452,50 @@ Jangan lompat milestone.
 ### T-705 — Saran lanjutan + sakelar navbar
 - `POST /api/saran` memakai model `GROQ_MODEL_MEMORI` (`gpt-oss-20b`): `maxOutputTokens` 700 + `reasoningEffort: low`, karena jatah kecil membuat balasan kosong (`finish_reason=length`) akibat token reasoning.
 - Sakelar ikon bintang di navbar; pilihan disimpan di `localStorage` (`ohmysea-saran`).
+
+---
+
+## M8 — Konteks lampiran yang terbaca & tampil
+
+Latar: chip konteks hanya muncul bila skor retrieval ≥ 0.30, jadi pertanyaan pendek
+membuat lampiran tampak "tidak terbaca" walau model memakainya. Pesan pengguna juga
+tak pernah menampilkan berkas yang dibawanya.
+
+### T-801 — Chip berkas di bubble pesan pengguna
+- **Cakupan**: `components/chat/MessageList.tsx`, `app/page.tsx`
+- **Bukti**: pesan pengguna menampilkan baris "Konteks" berisi nama berkas, termasuk
+  saat streaming (chip dari lampiran aktif), lalu diganti data `messages.sources`.
+
+### T-802 — Lampiran selalu jadi konteks
+- **Cakupan**: `lib/rag/retrieve.ts`, `app/api/chat/route.ts`
+- **Bukti**: `pilihPotongan()` memakai dokumen lampiran tanpa ambang skor, dicatat ke
+  `sources` pesan pengguna. 5 test baru (`lib/rag/retrieve.test.ts`).
+
+### T-803 — Hilangkan lomba conversationId
+- **Bukti**: `aktifIdRef` di `app/page.tsx` dipakai jalur kirim/ulang, bukan `aktif?.id`.
+
+### T-804 — Konteks hanya dari berkas terunggah
+- **Cakupan**: `lib/rag/retrieve.ts` (`hanyaLampiran`), `app/api/chat/route.ts`
+- **Bukti**: saat percakapan punya lampiran, query global (`conversation_id is null`)
+  tidak dijalankan — chip konteks hanya berisi berkas yang diunggah.
+
+---
+
+## M9 — Berkas per sesi, memori paten, chip konteks bersih
+
+### T-901 — Berkas menempel ke sesi percakapan
+- **Cakupan**: `app/api/chat/route.ts`, `app/api/conversations/[id]/route.ts`, `app/page.tsx`, `components/chat/Composer.tsx`, `lib/rag/ingest.ts`
+- **Bukti**: `hapusLampiranPercakapan()` dihapus; berkas tetap ada selama percakapan dan dipakai turn berikutnya; daftar "Berkas sesi" tampil di komposer.
+
+### T-902 — Memori paten terpisah dari memori otomatis
+- **Cakupan**: `lib/db/schema.ts` (`permanent_memories`), `drizzle/0003_high_iron_fist.sql`, `lib/memory.ts`, `app/api/memories/*`, `components/settings/MemoryPanel.tsx`, `lib/api.ts`
+- **Bukti**: migrasi menambah tabel `permanent_memories`; panel dua bagian; memori paten tidak pernah diubah proses otomatis; prompt memakai keduanya (paten dulu).
+
+### T-903 — Chip konteks hanya untuk berkas unggahan
+- **Bukti**: `sources` balasan difilter ke `documentId` lampiran; dokumen global tetap dipakai menjawab.
+
+### T-904 — Layar awal tanpa kartu saran
+- **Bukti**: `EmptyState` tinggal sapaan + satu baris penjelasan.
 
 ---
 

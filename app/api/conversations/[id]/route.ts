@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { getDb } from "@/lib/db/client";
-import { conversations, messages } from "@/lib/db/schema";
+import { conversations, documents, messages } from "@/lib/db/schema";
 import { pesanError, requireSession } from "@/lib/guard";
 
 export const runtime = "nodejs";
@@ -36,7 +36,14 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       .where(eq(messages.conversationId, id))
       .orderBy(asc(messages.createdAt));
 
-    return NextResponse.json({ ok: true, percakapan, pesan: daftar });
+    // Berkas yang diunggah di sesi ini — tetap tersedia untuk turn berikutnya.
+    const berkas = await db
+      .select({ id: documents.id, title: documents.title })
+      .from(documents)
+      .where(eq(documents.conversationId, id))
+      .orderBy(asc(documents.createdAt));
+
+    return NextResponse.json({ ok: true, percakapan, pesan: daftar, berkas });
   } catch (err) {
     return NextResponse.json(
       { ok: false, pesan: `Gagal memuat pesan: ${pesanError(err)}` },

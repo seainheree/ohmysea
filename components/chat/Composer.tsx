@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 
+import { Icon } from "@/components/ui/Icon";
+
 export function Composer({
   onKirim,
   sibuk,
@@ -10,6 +12,7 @@ export function Composer({
   lampiran,
   sibukLampiran,
   onHapusLampiran,
+  berkasSesi,
 }: {
   onKirim: (teks: string) => void;
   sibuk: boolean;
@@ -18,6 +21,8 @@ export function Composer({
   lampiran: { nama: string; status: string; galat?: boolean } | null;
   sibukLampiran: boolean;
   onHapusLampiran: () => void;
+  /** Berkas yang sudah tersimpan di sesi ini — tetap dipakai turn berikutnya. */
+  berkasSesi: { id: string; title: string }[];
 }) {
   const [teks, setTeks] = useState("");
   const area = useRef<HTMLTextAreaElement>(null);
@@ -36,6 +41,23 @@ export function Composer({
   return (
     <div className="shrink-0 border-t border-border bg-bg-topbar/95 backdrop-blur">
       <div className="mx-auto w-full max-w-[760px] px-sedang pb-aman pt-2">
+        {berkasSesi.length > 0 && (
+          <div className="mb-1.5 flex flex-wrap items-center gap-1">
+            <span className="text-[10px] uppercase tracking-[0.08em] text-teks-muted-2">
+              Berkas sesi
+            </span>
+            {berkasSesi.map((b) => (
+              <span
+                key={b.id}
+                title={b.title}
+                className="inline-flex max-w-[220px] items-center gap-1 rounded-penuh border border-border-kuat bg-bg-main px-2 py-0.5 text-[11px] text-teks-muted"
+              >
+                <Icon name="berkas" size={11} />
+                <span className="truncate">{b.title}</span>
+              </span>
+            ))}
+          </div>
+        )}
         {lampiran && (
           <div
             className={`mb-2 flex items-center gap-2 rounded-besar border px-3 py-2 text-[12px] ${

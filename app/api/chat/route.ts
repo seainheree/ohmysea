@@ -6,10 +6,9 @@ import { z } from "zod";
 import { chatModel, curhatModel, HISTORY_LIMIT } from "@/lib/ai/groq";
 import { SYSTEM_CHAT, SYSTEM_CURHAT, buildContextBlock } from "@/lib/ai/prompts";
 import { getDb } from "@/lib/db/client";
-import { conversations, messages } from "@/lib/db/schema";
+import { conversations, documents, messages } from "@/lib/db/schema";
 import { kunciRateLimit, pesanError, rateLimit, requireSession } from "@/lib/guard";
 import { ambilMemoriAktif, buildMemoryBlock, simpanMemoriOtomatis } from "@/lib/memory";
-import { hapusLampiranPercakapan } from "@/lib/rag/ingest";
 import { retrieve, toSources } from "@/lib/rag/retrieve";
 
 export const runtime = "nodejs";
@@ -24,6 +23,8 @@ const bodySchema = z
     autoMemori: z.boolean().optional(),
     /** Ulangi jawaban terakhir: pertanyaan terakhir dipakai ulang, tidak disimpan dobel. */
     regenerate: z.boolean().optional(),
+    /** Dokumen lampiran yang dibawa pesan ini (untuk chip "Konteks" di bubble pengguna). */
+    attachmentIds: z.array(z.uuid()).max(20).optional(),
   })
   .refine((v) => !v.regenerate || Boolean(v.conversationId), {
     message: "conversationId wajib diisi untuk regenerate",
@@ -99,18 +100,43 @@ export async function POST(request: NextRequest) {
 
     if (!conversationId) throw new Error("conversationId tidak tersedia");
 
-    // 2. Simpan pesan pengguna (tidak untuk regenerate).
+    // 2. Simpan pesan pengguna (tidak untuk regenerate). Lampiran yang dibawa pesan
+    //    ini dicatat di `sources` supaya chip "Konteks" muncul di bubble pengguna;
+    //    berkasnya tetap tersimpan selama percakapan (bisa dipakai turn berikutnya).
+    const lampiran = await db
+      .select({ id: documents.id, title: documents.title })
+      .from(documents)
+      .where(eq(documents.conversationId, conversationId));
+
     if (!body.regenerate) {
+      const lampiranPesan = body.attachmentIds
+        ? lampiran.filter((d) => body.attachmentIds!.includes(d.id))
+        : [];
       await db.insert(messages).values({
         conversationId,
         role: "user",
         content: pertanyaan,
+        sources:
+          lampiranPesan.length > 0
+            ? lampiranPesan.map((d) => ({ documentId: d.id, title: d.title, score: 1 }))
+            : null,
       });
     }
 
-    // 3. Ambil konteks dokumen (RAG) hanya untuk mode chat.
-    const potongan = body.mode === "chat" ? await retrieve(pertanyaan, { conversationId }) : [];
-    const sources = toSources(potongan);
+    // 3. Ambil konteks dokumen (RAG) hanya untuk mode chat. Kalau ada lampiran,
+    //    pakai lampiran itu saja — jangan campur dokumen global (user minta konteks
+    //    hanya dari berkas yang diunggah).
+    const potongan =
+      body.mode === "chat"
+        ? await retrieve(pertanyaan, {
+            conversationId,
+            hanyaLampiran: lampiran.length > 0,
+          })
+        : [];
+    // Chip "Konteks" hanya untuk berkas yang diunggah pengguna. Dokumen global
+    // (PRD/README/ADR) tetap dipakai menjawab, tapi tidak ditampilkan di UI.
+    const idLampiran = new Set(lampiran.map((d) => d.id));
+    const sources = toSources(potongan).filter((s) => idLampiran.has(s.documentId));
 
     // 4. Memori AI (fitur Pengaturan) — dipakai di kedua mode.
     const ingatan = await ambilMemoriAktif();
@@ -162,10 +188,6 @@ export async function POST(request: NextRequest) {
           if (body.autoMemori !== false && text.trim()) {
             await simpanMemoriOtomatis(pertanyaan, text);
           }
-
-          // Lampiran sekali pakai: sudah dipakai untuk jawaban ini, isinya dibuang.
-          // Nama berkas tetap tampil di chip sumber pesan (messages.sources).
-          await hapusLampiranPercakapan(conversationId);
         } catch (err) {
           console.error("gagal menyimpan balasan:", pesanError(err));
         }

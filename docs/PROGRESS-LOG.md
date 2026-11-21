@@ -17,6 +17,52 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-21 — QA/QC /understand + perbaikan hidrasi tema
+
+- **Sesi**: lanjutan
+- **Tujuan**: analisis kode (/understand) untuk QA/QC + bereskan error hidrasi yang muncul di log dev
+- **Dikerjakan**:
+  - `/understand` penuh: 106 file → 248 node / 510 edge / 10 layer / tour 14 langkah, tersimpan di `.ua/knowledge-graph.json` (+ `fingerprints.json`, `meta.json`)
+  - Perbaikan `app/layout.tsx`: `<head>` manual + `metaFallback` (churn sesi sebelumnya) memicu "text node in head" + hidrasi gagal; diganti `next/script` `strategy="beforeInteractive"` dan `suppressHydrationWarning` di `<html>`. Skrip tema kembali membaca localStorage/sistem (persistensi tema pulih; kelas mati `tema-loaded` dibuang)
+- **Keputusan**: jangan menulis `<head>` manual di App Router — Next mengelola head; skrip beforeInteractive disuntik Next sendiri
+- **Verifikasi**: `pnpm build` EXIT=0; `pnpm test` 8 file / 62 lulus EXIT=0; `GET localhost:3000` → status 200, 0 `<meta name="ohmysea-tema">` nyasar, skrip tema ter-inject
+- **Blocker**: tidak ada
+- **Next**: jalankan dashboard `.ua` bila perlu jelajah graf
+
+---
+
+### 2026-11-21 — Berkas per sesi, memori paten vs otomatis, chip konteks bersih
+
+- **Sesi**: lanjutan
+- **Tujuan**: permintaan pemilik — berkas menempel di satu sesi chat (bukan sekali pakai); memori paten dipisah dari memori simpan otomatis dengan tabel terpisah; chip "Konteks" hanya untuk berkas yang diunggah; kartu saran di layar awal dihapus
+- **Dikerjakan**:
+  - T-901: `hapusLampiranPercakapan()` dihapus; `GET /api/conversations/[id]` mengembalikan `berkas`; komposer menampilkan "Berkas sesi"; `attachmentIds` dicatat di `sources` pesan pengguna
+  - T-902: tabel `permanent_memories` + migrasi `0003_high_iron_fist.sql`; `ambilMemoriAktif`/`memoriSudahAda`/`simpanMemoriOtomatis` membaca dua tabel; panel Pengaturan terbagi "Memori paten" dan "Memori simpan otomatis"; PATCH/DELETE memilih tabel lewat `paten`
+  - T-903: chip balasan difilter ke dokumen lampiran; dokumen global tetap dipakai menjawab
+  - T-904: empat kartu saran di `EmptyState` dihapus
+- **Keputusan**: tabel terpisah (bukan kolom `sumber`) sesuai permintaan pemilik. Migrasi hanya menambah `permanent_memories`; delta `documents` dari drizzle (sudah ada di `0002_lampiran`) dibuang manual supaya migrasi tidak gagal.
+- **Verifikasi**: `pnpm test` 62 lulus (8 file); `pnpm build` EXIT=0; `pnpm db:migrate` sukses — tabel `permanent_memories` ada
+- **Blocker**: tidak ada
+- **Next**: uji browser :3000 — unggah berkas, tanya di turn berikutnya, cek dua tabel memori di Pengaturan
+
+---
+
+### 2026-11-21 — Konteks lampiran tampil & hanya dari berkas terunggah
+
+- **Sesi**: lanjutan
+- **Tujuan**: permintaan pemilik — berkas yang diunggah harus tampil di bubble pesan yang sama dan konteks tak boleh "tidak terbaca"; jangan campur dokumen global saat ada unggahan
+- **Dikerjakan**:
+  - T-801: chip "Konteks" di bubble pesan pengguna (bertahan setelah reload, dari `messages.sources`; tampil juga saat streaming)
+  - T-802: `/api/chat` mencatat dokumen lampiran ke `sources` pesan user; `pilihPotongan()` memakai lampiran tanpa ambang skor
+  - T-803: `aktifIdRef` — hilangkan lomba conversationId saat kirim tepat setelah unggah
+  - T-804: `hanyaLampiran` — saat ada lampiran, dokumen global (ADR/PRD/DESIGN) tidak ikut konteks
+- **Keputusan**: lampiran tetap sekali pakai (T-701 dipertahankan). Penanda lampiran disimpan di `messages.sources` (nol migrasi). Tidak ada dependensi baru.
+- **Verifikasi**: `pnpm test` 62 lulus (8 file, +5 test `retrieve.test.ts`); `pnpm build` EXIT=0
+- **Blocker**: tidak ada
+- **Next**: uji browser ulang unggah `.docx` di :3000 — konteks harus hanya berisi berkas itu
+
+---
+
 ### 2026-11-21 — Lampiran sekali pakai, markdown rapi, regenerate, saran lanjutan
 
 - **Sesi**: lanjutan

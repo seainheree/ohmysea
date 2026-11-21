@@ -1,26 +1,35 @@
-import { and, asc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { generateText } from "ai";
 
 import { memoriModel } from "@/lib/ai/groq";
 import { getDb } from "@/lib/db/client";
-import { memories } from "@/lib/db/schema";
+import { memories, permanentMemories } from "@/lib/db/schema";
 
 export const MAKS_PANJANG_MEMORI = 500;
 export const MAKS_MEMORI_AKTIF = 60;
 /** Batas keseluruhan baris memori (aktif + nonaktif) agar tabel tidak tumbuh liar. */
 export const MAKS_SEMUA_MEMORI = 90;
 
-/** Ambil memori aktif, terbaru dulu, dibatasi supaya prompt tidak membengkak. */
+/** Ambil memori aktif dari dua tabel: paten dulu, lalu otomatis; dibatasi agar prompt tidak membengkak. */
 export async function ambilMemoriAktif(): Promise<string[]> {
   const db = getDb();
-  const baris = await db
-    .select({ content: memories.content })
-    .from(memories)
-    .where(eq(memories.aktif, true))
-    .orderBy(asc(memories.createdAt))
-    .limit(MAKS_MEMORI_AKTIF);
+  const [paten, otomatis] = await Promise.all([
+    db
+      .select({ content: permanentMemories.content })
+      .from(permanentMemories)
+      .where(eq(permanentMemories.aktif, true))
+      .orderBy(asc(permanentMemories.createdAt)),
+    db
+      .select({ content: memories.content })
+      .from(memories)
+      .where(eq(memories.aktif, true))
+      .orderBy(asc(memories.createdAt)),
+  ]);
 
-  return baris.map((b) => b.content.trim()).filter(Boolean);
+  return [...paten, ...otomatis]
+    .map((b) => b.content.trim())
+    .filter(Boolean)
+    .slice(0, MAKS_MEMORI_AKTIF);
 }
 
 /**
@@ -33,21 +42,16 @@ export function buildMemoryBlock(daftar: string[]): string {
   return `\n\nYang kamu ingat tentang pengguna (pakai kalau relevan, jangan mengarang di luar daftar ini):\n${isi}`;
 }
 
-/** Apakah isi memori ini sudah ada (bandingkan tanpa beda huruf besar/kecil & spasi). */
+/** Apakah isi memori ini sudah ada di tabel mana pun (tanpa beda huruf/spasi). */
 export async function memoriSudahAda(content: string): Promise<boolean> {
   const db = getDb();
-  const semua = await db.select({ content: memories.content }).from(memories);
+  const [otomatis, paten] = await Promise.all([
+    db.select({ content: memories.content }).from(memories),
+    db.select({ content: permanentMemories.content }).from(permanentMemories),
+  ]);
   const kunci = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
-  return semua.some((m) => kunci(m.content) === kunci(content));
-}
-
-export async function hapusMemori(id: string): Promise<boolean> {
-  const db = getDb();
-  const dihapus = await db
-    .delete(memories)
-    .where(and(eq(memories.id, id)))
-    .returning({ id: memories.id });
-  return dihapus.length > 0;
+  const cari = kunci(content);
+  return [...otomatis, ...paten].some((m) => kunci(m.content) === cari);
 }
 
 /* ---------------------------------------------------------------------------
@@ -288,8 +292,11 @@ export async function simpanMemoriOtomatis(
 ): Promise<string[]> {
   try {
     const db = getDb();
-    const lama = await db.select({ content: memories.content }).from(memories);
-    const acuan = lama.map((m) => m.content.trim()).filter(Boolean);
+    const [otomatis, paten] = await Promise.all([
+      db.select({ content: memories.content }).from(memories),
+      db.select({ content: permanentMemories.content }).from(permanentMemories),
+    ]);
+    const acuan = [...otomatis, ...paten].map((m) => m.content.trim()).filter(Boolean);
     const sisa = MAKS_SEMUA_MEMORI - acuan.length;
     if (sisa <= 0) return [];
 

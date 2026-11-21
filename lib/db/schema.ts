@@ -106,9 +106,26 @@ export const memories = pgTable(
   (t) => [index("memories_aktif_idx").on(t.aktif, t.createdAt)],
 );
 
+/**
+ * Memori paten: ditulis sendiri oleh pengguna. Terpisah dari `memories` (otomatis)
+ * supaya Kirby tidak pernah menimpa/menghapusnya saat menyimpan memori otomatis.
+ */
+export const permanentMemories = pgTable(
+  "permanent_memories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    content: text("content").notNull(),
+    aktif: boolean("aktif").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("permanent_memories_aktif_idx").on(t.aktif, t.createdAt)],
+);
+
 export type Conversation = typeof conversations.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type Chunk = typeof chunks.$inferSelect;
 export type ImageRow = typeof images.$inferSelect;
 export type Memory = typeof memories.$inferSelect;
+export type PermanentMemory = typeof permanentMemories.$inferSelect;

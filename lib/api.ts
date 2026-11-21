@@ -53,9 +53,13 @@ export async function daftarPercakapan(mode?: Mode): Promise<Percakapan[]> {
   return data.percakapan;
 }
 
-export async function ambilPesan(id: string): Promise<{ percakapan: Percakapan; pesan: Pesan[] }> {
+export type BerkasSesi = { id: string; title: string };
+
+export async function ambilPesan(
+  id: string,
+): Promise<{ percakapan: Percakapan; pesan: Pesan[]; berkas: BerkasSesi[] }> {
   const res = await fetch(`/api/conversations/${id}`, { cache: "no-store" });
-  return baca<{ percakapan: Percakapan; pesan: Pesan[] }>(res);
+  return baca<{ percakapan: Percakapan; pesan: Pesan[]; berkas: BerkasSesi[] }>(res);
 }
 
 /** Buat percakapan kosong — dipakai saat melampirkan berkas sebelum pesan pertama. */
@@ -135,6 +139,8 @@ export type Memori = {
   id: string;
   content: string;
   aktif: boolean;
+  /** true = memori paten (ditulis pengguna), false = simpan otomatis. */
+  paten?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -157,7 +163,7 @@ export async function tambahMemori(content: string): Promise<Memori> {
 
 export async function ubahMemori(
   id: string,
-  perubahan: { content?: string; aktif?: boolean },
+  perubahan: { content?: string; aktif?: boolean; paten?: boolean },
 ): Promise<Memori> {
   const res = await fetch(`/api/memories/${id}`, {
     method: "PATCH",
@@ -168,8 +174,9 @@ export async function ubahMemori(
   return data.memori;
 }
 
-export async function hapusMemori(id: string): Promise<void> {
-  const res = await fetch(`/api/memories/${id}`, { method: "DELETE" });
+export async function hapusMemori(id: string, paten = false): Promise<void> {
+  const q = paten ? "?paten=1" : "";
+  const res = await fetch(`/api/memories/${id}${q}`, { method: "DELETE" });
   await baca(res);
 }
 
@@ -208,6 +215,8 @@ export async function kirimPesan(input: {
   autoMemori?: boolean;
   /** Ulangi jawaban terakhir: pertanyaan yang sama dipakai ulang, tidak disimpan dobel. */
   regenerate?: boolean;
+  /** Dokumen lampiran yang dibawa pesan ini (chip "Konteks" di bubble pengguna). */
+  attachmentIds?: string[];
   onChunk: (teks: string) => void;
 }): Promise<{ conversationId: string; sources: Pesan["sources"]; durasiMs: number }> {
   const mulai = Date.now();
@@ -220,6 +229,7 @@ export async function kirimPesan(input: {
       message: input.message,
       autoMemori: input.autoMemori,
       regenerate: input.regenerate,
+      attachmentIds: input.attachmentIds,
     }),
   });
 

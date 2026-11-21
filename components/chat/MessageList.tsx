@@ -164,6 +164,23 @@ export function MessageList({
                 <div className="whitespace-pre-wrap rounded-besar rounded-br-kecil bg-aksen px-sedang py-3 text-sm leading-relaxed text-white">
                   {m.content}
                 </div>
+                {m.sources && m.sources.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1">
+                    <span className="text-[10px] uppercase tracking-[0.08em] text-teks-muted-2">
+                      Konteks
+                    </span>
+                    {[...new Set(m.sources.map((s) => s.title))].map((judul) => (
+                      <span
+                        key={judul}
+                        title={judul}
+                        className="inline-flex max-w-[220px] items-center gap-1 rounded-penuh border border-border-kuat bg-bg-main px-2 py-0.5 text-[11px] text-teks-muted"
+                      >
+                        <Icon name="berkas" size={11} />
+                        <span className="truncate">{judul}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <p className="mt-1 text-right text-[10px] text-teks-muted-2">{waktu(m.createdAt)}</p>
               </div>
             </motion.div>
@@ -224,20 +241,6 @@ export function MessageList({
 
 function EmptyState({ mode, nama }: { mode: "chat" | "curhat"; nama?: string | null }) {
   const panggilan = nama ? nama.charAt(0).toUpperCase() + nama.slice(1) : null;
-  const kartu =
-    mode === "curhat"
-      ? [
-          { judul: "Ada yang mengganjal", isi: "Tumpahkan saja, aku dengarkan dulu." },
-          { judul: "Hari yang berat", isi: "Ceritakan bagian terberatnya." },
-          { judul: "Butuh ditata", isi: "Boleh mulai dari apa yang paling mengganggu." },
-          { judul: "Cuma ingin bicara", isi: "Tidak perlu jelas, mulai saja." },
-        ]
-      : [
-          { judul: "Pakai dokumenku", isi: "Tanya apa pun soal PRD atau TECH-SPEC ohmysea." },
-          { judul: "Bikin gambar", isi: "Mode gambar ada di halaman Gambar." },
-          { judul: "Ingat-ingatanku", isi: "Isi memori di Pengaturan agar aku ingat hal pentingmu." },
-          { judul: "Tanya bebas", isi: "Kalau tidak ada di dokumen, aku bilang jujur." },
-        ];
 
   return (
     <div className="flex flex-col items-start gap-besar py-besar text-left sm:items-center sm:text-center">
@@ -252,17 +255,6 @@ function EmptyState({ mode, nama }: { mode: "chat" | "curhat"; nama?: string | n
             ? "Mode curhat: aku menanggapi perasaanmu dulu, bukan menceramahi."
             : "Mode chat: aku ingat percakapan ini dan bisa memakai dokumen yang kamu tambahkan."}
         </p>
-      </div>
-      <div className="grid w-full grid-cols-1 gap-sedang sm:grid-cols-2">
-        {kartu.map((k) => (
-          <div
-            key={k.judul}
-            className="rounded-besar border border-border-kuat bg-surface p-sedang text-left"
-          >
-            <p className="text-sm font-semibold">{k.judul}</p>
-            <p className="mt-1 text-xs text-teks-muted">{k.isi}</p>
-          </div>
-        ))}
       </div>
     </div>
   );

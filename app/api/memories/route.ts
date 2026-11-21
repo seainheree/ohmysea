@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { getDb } from "@/lib/db/client";
-import { memories } from "@/lib/db/schema";
+import { memories, permanentMemories } from "@/lib/db/schema";
 import { pesanError, requireSession } from "@/lib/guard";
 import { MAKS_MEMORI_AKTIF, MAKS_PANJANG_MEMORI, memoriSudahAda } from "@/lib/memory";
 
@@ -17,14 +17,26 @@ const bodySchema = z.object({
     .max(MAKS_PANJANG_MEMORI, `Memori maksimal ${MAKS_PANJANG_MEMORI} karakter`),
 });
 
-/** GET /api/memories — semua memori (aktif & nonaktif), terbaru dulu. */
+/**
+ * GET /api/memories — memori paten (ditulis pengguna) dan otomatis dalam satu daftar.
+ * Tiap butir punya `paten: true|false` supaya UI bisa memisahkannya.
+ */
 export async function GET(request: NextRequest) {
   const tolak = requireSession(request);
   if (tolak) return tolak;
 
   try {
     const db = getDb();
-    const daftar = await db.select().from(memories).orderBy(desc(memories.createdAt)).limit(200);
+    const [paten, otomatis] = await Promise.all([
+      db.select().from(permanentMemories).orderBy(desc(permanentMemories.createdAt)).limit(200),
+      db.select().from(memories).orderBy(desc(memories.createdAt)).limit(200),
+    ]);
+
+    const daftar = [
+      ...paten.map((m) => ({ ...m, paten: true })),
+      ...otomatis.map((m) => ({ ...m, paten: false })),
+    ];
+
     return NextResponse.json({ ok: true, memori: daftar });
   } catch (err) {
     return NextResponse.json(
@@ -34,7 +46,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** POST /api/memories — tambah satu memori. */
+/** POST /api/memories — tambah satu memori paten. */
 export async function POST(request: NextRequest) {
   const tolak = requireSession(request);
   if (tolak) return tolak;
@@ -52,12 +64,16 @@ export async function POST(request: NextRequest) {
   try {
     const db = getDb();
 
-    const jumlah = await db.select({ id: memories.id }).from(memories);
-    if (jumlah.length >= MAKS_MEMORI_AKTIF * 2) {
+    const [paten, otomatis] = await Promise.all([
+      db.select({ id: permanentMemories.id }).from(permanentMemories),
+      db.select({ id: memories.id }).from(memories),
+    ]);
+    const jumlah = paten.length + otomatis.length;
+    if (jumlah >= MAKS_MEMORI_AKTIF * 2) {
       return NextResponse.json(
         {
           ok: false,
-          pesan: `Memori sudah terlalu banyak (${jumlah.length}). Hapus beberapa dulu sebelum menambah.`,
+          pesan: `Memori sudah terlalu banyak (${jumlah}). Hapus beberapa dulu sebelum menambah.`,
         },
         { status: 400 },
       );
@@ -70,8 +86,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [baru] = await db.insert(memories).values({ content: body.content }).returning();
-    return NextResponse.json({ ok: true, memori: baru }, { status: 201 });
+    const [baru] = await db
+      .insert(permanentMemories)
+      .values({ content: body.content })
+      .returning();
+    return NextResponse.json({ ok: true, memori: { ...baru, paten: true } }, { status: 201 });
   } catch (err) {
     return NextResponse.json(
       { ok: false, pesan: `Gagal menyimpan memori: ${pesanError(err)}` },
