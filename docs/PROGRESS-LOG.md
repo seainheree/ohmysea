@@ -23,7 +23,7 @@ letakkan entri terbaru paling atas.
 - **Tujuan**: permintaan pemilik — gambar/berkas yang diunggah harus kelihatan di bubble chat; tambah tombol kamera yang langsung membuka kamera perangkat
 - **Dikerjakan**:
   - Pratinjau: `app/page.tsx` menyimpan object URL per `documentId` (`pratinjau`); dibuat sekali dari berkas asli, di-`revoke` saat lampiran gagal/dihapus. `MessageList` menampilkan thumbnail di bubble pesan pengguna (klik = buka gambar penuh); `Composer` menampilkan thumbnail di kotak lampiran & chip "Berkas sesi"
-  - Kamera: `<input type="file" accept="image/*" capture="environment">` + tombol kamera di `Composer` — di ponsel langsung membuka kamera, hasilnya lewat jalur lampiran gambar yang sama (OCR + vision)
+  - Kamera: `<input type="file" accept="image/*" capture="environment">` + tombol kamera **di dalam command box, terpisah dari tombol lampiran** (di kanan, sebelum tombol kirim) — di ponsel langsung membuka kamera, hasilnya lewat jalur lampiran gambar yang sama (OCR + vision)
 - **Keputusan**: pratinjau hanya di klien (object URL), tidak disimpan ke DB (bukan base64 di DB); kamera pakai native `capture`, bukan `getUserMedia`
 - **Verifikasi**: `pnpm build` EXIT=0; `pnpm test` 8 file / 62 lulus EXIT=0
 - **Blocker**: tidak ada

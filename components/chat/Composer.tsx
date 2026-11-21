@@ -123,7 +123,7 @@ export function Composer({
             onClick={() => berkas.current?.click()}
             disabled={sibukLampiran || sibuk}
             aria-label="Lampirkan dokumen"
-            title="Lampirkan dokumen — semua jenis, maks 10 MB, dipakai sekali"
+            title="Lampirkan dokumen — semua jenis, maks 10 MB"
             className={`mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-penuh transition-colors ${
               sibukLampiran ? "text-teks-muted" : "text-teks-muted hover:text-aksen"
             }`}
@@ -138,6 +138,25 @@ export function Composer({
               />
             </svg>
           </button>
+          <textarea
+            ref={area}
+            value={teks}
+            rows={1}
+            onChange={(e) => {
+              setTeks(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                kirim();
+              }
+            }}
+            placeholder={mode === "curhat" ? "Ceritakan apa yang kamu rasakan..." : "Tulis pesan..."}
+            aria-label="Tulis pesan"
+            className="max-h-[200px] min-h-[44px] flex-1 resize-none bg-transparent px-2.5 py-3 text-sm outline-none placeholder:text-teks-muted-2"
+          />
           {/* Kamera perangkat: atribut capture membuka kamera langsung di ponsel.
               ponytail: hanya native capture; kalau butuh webcam di desktop,
               ganti ke modal getUserMedia. */}
@@ -162,7 +181,7 @@ export function Composer({
               sibukLampiran ? "text-teks-muted" : "text-teks-muted hover:text-aksen"
             }`}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
                 d="M3 8.5A2.5 2.5 0 015.5 6h1.2a1 1 0 00.83-.45l.94-1.4A1 1 0 019.3 3.7h5.4a1 1 0 01.83.45l.94 1.4a1 1 0 00.83.45h1.2A2.5 2.5 0 0121 8.5v8A2.5 2.5 0 0118.5 19h-13A2.5 2.5 0 013 16.5z"
                 stroke="currentColor"
@@ -173,25 +192,6 @@ export function Composer({
               <circle cx="12" cy="12.5" r="3.2" stroke="currentColor" strokeWidth="1.8" />
             </svg>
           </button>
-          <textarea
-            ref={area}
-            value={teks}
-            rows={1}
-            onChange={(e) => {
-              setTeks(e.target.value);
-              e.target.style.height = "auto";
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                kirim();
-              }
-            }}
-            placeholder={mode === "curhat" ? "Ceritakan apa yang kamu rasakan..." : "Tulis pesan..."}
-            aria-label="Tulis pesan"
-            className="max-h-[200px] min-h-[44px] flex-1 resize-none bg-transparent px-2.5 py-3 text-sm outline-none placeholder:text-teks-muted-2"
-          />
           <button
             onClick={kirim}
             disabled={!bisaKirim}
