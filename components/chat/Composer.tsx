@@ -13,20 +13,24 @@ export function Composer({
   sibukLampiran,
   onHapusLampiran,
   berkasSesi,
+  pratinjau,
 }: {
   onKirim: (teks: string) => void;
   sibuk: boolean;
   mode: "chat" | "curhat";
   onLampirkan: (berkas: File) => void;
-  lampiran: { nama: string; status: string; galat?: boolean } | null;
+  lampiran: { nama: string; status: string; galat?: boolean; documentId?: string; pratinjau?: string } | null;
   sibukLampiran: boolean;
   onHapusLampiran: () => void;
   /** Berkas yang sudah tersimpan di sesi ini — tetap dipakai turn berikutnya. */
   berkasSesi: { id: string; title: string }[];
+  /** documentId → object URL gambar (pratinjau thumbnail) — hanya di klien. */
+  pratinjau: Record<string, string>;
 }) {
   const [teks, setTeks] = useState("");
   const area = useRef<HTMLTextAreaElement>(null);
   const berkas = useRef<HTMLInputElement>(null);
+  const kamera = useRef<HTMLInputElement>(null);
 
   function kirim() {
     const isi = teks.trim();
@@ -52,7 +56,16 @@ export function Composer({
                 title={b.title}
                 className="inline-flex max-w-[220px] items-center gap-1 rounded-penuh border border-border-kuat bg-bg-main px-2 py-0.5 text-[11px] text-teks-muted"
               >
-                <Icon name="berkas" size={11} />
+                {pratinjau[b.id] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={pratinjau[b.id]}
+                    alt=""
+                    className="h-4 w-4 shrink-0 rounded-kecil object-cover"
+                  />
+                ) : (
+                  <Icon name="berkas" size={11} />
+                )}
                 <span className="truncate">{b.title}</span>
               </span>
             ))}
@@ -64,15 +77,24 @@ export function Composer({
               lampiran.galat ? "border-bahaya/40 text-bahaya" : "border-border text-teks"
             }`}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0">
-              <path
-                d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l8.57-8.57A4 4 0 0118 8.84l-8.59 8.57a2 2 0 01-2.83-2.83l8.49-8.48"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            {lampiran.pratinjau ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={lampiran.pratinjau}
+                alt=""
+                className="h-8 w-8 shrink-0 rounded-kecil border border-border object-cover"
               />
-            </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0">
+                <path
+                  d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l8.57-8.57A4 4 0 0118 8.84l-8.59 8.57a2 2 0 01-2.83-2.83l8.49-8.48"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
             <span className="truncate font-medium">{lampiran.nama}</span>
             <span className="ml-auto shrink-0 text-teks-muted-2">{lampiran.status}</span>
             {!sibukLampiran && (
@@ -114,6 +136,41 @@ export function Composer({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
+            </svg>
+          </button>
+          {/* Kamera perangkat: atribut capture membuka kamera langsung di ponsel.
+              ponytail: hanya native capture; kalau butuh webcam di desktop,
+              ganti ke modal getUserMedia. */}
+          <input
+            ref={kamera}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => {
+              const dipilih = e.target.files?.[0];
+              if (dipilih) onLampirkan(dipilih);
+              e.target.value = "";
+            }}
+          />
+          <button
+            onClick={() => kamera.current?.click()}
+            disabled={sibukLampiran || sibuk}
+            aria-label="Ambil foto dari kamera"
+            title="Ambil foto dari kamera"
+            className={`mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-penuh transition-colors ${
+              sibukLampiran ? "text-teks-muted" : "text-teks-muted hover:text-aksen"
+            }`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M3 8.5A2.5 2.5 0 015.5 6h1.2a1 1 0 00.83-.45l.94-1.4A1 1 0 019.3 3.7h5.4a1 1 0 01.83.45l.94 1.4a1 1 0 00.83.45h1.2A2.5 2.5 0 0121 8.5v8A2.5 2.5 0 0118.5 19h-13A2.5 2.5 0 013 16.5z"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="12" cy="12.5" r="3.2" stroke="currentColor" strokeWidth="1.8" />
             </svg>
           </button>
           <textarea

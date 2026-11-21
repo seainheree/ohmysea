@@ -17,6 +17,32 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-21 — Pratinjau lampiran + tombol kamera
+
+- **Sesi**: lanjutan
+- **Tujuan**: permintaan pemilik — gambar/berkas yang diunggah harus kelihatan di bubble chat; tambah tombol kamera yang langsung membuka kamera perangkat
+- **Dikerjakan**:
+  - Pratinjau: `app/page.tsx` menyimpan object URL per `documentId` (`pratinjau`); dibuat sekali dari berkas asli, di-`revoke` saat lampiran gagal/dihapus. `MessageList` menampilkan thumbnail di bubble pesan pengguna (klik = buka gambar penuh); `Composer` menampilkan thumbnail di kotak lampiran & chip "Berkas sesi"
+  - Kamera: `<input type="file" accept="image/*" capture="environment">` + tombol kamera di `Composer` — di ponsel langsung membuka kamera, hasilnya lewat jalur lampiran gambar yang sama (OCR + vision)
+- **Keputusan**: pratinjau hanya di klien (object URL), tidak disimpan ke DB (bukan base64 di DB); kamera pakai native `capture`, bukan `getUserMedia`
+- **Verifikasi**: `pnpm build` EXIT=0; `pnpm test` 8 file / 62 lulus EXIT=0
+- **Blocker**: tidak ada
+- **Next**: kalau perlu webcam desktop, ganti tombol kamera ke modal `getUserMedia`
+
+---
+
+### 2026-11-21 — Tema lewat cookie (hapus warning script React)
+
+- **Sesi**: lanjutan
+- **Tujuan**: hilangkan Console Error `Encountered a script tag while rendering React component` di `app/layout.tsx`
+- **Dikerjakan**: `next/script` (baik `src` maupun `dangerouslySetInnerHTML`) ternyata **sendiri** me-render `<script dangerouslySetInnerHTML>` berisi bootstrap `self.__next_s.push(...)`, jadi warning React 19 tak terhindarkan. Solusi: buang semua script tag; tema dipindah ke cookie. `app/layout.tsx` jadi async, baca `cookies()`, set `<html data-tema>` di server (tanpa kedipan). `ThemeToggle` menulis pilihan ke cookie (`ohmysea-tema`) + localStorage.
+- **Keputusan**: server menentukan tema dari cookie; tidak ada skrip inline di dokumen (docs Next: jangan tulis `<head>` manual; skrip beforeInteractive disuntik Next).
+- **Verifikasi**: `pnpm build` EXIT=0; `pnpm test` 62 lulus; `curl -H "Cookie: ohmysea-tema=terang" /` → `<html ... data-tema="terang">`; tanpa cookie → `gelap`; `__next_s` = 0 di HTML
+- **Blocker**: tidak ada
+- **Next**: tidak ada
+
+---
+
 ### 2026-11-21 — QA/QC /understand + perbaikan hidrasi tema
 
 - **Sesi**: lanjutan

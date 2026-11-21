@@ -7,20 +7,24 @@ import { Icon } from "@/components/ui/Icon";
 export type Tema = "gelap" | "terang";
 const KUNCI = "ohmysea-tema";
 
+/** Tulis pilihan tema ke cookie supaya server bisa merender `<html data-tema>` yang benar. */
+function simpanCookie(baru: Tema) {
+  document.cookie = `${KUNCI}=${baru}; path=/; max-age=31536000; samesite=lax`;
+}
+
 /**
- * Tema gelap/terang. Nilai awal ditulis oleh skrip kecil di <head> (sebelum
- * render) supaya tidak ada kedipan warna; komponen ini hanya menyinkronkan
- * tombol dengan keadaan sebenarnya lalu menyimpan pilihan pengguna.
+ * Tema gelap/terang. Nilai awal sudah ditulis server dari cookie ke
+ * `<html data-tema>` (lihat app/layout.tsx), jadi tidak ada kedipan. Komponen ini
+ * menyinkronkan tombol dengan keadaan sebenarnya lalu menyimpan pilihan pengguna
+ * ke cookie (untuk server) dan localStorage.
  */
 export function pakaiTema() {
   const [tema, setTema] = useState<Tema>("gelap");
 
   useEffect(() => {
-    const tersimpan = (localStorage.getItem(KUNCI) as Tema | null) ?? null;
-    const sistem: Tema = window.matchMedia("(prefers-color-scheme: light)").matches
-      ? "terang"
-      : "gelap";
-    const awal = tersimpan ?? sistem;
+    const server = document.documentElement.dataset.tema as Tema | undefined;
+    const tersimpan = localStorage.getItem(KUNCI) as Tema | null;
+    const awal = server ?? tersimpan ?? "gelap";
     setTema(awal);
     document.documentElement.dataset.tema = awal;
   }, []);
@@ -31,8 +35,9 @@ export function pakaiTema() {
     try {
       localStorage.setItem(KUNCI, baru);
     } catch {
-      // localStorage bisa diblokir (mode privat) — tema tetap berlaku untuk sesi ini
+      // localStorage bisa diblokir (mode privat) — cookie tetap jadi sumber server
     }
+    simpanCookie(baru);
   }
 
   return { tema, ganti, terang: tema === "terang" };

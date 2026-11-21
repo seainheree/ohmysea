@@ -55,8 +55,12 @@ export default function Home() {
     status: string;
     galat?: boolean;
     documentId?: string;
+    /** Object URL gambar yang sedang dilampirkan (pratinjau, hanya di klien). */
+    pratinjau?: string;
   } | null>(null);
   const [berkasSesi, setBerkasSesi] = useState<BerkasSesi[]>([]);
+  /** documentId → object URL gambar, supaya berkas yang diunggah tampil di chat. */
+  const [pratinjau, setPratinjau] = useState<Record<string, string>>({});
   const [sibukLampiran, setSibukLampiran] = useState(false);
   const [saran, setSaran] = useState<string[]>([]);
   const [saranAktif, setSaranAktif] = useState(true);
@@ -185,21 +189,24 @@ export default function Home() {
 
   async function lampirkan(berkas: File) {
     setSibukLampiran(true);
-    setLampiran({ nama: berkas.name, status: "Membaca…" });
+    const jenis = jenisDari(berkas);
+    // Object URL dibuat sekali dari berkas asli: dipakai komposer + bubble chat.
+    const urlPratinjau = jenis === "gambar" ? URL.createObjectURL(berkas) : undefined;
+    setLampiran({ nama: berkas.name, status: "Membaca…", pratinjau: urlPratinjau });
     try {
-      if (jenisDari(berkas) === "gambar") {
+      if (jenis === "gambar") {
         // Gambar: OCR di browser (untuk tulisan) + deskripsi model vision di server.
         let ocrText = "";
         try {
           const hasilOcr = await extractText(berkas, (pesan) =>
-            setLampiran({ nama: berkas.name, status: pesan }),
+            setLampiran({ nama: berkas.name, status: pesan, pratinjau: urlPratinjau }),
           );
           ocrText = hasilOcr.teks;
         } catch {
           // OCR bukan syarat: foto tanpa tulisan tetap bisa dijelaskan model vision.
         }
 
-        setLampiran({ nama: berkas.name, status: "Menanyakan isi gambar…" });
+        setLampiran({ nama: berkas.name, status: "Menanyakan isi gambar…", pratinjau: urlPratinjau });
         const { blob } = await kecilkanGambar(berkas);
         const gambar = await unggahLampiranGambar({
           conversationId: await pastikanPercakapan(),
@@ -212,8 +219,10 @@ export default function Home() {
           nama: berkas.name,
           status: `${gambar.pesan} · ${gambar.model}`,
           documentId: gambar.documentId,
+          pratinjau: urlPratinjau,
         });
         catatBerkas(gambar.documentId, berkas.name);
+        if (urlPratinjau) setPratinjau((p) => ({ ...p, [gambar.documentId]: urlPratinjau }));
         return;
       }
 
@@ -241,6 +250,7 @@ export default function Home() {
       setLampiran({ nama: berkas.name, status: catatan, documentId: simpan.documentId });
       catatBerkas(simpan.documentId, berkas.name);
     } catch (err) {
+      if (urlPratinjau) URL.revokeObjectURL(urlPratinjau);
       setLampiran({
         nama: berkas.name,
         status: err instanceof Error ? err.message : "Gagal membaca berkas",
@@ -528,6 +538,7 @@ export default function Home() {
               mode={mode}
               nama={panggilan}
               menunggu={sibuk && streaming.length === 0}
+              pratinjau={pratinjau}
               onUlangi={() => void ulangi()}
               bisaUlangi={!sibuk && pesan.some((m) => m.role === "assistant")}
               saran={saranAktif ? saran : []}
@@ -554,8 +565,12 @@ export default function Home() {
           onLampirkan={lampirkan}
           lampiran={lampiran}
           sibukLampiran={sibukLampiran}
-          onHapusLampiran={() => setLampiran(null)}
+          onHapusLampiran={() => {
+            if (lampiran?.pratinjau) URL.revokeObjectURL(lampiran.pratinjau);
+            setLampiran(null);
+          }}
           berkasSesi={berkasSesi}
+          pratinjau={pratinjau}
         />
       </div>
 

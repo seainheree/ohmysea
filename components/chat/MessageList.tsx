@@ -65,6 +65,7 @@ export function MessageList({
   bisaUlangi = false,
   saran = [],
   onSaran,
+  pratinjau = {},
 }: {
   pesan: PesanTampil[];
   streaming: string;
@@ -79,6 +80,8 @@ export function MessageList({
   /** Saran pertanyaan lanjutan; klik = langsung dikirim. */
   saran?: string[];
   onSaran?: (teks: string) => void;
+  /** documentId → object URL gambar yang diunggah, untuk dipratinjau di bubble. */
+  pratinjau?: Record<string, string>;
 }) {
   const bawah = useRef<HTMLDivElement>(null);
 
@@ -161,6 +164,29 @@ export function MessageList({
               className="flex justify-end"
             >
               <div className="max-w-[85%]">
+                {(() => {
+                  const gambar = (m.sources ?? []).filter((s) => pratinjau[s.documentId]);
+                  return gambar.length > 0 ? (
+                    <div className="mb-1.5 flex flex-wrap justify-end gap-1.5">
+                      {gambar.map((s) => (
+                        <a
+                          key={s.documentId}
+                          href={pratinjau[s.documentId]}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={s.title}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={pratinjau[s.documentId]}
+                            alt={s.title}
+                            className="max-h-52 rounded-sedang border border-border object-cover"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
                 <div className="whitespace-pre-wrap rounded-besar rounded-br-kecil bg-aksen px-sedang py-3 text-sm leading-relaxed text-white">
                   {m.content}
                 </div>
