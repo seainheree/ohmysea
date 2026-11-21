@@ -17,6 +17,19 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-21 — Lampiran tak ikut konteks: produksi kedaluwarsa
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik melaporkan lampiran tidak ikut konteks chat & tak tampil di bubble
+- **Diagnosa**: bukan bug kode. Uji E2E ke API lokal **dan** produksi membuktikan lampiran sudah masuk konteks (balasan menyebut isi berkas, `x-ohmysea-sumber` berisi dokumennya, `sources` pesan pengguna terisi). Penyebab: deployment Vercel terakhir 20 jam lalu (pra-`2e7eb3f`) — build lama belum punya lampiran per sesi, `attachmentIds` di bubble, dan penyaring chip "Konteks". Auto-deploy GitHub **tidak** tersambung (`vercel git connect` disarankan), sehingga push ke `main` tak memicu build baru.
+- **Dikerjakan**: `vercel --prod` (deployment `ohmysea-c8xflhlqo`, alias `https://ohmysea.vercel.app`); verifikasi E2E produksi: lampiran `catatan.txt` → balasan memuat `NANGKA-9182`, header sumber & sumber pesan pengguna terisi. Percakapan uji dihapus.
+- **Keputusan**: setelah `git push`, jalankan `vercel --prod` (atau `vercel git connect` sekali untuk auto-deploy)
+- **Verifikasi**: E2E lokal & produksi — lampiran dipakai menjawab + muncul sebagai sumber
+- **Blocker**: tidak ada
+- **Next**: (opsional) `vercel git connect` supaya push otomatis deploy
+
+---
+
 ### 2026-11-21 — Pratinjau lampiran + tombol kamera
 
 - **Sesi**: lanjutan
