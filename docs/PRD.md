@@ -73,6 +73,7 @@ inti utuh, murah, tidak rapuh.
 | US-07 | Sebagai pemilik, saya ingin mengganti judul atau menghapus percakapan, agar daftar chat tetap rapi | Should |
 | US-08 | Sebagai pemilik, saya ingin menyimpan fakta tentang diriku sebagai memori AI, agar tidak mengulang konteks di setiap percakapan | Must |
 | US-09 | Sebagai pemilik, saya ingin menghapus riwayat percakapan (satuan atau semua), agar data lama bisa dibersihkan | Must |
+| US-15 | Sebagai pemilik, saya ingin main game lewat opsi di chat, agar bisa main langsung tanpa keluar aplikasi | Should |
 
 ## 6. Kebutuhan fungsional
 
@@ -95,7 +96,8 @@ inti utuh, murah, tidak rapuh.
 | FR-15 | Sidebar bisa ditutup & footer rapi | US-11 | Klik tombol panel di ≥ 768 px → `getComputedStyle(aside).display === "none"` dan area chat melebar; setelah reload tetap tertutup; footer terlihat penuh (`rect.bottom <= innerHeight`) di 360/768/1440 px dan tidak tertimpa kolom chat |
 | FR-16 | Identitas & kecepatan balasan Kirby | US-12 | Balasan asisten menampilkan avatar `kirby.png` + label "Kirby · X,X detik · jam:menit"; saat menunggu tampil teks "Kirby sedang menjawab..."; chip nama dokumen tidak lagi tampil di balasan (nama dokumen tetap disebut di dalam teks jawaban) |
 | FR-17 | Latar transparan pada gambar | US-13 | Centang "Latar transparan" → prompt memuat petunjuk latar putih rata; tombol "Unduh PNG transparan" menghasilkan PNG dengan kanal alfa (uji: >50% piksel transparan pada subjek berlatar putih) |
-| FR-18 | Gerak UI standar (Framer Motion + GSAP + Lenis) | US-14 | Semua durasi & kurva memakai token `lib/motion.ts` (150–400 ms, satu kurva; GSAP memakai `GSAP_EASE` sebagai ekuivalen); pesan masuk beranimasi; indikator menunggu hilang tepat saat balasan tampil dan **tidak** muncul lagi; dialog konfirmasi tertutup bersih (tidak menyisakan overlay); gulir chat memakai Lenis (`main` memiliki class `lenis`) yang disinkronkan ke GSAP ScrollTrigger; sapaan hero punya animasi masuk + parallax gulir, dan kartu galeri ter-reveal saat masuk viewport; animasi **selalu aktif** (tanpa cabang `prefers-reduced-motion` — keputusan pemilik) |
+| FR-18 | Gerak UI standar (Framer Motion + GSAP + Lenis) | US-14 | Semua durasi & kurva memakai token `lib/motion.ts` (150–400 ms, satu kurva; GSAP memakai `GSAP_EASE` sebagai ekuivalen); pesan masuk beranimasi; indikator menunggu hilang tepat saat balasan tampil dan **tidak** muncul lagi; dialog konfirmasi tertutup bersih (tidak menyisakan overlay); gulir chat memakai Lenis (`main` memiliki class `lenis`) yang disinkronkan ke GSAP ScrollTrigger; sapaan hero punya animasi masuk + parallax gulir, dan kartu galeri ter-reveal saat masuk viewport; animasi **selalu aktif** (tanpa cabang `prefers-reduced-motion` - keputusan pemilik) |
+| FR-19 | Ruang main (opsi game di chat) | US-15 | Tombol ikon game di header chat membuka panel `Ruang main` berisi 3 game: **Tic Tac Toe** (3×3, lawan Kirby, tingkat Mudah/Sulit), **Empat Berderet** (7×6, lawan Kirby, tingkat Mudah/Sulit), **Kartu Ingatan** (16 kartu, cari 8 pasangan). Bermain langsung di klien (tanpa API/DB), papan skor per sesi, tombol "Mulai ulang", status giliran/hasil, lalu panel ditutup dengan tombol tutup, klik latar, atau `Esc`. Logika murni di `lib/game.ts` (diuji `lib/game.test.ts`: minimax TTT tak terkalahkan saat sulit, deteksi empat sejajar, blok ancaman, dek 8 pasangan) |
 
 Aturan: setiap kriteria penerimaan **harus bisa dijalankan sebagai command** atau
 diperiksa dengan mata tanpa menebak. Kriteria yang berupa penilaian rasa (G3,

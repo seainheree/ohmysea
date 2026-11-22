@@ -17,6 +17,27 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Ruang main: opsi game di chat (TTT, Empat Berderet, Kartu Ingatan)
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik minta opsi game di chat, bisa langsung dimainkan dengan UI interaktif
+- **Keputusan (dikonfirmasi pemilik)**: game = Tic Tac Toe + Empat Berderet + Kartu Ingatan; TTT & Empat Berderet lawan Kirby (AI klien, tingkat Mudah/Sulit), Kartu Ingatan solo. Tanpa API, DB, atau dependency baru.
+- **Dikerjakan**:
+  - `lib/game.ts`: logika murni (tipe `Pemain`/`Papan`, `kocok` Fisher-Yates) — TTT (`garisTTT`, minimax `nilaiTTT`, `langkahTTT`), Empat Berderet (`jatuhkan`, `garisCO` 4 arah, `bisaMenang`, heuristik `nilaiKolom`, `langkahCO`), Kartu Ingatan (`dekIngatan` 16 kartu / 8 pasangan).
+  - `lib/game.test.ts`: 11 test — TTT level sulit **tidak kalah dalam 120 permainan**, deteksi garis, gravitasi & kolom penuh, deteksi empat sejajar (mendatar/diagonal naik-turun), ambil kemenangan langsung, blokir ancaman, isi dek.
+  - `components/game/bersama.tsx`: `Status`, `Skor`, `Tingkat`, `Ulang` (satu tempat, semua papan seragam).
+  - `components/game/PapanTicTacToe.tsx`, `PapanEmpatBerderet.tsx`, `PapanIngatan.tsx`: papan skor, status giliran/hasil, tombol mulai ulang, markah/keping/kartu beranimasi dari `lib/motion.ts`; giliran Kirby memakai jeda 480–560 ms supaya terasa hidup dan papan terkunci.
+  - `components/game/GamePanel.tsx`: panel `role="dialog"` `aria-modal`, pemilih 3 game, tutup via tombol/latar/`Esc`.
+  - `app/page.tsx`: state `gameTerbuka`, tombol ikon game di header chat, panel di dalam `AnimatePresence`.
+  - `components/ui/Icon.tsx`: ikon `game`, `kisi`.
+- **Catatan bug yang ketemu + dibetulkan di sesi ini**: heuristik Empat Berderet awalnya memberi skor 800 pada langkah yang **membiarkan lawan menang** (kebalikan arti) — diubah jadi penalti `(ancaman ? 0 : 500)`; test "menutup ancaman" mengunci perilaku benar.
+- **Temuan dicatat, belum diperbaiki**: `Composer.tsx` memakai kelas `border-bahaya`/`text-bahaya` yang bukan token (`F7` di `TASKS.md`).
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **11 file / 80 lulus** EXIT=0
+- **Blocker**: tidak ada
+- **Next**: cek browser — tombol game di header → main ketiga papan; coba tingkat Sulit (TTT harus selalu seri/menang Kirby), tutup dengan `Esc`.
+
+---
+
 ### 2026-11-23 — Chat "stuck memuat" saat kembali dari Pengaturan
 
 - **Sesi**: lanjutan

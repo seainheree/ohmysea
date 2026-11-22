@@ -553,6 +553,48 @@ tanpa membuang framer-motion. Ditambahkan 2026-11-23.
   - Unmount membatalkan set-state (`batal`), jadi tidak ada pembaruan setelah navigasi.
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 10 file / 69 lulus.
 
+| M11 | Ruang main: opsi game di chat — Tic Tac Toe, Empat Berderet, Kartu Ingatan | T-1101..T-1103 | done |
+
+---
+
+## M11 — Ruang main: opsi game di chat
+
+Latar: pemilik minta opsi game di chat, bisa dimainkan langsung dengan UI
+interaktif. Ditambahkan 2026-11-23. Tanpa API/DB/dependency baru — semua di klien.
+
+### T-1101 — Logika murni tiga game
+
+- **Status**: done
+- **Dependency**: —
+- **Cakupan**: `lib/game.ts`, `lib/game.test.ts`
+- **Kriteria penerimaan**:
+  - Tic Tac Toe: deteksi tiga sejajar, minimax penuh untuk level sulit.
+  - Empat Berderet: gravitasi keping, deteksi empat sejajar 4 arah, heuristik menang/blokir.
+  - Kartu Ingatan: dek 16 kartu (8 ikon × 2) teracak.
+- **Verifikasi**: `pnpm test` 11 file / 80 lulus (termasuk 120 permainan TTT level sulit tanpa kalah).
+
+### T-1102 — UI papan interaktif
+
+- **Status**: done
+- **Dependency**: T-1101
+- **Cakupan**: `components/game/bersama.tsx`, `components/game/PapanTicTacToe.tsx`, `components/game/PapanEmpatBerderet.tsx`, `components/game/PapanIngatan.tsx`, `components/ui/Icon.tsx` (`game`, `kisi`)
+- **Kriteria penerimaan**:
+  - Tiap papan punya papan skor, status giliran/hasil, dan tombol "Mulai ulang".
+  - Giliran Kirby punya jeda singkat supaya terasa hidup; papan terkunci saat giliran Kirby.
+  - Sel/kartu yang menang disorot; markah/keping beranimasi masuk memakai token `lib/motion.ts`.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0.
+
+### T-1103 — Panel ruang main di chat
+
+- **Status**: done
+- **Dependency**: T-1102
+- **Cakupan**: `components/game/GamePanel.tsx`, `app/page.tsx`
+- **Kriteria penerimaan**:
+  - Tombol ikon game di header chat membuka panel `role="dialog"` `aria-modal`.
+  - Panel berisi pemilih 3 game + papan aktif; tutup lewat tombol, klik latar, atau `Esc`.
+  - Tema terang/gelap ikut token `app/globals.css` (tanpa hex baru).
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 80 lulus.
+
 ---
 
 ## Temuan di luar cakupan
@@ -565,6 +607,7 @@ tanpa membuang framer-motion. Ditambahkan 2026-11-23.
 | F4 | Provider gambar pernah menolak prompt wajar dengan error NSFW (false positive) | uji provider | sedang | ya — ditangani di T-301 |
 | F5 | `flux-1-schnell` tidak mendukung image-to-image meski ada di katalog "Text-to-Image" | uji provider | rendah | ya — divalidasi di T-203 |
 | F6 | `simpanMemoriOtomatis()` memakai `gpt-oss-20b` dengan jatah token kecil; pola yang sama seperti `/api/saran` berisiko balasan kosong karena token reasoning dihabiskan lebih dulu. Kalau memori otomatis terasa tidak jalan, ini penyebab pertamanya | T-705 | sedang | belum — perlu uji terpisah |
+| F7 | `components/chat/Composer.tsx` memakai kelas `border-bahaya` / `text-bahaya`, padahal token yang ada `--color-danger` (`border-danger` / `text-danger`). Kelas itu tidak menghasilkan gaya apa pun, jadi status lampiran gagal tidak berwarna merah | T-1101 (lihat Composer) | rendah | belum — perbaikan satu kata |
 
 Jangan perbaiki temuan di luar cakupan saat sesi aktif. Catat saja di sini.
 

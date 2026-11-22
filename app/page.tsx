@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { GamePanel } from "@/components/game/GamePanel";
 import { LockScreen } from "@/components/LockScreen";
 import { Composer } from "@/components/chat/Composer";
 import { MessageList, type PesanTampil } from "@/components/chat/MessageList";
@@ -47,6 +48,7 @@ export default function Home() {
   const [sidebarTerbuka, setSidebarTerbuka] = useState(false);
   const [jumlahMemori, setJumlahMemori] = useState(0);
   const [mauHapusIni, setMauHapusIni] = useState(false);
+  const [gameTerbuka, setGameTerbuka] = useState(false);
   const [sidebarRingkas, setSidebarRingkas] = useState(false);
   const [autoMemori, setAutoMemori] = useState(true);
   const [catatanMemori, setCatatanMemori] = useState<string | null>(null);
@@ -554,6 +556,15 @@ export default function Home() {
 
           <ThemeToggle />
 
+          <button
+            onClick={() => setGameTerbuka(true)}
+            aria-label="Ruang main — main game"
+            title="Ruang main — Tic Tac Toe, Empat Berderet, Kartu Ingatan"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-penuh text-teks-muted hover:bg-border hover:text-aksen-lembut"
+          >
+            <Icon name="game" />
+          </button>
+
           {aktif && (
             <button
               onClick={() => setMauHapusIni(true)}
@@ -656,6 +667,10 @@ export default function Home() {
         }}
         onBatal={() => setMauHapusIni(false)}
       />
+
+      <AnimatePresence>
+        {gameTerbuka && <GamePanel onTutup={() => setGameTerbuka(false)} />}
+      </AnimatePresence>
     </div>
   );
 }
