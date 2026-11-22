@@ -139,12 +139,32 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    let batal = false;
+    let lambat = false;
     (async () => {
       setMemuat(true);
-      await muatDaftar(mode);
-      await muatMemori();
-      setMemuat(false);
+      try {
+        // Batas waktu: jaringan macet/abort saat berpindah halaman tidak boleh
+        // membuat layar tertahan selamanya di "Memuat...".
+        await Promise.race([
+          muatDaftar(mode),
+          new Promise((selesai) =>
+            setTimeout(() => {
+              lambat = true;
+              selesai(undefined);
+            }, 8000),
+          ),
+        ]);
+      } finally {
+        if (!batal) setMemuat(false);
+      }
+      if (lambat && !batal) setError("Daftar percakapan lambat dimuat. Coba lagi.");
+      // Lencana memori tidak menentukan layar — jangan ikut menahan.
+      if (!batal) void muatMemori();
     })();
+    return () => {
+      batal = true;
+    };
   }, [mode, muatDaftar, muatMemori]);
 
   async function bukaPercakapan(p: Percakapan) {
@@ -576,15 +596,25 @@ export default function Home() {
         </main>
 
         {error && (
-          <motion.p
+          <motion.div
             key={error}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0, transition: TRANSISI.cepat }}
             role="alert"
-            className="shrink-0 border-t border-danger/40 bg-danger/10 px-sedang py-2 text-center text-sm text-danger"
+            className="flex shrink-0 flex-wrap items-center justify-center gap-2 border-t border-danger/40 bg-danger/10 px-sedang py-2 text-center text-sm text-danger"
           >
-            {error}
-          </motion.p>
+            <span>{error}</span>
+            <button
+              onClick={() => {
+                setError(null);
+                void muatDaftar(mode);
+                void muatMemori();
+              }}
+              className="rounded-penuh border border-danger/50 px-2.5 py-0.5 text-[11px] font-medium text-danger hover:bg-danger/10"
+            >
+              Coba lagi
+            </button>
+          </motion.div>
         )}
 
         {catatanMemori && (

@@ -17,6 +17,19 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Chat "stuck memuat" saat kembali dari Pengaturan
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik melaporkan chat tertahan di "Memuat..." setelah masuk lalu keluar dari `/pengaturan`
+- **Diagnosa**: `app/page.tsx` menahan layar sampai **dua** panggilan selesai dan `muatMemori()` (lencana, non-kritis) di-`await` tanpa batas waktu. Satu fetch yang macet/abort saat berpindah halaman membuat `setMemuat(false)` tak pernah jalan.
+- **Dikerjakan**: `app/page.tsx` — `muatDaftar` dibatasi `Promise.race` 8 dtk; `muatMemori` dilepas dari jalur penahan (`void`); flag `batal` dibersihkan saat unmount; kalau lewat batas muncul pesan + tombol **Coba lagi** yang memuat ulang daftar & memori.
+- **Keputusan**: layar chat hanya bergantung pada satu panggilan (daftar percakapan). Data sekunder gagal = tidak mengunci UI.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm test` **10 file / 69 lulus** EXIT=0; `pnpm build` EXIT=0
+- **Blocker**: tidak ada
+- **Next**: cek browser — buka chat → Pengaturan → kembali; layar harus langsung tampil (maks 8 dtk sebelum pesan "lambat dimuat").
+
+---
+
 ### 2026-11-23 — Login 500: env Vercel kosong + login dibuat tahan env lain
 
 - **Sesi**: lanjutan

@@ -16,7 +16,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M7 | Lampiran sekali pakai, markdown rapi di balasan, regenerate, saran lanjutan + sakelar navbar | T-701..T-705 | done |
 | M8 | Konteks lampiran: chip di bubble pesan, retrieval lampiran tanpa ambang, konteks hanya dari berkas terunggah | T-801..T-804 | done |
 | M9 | Berkas per sesi chat, memori paten vs otomatis (tabel terpisah), sembunyikan chip konteks global, rapikan layar awal | T-901..T-904 | done |
-| M10 | Gerak UI lanjutan: GSAP + ScrollTrigger, sinkron Lenis↔ScrollTrigger, poles UX chat, animasi AI & aliran jawaban halus | T-1001..T-1003 | done |
+| M10 | Gerak UI lanjutan: GSAP + ScrollTrigger, sinkron Lenis↔ScrollTrigger, poles UX chat, animasi AI & aliran jawaban halus, perbaikan chat macet memuat | T-1001..T-1004 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -541,6 +541,17 @@ tanpa membuang framer-motion. Ditambahkan 2026-11-23.
   - Balasan asisten `15px / line-height 28px`, `text-pretty`.
   - Avatar Kirby tanpa bingkai lingkaran.
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 9 file / 65 lulus.
+
+### T-1004 — Chat tidak lagi macet "Memuat..." saat kembali dari Pengaturan
+
+- **Status**: done
+- **Dependency**: T-1003
+- **Cakupan**: `app/page.tsx`
+- **Kriteria penerimaan**:
+  - Layar chat hanya menunggu `muatDaftar`; lencana memori tidak menahan tampilan.
+  - Panggilan daftar dibatasi 8 dtk; lewat batas menampilkan pesan + tombol **Coba lagi**.
+  - Unmount membatalkan set-state (`batal`), jadi tidak ada pembaruan setelah navigasi.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 10 file / 69 lulus.
 
 ---
 
