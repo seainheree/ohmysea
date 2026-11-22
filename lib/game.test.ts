@@ -10,12 +10,14 @@ import {
   kocok,
   kolomBisa,
   langkahCO,
+  langkahMenangTTT,
   langkahTTT,
   papanTTTKosong,
   penuh,
   type Papan,
   type Pemain,
 } from "./game";
+import { BASS, MELODI, nadaKeFrekuensi } from "./game/lagu";
 
 /** Pembangkit acak deterministik supaya hasil uji tidak berubah tiap jalan. */
 function acakTetap(seed = 1): () => number {
@@ -122,6 +124,34 @@ describe("empat berderet", () => {
     const p: Papan = Array(CO_JALUR * 6).fill("kamu");
     expect(kolomBisa(p)).toEqual([]);
     expect(langkahCO(p, "kirby", true, acakTetap(1))).toBeNull();
+  });
+});
+
+describe("langkah menang & saran", () => {
+  it("menemukan langkah yang langsung memenangkan TTT", () => {
+    const p = papanTTTKosong();
+    p[0] = p[1] = "kirby";
+    expect(langkahMenangTTT(p, "kirby")).toEqual([2]);
+    expect(langkahMenangTTT(p, "kamu")).toEqual([]);
+  });
+});
+
+describe("lagu mode game", () => {
+  it("A4 = 440 Hz dan oktaf naik dua kali lipat", () => {
+    expect(nadaKeFrekuensi("A4")).toBeCloseTo(440, 5);
+    expect(nadaKeFrekuensi("A5")).toBeCloseTo(880, 5);
+    expect(nadaKeFrekuensi("C4")).toBeCloseTo(261.63, 2);
+  });
+
+  it("menolak nada yang salah tulis", () => {
+    expect(() => nadaKeFrekuensi("H4")).toThrow(/Nada tidak dikenal/);
+  });
+
+  it("semua nada di melodi & bass bisa dibaca dan panjangnya sepadan", () => {
+    expect(MELODI).toHaveLength(BASS.length);
+    for (const n of [...MELODI, ...BASS]) {
+      if (n !== "-") expect(() => nadaKeFrekuensi(n)).not.toThrow();
+    }
   });
 });
 

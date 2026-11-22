@@ -57,6 +57,15 @@ export function penuh(p: Papan): boolean {
   return p.every((s) => s !== null);
 }
 
+/** Indeks sel kosong yang langsung memenangkan TTT untuk `pemain`. */
+export function langkahMenangTTT(p: Papan, pemain: Pemain): number[] {
+  return kosongDi(p).filter((i) => {
+    const c = [...p];
+    c[i] = pemain;
+    return garisTTT(c) !== null;
+  });
+}
+
 /** Minimax: nilai posisi dari sudut pandang `ai` (menang cepat > menang lambat). */
 function nilaiTTT(p: Papan, giliran: Pemain, ai: Pemain, depth: number): number {
   const g = garisTTT(p);
@@ -159,7 +168,7 @@ export function garisCO(p: Papan): number[] | null {
 }
 
 /** Ada langkah yang langsung menang untuk `pemain`? */
-function bisaMenang(p: Papan, pemain: Pemain): boolean {
+export function bisaMenangCO(p: Papan, pemain: Pemain): boolean {
   return kolomBisa(p).some((k) => {
     const c = [...p];
     return jatuhkan(c, k, pemain) !== null && garisCO(c) !== null;
@@ -178,7 +187,7 @@ function nilaiKolom(p: Papan, kolom: number, ai: Pemain): number {
   if (baris === null) return -Infinity;
   if (garisCO(salinan)) return 1000;
   // Langkah yang membiarkan lawan menang langsung selalu lebih buruk.
-  const ancaman = bisaMenang(salinan, lain(ai));
+  const ancaman = bisaMenangCO(salinan, lain(ai));
 
   let dekat = 0;
   for (let db = -1; db <= 1; db++) {

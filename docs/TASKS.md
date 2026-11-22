@@ -17,6 +17,8 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M8 | Konteks lampiran: chip di bubble pesan, retrieval lampiran tanpa ambang, konteks hanya dari berkas terunggah | T-801..T-804 | done |
 | M9 | Berkas per sesi chat, memori paten vs otomatis (tabel terpisah), sembunyikan chip konteks global, rapikan layar awal | T-901..T-904 | done |
 | M10 | Gerak UI lanjutan: GSAP + ScrollTrigger, sinkron Lenis↔ScrollTrigger, poles UX chat, animasi AI & aliran jawaban halus, perbaikan chat macet memuat | T-1001..T-1004 | done |
+| M11 | Ruang main: opsi game di chat — Tic Tac Toe, Empat Berderet, Kartu Ingatan | T-1101..T-1103 | done |
+| M12 | Ruang main dipoles: kontras keping, animasi maksimal, reaksi/ekspresi Kirby, lagu on/off | T-1201..T-1204 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -553,11 +555,9 @@ tanpa membuang framer-motion. Ditambahkan 2026-11-23.
   - Unmount membatalkan set-state (`batal`), jadi tidak ada pembaruan setelah navigasi.
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 10 file / 69 lulus.
 
-| M11 | Ruang main: opsi game di chat — Tic Tac Toe, Empat Berderet, Kartu Ingatan | T-1101..T-1103 | done |
-
 ---
 
-## M11 — Ruang main: opsi game di chat
+## M11 - Ruang main: opsi game di chat
 
 Latar: pemilik minta opsi game di chat, bisa dimainkan langsung dengan UI
 interaktif. Ditambahkan 2026-11-23. Tanpa API/DB/dependency baru — semua di klien.
@@ -594,6 +594,54 @@ interaktif. Ditambahkan 2026-11-23. Tanpa API/DB/dependency baru — semua di kl
   - Panel berisi pemilih 3 game + papan aktif; tutup lewat tombol, klik latar, atau `Esc`.
   - Tema terang/gelap ikut token `app/globals.css` (tanpa hex baru).
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 80 lulus.
+
+---
+
+## M12 - Ruang main dipoles
+
+Latar: pemilik menilai keping Empat Berderet kurang kontras, minta UI/animasi
+dimaksimalkan di tiga game, Kirby bereaksi seperti bot catur, dan lagu mode game
+dengan tombol nyala/mati. Ditambahkan 2026-11-23. Tetap tanpa API/DB/dependency.
+
+### T-1201 — Kontras & animasi papan
+
+- **Status**: done
+- **Dependency**: T-1103
+- **Cakupan**: `components/game/PapanEmpatBerderet.tsx`, `PapanTicTacToe.tsx`, `PapanIngatan.tsx`, `components/game/bersama.tsx`, `app/globals.css`
+- **Kriteria penerimaan**:
+  - Keping Empat Berderet jelas di tema gelap & terang: kamu `bg-aksen`, Kirby `bg-teks`, keduanya ber-ring, lubang `bg-bg-main`; kolom tersorot menampilkan bayangan keping di baris tempat keping akan mendarat.
+  - Keping jatuh dengan pegas; kartu ingatan berputar 3D dan bergetar saat pasangan salah; garis kemenangan TTT tergambar beranimasi.
+  - Sel/kartu memberi umpan balik hover dan terkunci saat giliran Kirby.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0.
+
+### T-1202 — Reaksi & ekspresi Kirby
+
+- **Status**: done
+- **Dependency**: T-1201
+- **Cakupan**: `components/game/reaksi.ts`, `components/game/bersama.tsx` (`AvatarKirby`, `BarKirby`), ketiga papan, `app/globals.css`
+- **Kriteria penerimaan**:
+  - Bilah Kirby (avatar + ucapan) berganti hanya pada momen berarti: menghitung, memblokir langkah, lawan terancam, menang, kalah, seri, kartu ketemu/beres, ganti game.
+  - Ekspresi `tenang/hitung/senang/kaget/sedih` dari satu sprite lewat kelas CSS; ucapan Bahasa Indonesia singkat.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0.
+
+### T-1203 — Lagu mode game + tombol nyala/mati
+
+- **Status**: done
+- **Dependency**: T-1103
+- **Cakupan**: `lib/game/lagu.ts`, `components/game/GamePanel.tsx`, `components/ui/Icon.tsx` (`suara`, `bisu`)
+- **Kriteria penerimaan**:
+  - Chiptune prosedural (Web Audio, penjadwal lookahead) — tanpa file audio/dependency.
+  - Tombol nyala/mati di header panel; pilihan disimpan di `localStorage`; audio berhenti saat panel ditutup.
+  - `mulai()` dicoba ulang saat interaksi pertama supaya lolos kebijakan autoplay browser.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 84 lulus (termasuk A4 = 440 Hz + validasi nada lagu).
+
+### T-1204 — Uji logika baru
+
+- **Status**: done
+- **Dependency**: T-1201, T-1203
+- **Cakupan**: `lib/game.ts` (`langkahMenangTTT`, `bisaMenangCO` diekspor), `lib/game.test.ts`
+- **Kriteria penerimaan**: `langkahMenangTTT` mengembalikan sel penentu kemenangan; semua nada lagu divalidasi.
+- **Verifikasi**: `pnpm test` **11 file / 84 lulus** EXIT=0.
 
 ---
 

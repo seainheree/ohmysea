@@ -17,6 +17,31 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Ruang main dipoles: kontras, animasi, reaksi Kirby, lagu
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik minta (1) keping Empat Berderet lebih kontras, (2) UI+animasi tiga game dimaksimalkan, (3) Kirby bereaksi/berekspresi seperti bot catur pada momen berarti, (4) lagu mode game lucu dengan tombol nyala/mati
+- **Keputusan**:
+  - Kontras: keping `kamu` = `bg-aksen`, `Kirby` = `bg-teks` (putih di tema gelap, gelap di tema terang) + ring; lubang papan `bg-bg-main` + `ring-border`. Ini menghindari dua nuansa pink yang sebelumnya berdekatan.
+  - Ekspresi Kirby **tanpa aset baru**: satu sprite `kirby-96.png` + kelas CSS (`kirby-tenang/hitung/senang/kaget/sedih`) karena repo belum punya gambar ekspresi.
+  - Lagu **prosedural Web Audio**, bukan file audio: tidak ada biner baru, tidak ada dependency, bisa dimatikan total. Penjadwal "lookahead" supaya loop tidak tersendat.
+- **Dikerjakan**:
+  - `components/game/PapanEmpatBerderet.tsx`: kontras keping, bayangan keping saat hover kolom, keping jatuh dengan `TRANSISI.pegas`, ring berdenyut saat menang.
+  - `components/game/PapanTicTacToe.tsx`: sel tanpa jarak supaya **garis kemenangan** bisa digambar tepat di tengah, markah masuk dengan pegas, bayangan X saat hover, titik penanda langkah terakhir.
+  - `components/game/PapanIngatan.tsx`: kartu berputar 3D (`backface-visibility`), getar saat pasangan salah, bilah kemajuan, ledakan cincin saat selesai.
+  - `components/game/reaksi.ts` (baru): katalog ucapan + tipe `Ekspresi`/`Reaksi`; `acak()`.
+  - `components/game/bersama.tsx`: `AvatarKirby`, `BarKirby`, animasi skor, tombol tingkat dengan `layoutId`.
+  - `lib/game/lagu.ts` (baru): `nadaKeFrekuensi`, `MELODI`, `BASS`, `buatLagu()` (mulai/berhenti).
+  - `components/game/GamePanel.tsx`: bilah Kirby, tombol lagu (`localStorage` `ohmysea-lagu-game`), reaksi disetel ulang saat ganti game.
+  - `app/globals.css`: keyframes ekspresi Kirby + `perspective` kartu.
+  - `components/ui/Icon.tsx`: ikon `suara`, `bisu`.
+  - `lib/game.ts`: ekspor `langkahMenangTTT`, `bisaMenangCO` (dipakai untuk reaksi).
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **11 file / 84 lulus** EXIT=0
+- **Blocker**: tidak ada
+- **Next**: cek browser — keping Empat Berderet di tema terang & gelap, garis menang TTT, kartu berputar, ucapan Kirby saat memblokir/menang, tombol lagu (cabut headphone untuk memastikan suara berhenti saat panel ditutup).
+
+---
+
 ### 2026-11-23 — Ruang main: opsi game di chat (TTT, Empat Berderet, Kartu Ingatan)
 
 - **Sesi**: lanjutan

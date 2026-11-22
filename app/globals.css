@@ -195,3 +195,92 @@ html {
   color: transparent;
   animation: kilau-teks 2.4s linear infinite;
 }
+
+/* --- Ekspresi Kirby (ruang main) -------------------------------------
+   Satu sprite, banyak sikap. Loop ambient memakai durasi > 1 dtk (seperti
+   titik-menulis); gerak reaksi pendek tetap 150–400 ms dari lib/motion.ts. */
+
+@keyframes kirby-tenang {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(-2deg);
+  }
+}
+
+@keyframes kirby-hitung {
+  0%,
+  100% {
+    transform: rotate(-7deg) translateY(0);
+  }
+  50% {
+    transform: rotate(7deg) translateY(-2px);
+  }
+}
+
+@keyframes kirby-lompat {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-12px) scale(1.08);
+  }
+  70% {
+    transform: translateY(0) scale(0.96);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes kirby-goyang {
+  0%,
+  100% {
+    transform: translateX(-3px) rotate(-4deg);
+  }
+  50% {
+    transform: translateX(3px) rotate(4deg);
+  }
+}
+
+@keyframes kirby-lesu {
+  0%,
+  100% {
+    transform: rotate(-9deg) translateY(3px);
+    opacity: 0.8;
+  }
+  50% {
+    transform: rotate(-9deg) translateY(5px);
+    opacity: 0.65;
+  }
+}
+
+.kirby-tenang {
+  animation: kirby-tenang 2.8s ease-in-out infinite;
+}
+
+.kirby-hitung {
+  animation: kirby-hitung 0.9s ease-in-out infinite;
+}
+
+.kirby-senang {
+  animation: kirby-lompat 0.7s ease-out infinite;
+  filter: drop-shadow(0 0 10px var(--color-aksen));
+}
+
+.kirby-kaget {
+  animation: kirby-goyang 0.28s ease-in-out infinite;
+}
+
+.kirby-sedih {
+  animation: kirby-lesu 1.6s ease-in-out infinite;
+  filter: grayscale(0.35);
+}
+
+/* Papan: keping jatuh & kartu berputar butuh ruang 3D sendiri. */
+.papan-3d {
+  perspective: 900px;
+}
+

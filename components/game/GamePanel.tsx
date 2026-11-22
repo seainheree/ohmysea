@@ -3,11 +3,14 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
+import { BarKirby } from "@/components/game/bersama";
 import { PapanEmpatBerderet } from "@/components/game/PapanEmpatBerderet";
 import { PapanIngatan } from "@/components/game/PapanIngatan";
 import { PapanTicTacToe } from "@/components/game/PapanTicTacToe";
+import { REAKSI, acak, type Reaksi } from "@/components/game/reaksi";
 import { Icon, type NamaIkon } from "@/components/ui/Icon";
 import { TRANSISI } from "@/lib/motion";
+import { buatLagu } from "@/lib/game/lagu";
 
 type Jenis = "ttt" | "berderet" | "ingatan";
 
@@ -17,9 +20,54 @@ const DAFTAR: { id: Jenis; nama: string; ikon: NamaIkon; ringkas: string }[] = [
   { id: "ingatan", nama: "Kartu Ingatan", ikon: "salin", ringkas: "16 kartu · cari pasangan" },
 ];
 
+const KUNCI_LAGU = "ohmysea-lagu-game";
+
 /** Panel ruang main: pilih game, main langsung di dalam chat. */
 export function GamePanel({ onTutup }: { onTutup: () => void }) {
   const [jenis, setJenis] = useState<Jenis>("ttt");
+  const [reaksi, setReaksi] = useState<Reaksi>(() => ({
+    ekspresi: "tenang",
+    teks: acak(REAKSI.sambut),
+  }));
+  const [laguNyala, setLaguNyala] = useState(false);
+
+  useEffect(() => {
+    try {
+      setLaguNyala(localStorage.getItem(KUNCI_LAGU) === "nyala");
+    } catch {
+      // localStorage bisa diblokir; lagu tetap bisa dinyalakan manual.
+    }
+  }, []);
+
+  // Lagu dibuat/dimatikan di sini supaya tidak ada audio yang tertinggal
+  // saat panel ditutup. Kalau browser menahan audio sebelum ada aksi
+  // pengguna, percobaan pertama saat interaksi apa pun akan membunyikannya.
+  useEffect(() => {
+    if (!laguNyala) return;
+    const lagu = buatLagu();
+    lagu.mulai();
+    const sekali = () => lagu.mulai();
+    window.addEventListener("pointerdown", sekali, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", sekali);
+      lagu.berhenti();
+    };
+  }, [laguNyala]);
+
+  function gantiLagu() {
+    const baru = !laguNyala;
+    setLaguNyala(baru);
+    try {
+      localStorage.setItem(KUNCI_LAGU, baru ? "nyala" : "mati");
+    } catch {
+      // abaikan
+    }
+  }
+
+  function gantiGame(id: Jenis) {
+    setJenis(id);
+    setReaksi({ ekspresi: "tenang", teks: acak(REAKSI.sambut) });
+  }
 
   useEffect(() => {
     function tekan(e: KeyboardEvent) {
@@ -55,6 +103,17 @@ export function GamePanel({ onTutup }: { onTutup: () => void }) {
             </p>
           </div>
           <button
+            onClick={gantiLagu}
+            aria-pressed={laguNyala}
+            aria-label={laguNyala ? "Matikan lagu mode game" : "Nyalakan lagu mode game"}
+            title={laguNyala ? "Lagu: nyala" : "Lagu: mati"}
+            className={`grid h-10 w-10 shrink-0 place-items-center rounded-penuh transition-colors hover:bg-border ${
+              laguNyala ? "text-aksen-lembut" : "text-teks-muted-2 hover:text-teks"
+            }`}
+          >
+            <Icon name={laguNyala ? "suara" : "bisu"} />
+          </button>
+          <button
             onClick={onTutup}
             aria-label="Tutup ruang main"
             className="grid h-10 w-10 shrink-0 place-items-center rounded-penuh text-teks-muted transition-colors hover:bg-border hover:text-teks"
@@ -67,14 +126,17 @@ export function GamePanel({ onTutup }: { onTutup: () => void }) {
           {DAFTAR.map((g) => (
             <button
               key={g.id}
-              onClick={() => setJenis(g.id)}
+              onClick={() => gantiGame(g.id)}
               aria-pressed={jenis === g.id}
-              className={`flex shrink-0 items-center gap-2 rounded-sedang border px-3 py-1.5 text-left transition-colors ${
-                jenis === g.id
-                  ? "border-aksen bg-aksen/10 text-teks"
-                  : "border-border text-teks-muted hover:border-border-kuat hover:text-teks"
-              }`}
+              className="relative flex shrink-0 items-center gap-2 rounded-sedang border border-border px-3 py-1.5 text-left transition-colors hover:border-border-kuat"
             >
+              {jenis === g.id && (
+                <motion.span
+                  layoutId="game-aktif"
+                  className="absolute inset-0 -z-10 rounded-sedang border border-aksen bg-aksen/10"
+                  transition={TRANSISI.pegas}
+                />
+              )}
               <Icon name={g.ikon} size={16} />
               <span className="text-[12px] leading-tight">
                 <span className="block font-medium">{g.nama}</span>
@@ -85,9 +147,12 @@ export function GamePanel({ onTutup }: { onTutup: () => void }) {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-sedang">
-          {jenis === "ttt" && <PapanTicTacToe />}
-          {jenis === "berderet" && <PapanEmpatBerderet />}
-          {jenis === "ingatan" && <PapanIngatan />}
+          <div className="flex flex-col gap-sedang">
+            <BarKirby reaksi={reaksi} />
+            {jenis === "ttt" && <PapanTicTacToe onReaksi={setReaksi} />}
+            {jenis === "berderet" && <PapanEmpatBerderet onReaksi={setReaksi} />}
+            {jenis === "ingatan" && <PapanIngatan onReaksi={setReaksi} />}
+          </div>
         </div>
       </motion.div>
     </motion.div>
