@@ -17,6 +17,22 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Login 500: env Vercel kosong + login dibuat tahan env lain
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik melaporkan login `POST /api/unlock` gagal HTTP 500
+- **Diagnosa (bukti)**: `GET /api/health` produksi → HTTP 503, `env.hilang` berisi 8 variabel termasuk `APP_ACCESS_CODE`; `vercel env ls production` → "No Environment Variables found for sea-fee9/ohmysea". Penyebab: project Vercel baru belum diisi env; `lib/session.ts` memanggil `getEnv()` yang memvalidasi **semua** env wajib, sehingga login ikut throw → route tanpa `try/catch` → 500.
+- **Dikerjakan**:
+  - `lib/session.ts`: `kodeAkses()` membaca `process.env.APP_ACCESS_CODE` langsung (bukan `getEnv()`); `isAuthorized()` mengembalikan `false` (bukan throw) kalau env rusak.
+  - `app/api/unlock/route.ts`: `try/catch` → 503 + pesan Indonesia jelas ("Login tidak bisa diproses: …"), bukan 500 kosong.
+  - `lib/session.test.ts` (4 test): kode benar/salah, HMAC stabil, cookie sah/palsu, env kosong.
+- **Keputusan**: login hanya bergantung pada `APP_ACCESS_CODE`; fitur lain tetap divalidasi penuh oleh `getEnv()` saat dipakai.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm test` **10 file / 69 lulus** EXIT=0; `pnpm build` EXIT=0
+- **Blocker**: env produksi masih kosong — butuh unggah variabel dari `.env` ke Vercel project `sea-fee9/ohmysea`.
+- **Next**: isi env produksi lalu `vercel --prod`; cek `GET /api/health` → 200.
+
+---
+
 ### 2026-11-23 — Animasi AI & aliran jawaban halus
 
 - **Sesi**: lanjutan
