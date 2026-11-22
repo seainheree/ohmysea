@@ -154,7 +154,7 @@ export function MessageList({
             >
             <AvatarAsisten />
             <div className="min-w-0 flex-1">
-              <div className="rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed text-teks">
+              <div className="rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-[15px] leading-7 text-pretty text-teks">
                 <Markdown teks={m.content} />
               </div>
               {m.sources && m.sources.length > 0 && (
@@ -281,16 +281,12 @@ export function MessageList({
                 {streaming ? (
                   <>
                     <Markdown teks={streaming} />
-                    <motion.span
-                      animate={{ opacity: [1, 0.2, 1] }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="ml-0.5 inline-block h-4 w-[2px] self-end bg-aksen-lembut"
-                    />
+                    <span className="kursor-menulis ml-0.5 inline-block h-4 w-[2px] self-end rounded-penuh bg-aksen-lembut" />
                   </>
                 ) : (
                   <span className="flex items-center gap-2 text-teks-muted">
                     <TitikMenulis />
-                    <span className="text-xs">
+                    <span className="teks-kilau text-xs">
                       {mode === "curhat" ? "Kirby sedang menyimak..." : "Kirby sedang menjawab..."}
                     </span>
                   </span>

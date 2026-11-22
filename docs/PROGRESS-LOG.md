@@ -17,6 +17,22 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Animasi AI & aliran jawaban halus
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik minta animasi AI saat chat, aliran jawaban mulus, tipografi balasan lebih profesional, dan bingkai lingkaran avatar dibuang
+- **Dikerjakan**:
+  - `app/page.tsx`: potongan stream dikumpulkan lalu dicat sekali per frame (`requestAnimationFrame`) — sebelumnya tiap token memicu render sendiri sehingga teks bergetar; buffer dibersihkan di jalur sukses, gagal, dan ulang.
+  - `components/chat/MessageList.tsx`: kursor menulis memakai CSS `.kursor-menulis` (pudar lembut), bukan animasi framer per frame; status "Kirby sedang menjawab..." memakai `.teks-kilau` (kilau bergerak); titik menunggu naik-turun + skala halus; balasan asisten `text-[15px] leading-7 text-pretty`.
+  - `components/chat/MessageList.tsx`: avatar Kirby `object-contain` tanpa `rounded-penuh`/border/latar (sesuai permintaan hapus lingkaran).
+  - `app/globals.css`: keyframes kilau teks, kursor pudar, titik dengan skala; `will-change` pada titik.
+- **Keputusan**: tanpa dependensi baru. Animasi status pakai CSS (murah, tidak memicu render React).
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **9 file / 65 lulus** EXIT=0
+- **Blocker**: tidak ada
+- **Next**: cek browser — kirim pesan panjang, teks harus mengalir rata tanpa getar; status menunggu berkilau; avatar tanpa lingkaran.
+
+---
+
 ### 2026-11-23 — Poles UI/UX chatbot: smart scroll, salin, drag-drop, waktu relatif
 
 - **Sesi**: lanjutan

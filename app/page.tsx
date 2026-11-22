@@ -261,6 +261,32 @@ export default function Home() {
     }
   }
 
+  /**
+   * Kumpulkan potongan stream lalu cat ke layar sekali per frame.
+   * Tanpa ini tiap token memicu render sendiri → teks bergetar dan gulir tersendat.
+   */
+  function penampungStream() {
+    let buf = "";
+    let raf = 0;
+    return {
+      tambah(bagian: string) {
+        buf += bagian;
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          const teks = buf;
+          buf = "";
+          if (teks) setStreaming((s) => s + teks);
+        });
+      },
+      hentikan() {
+        if (raf) cancelAnimationFrame(raf);
+        raf = 0;
+        buf = "";
+      },
+    };
+  }
+
   async function kirim(teks: string) {
     if (sibukLampiran) return;
     setSibuk(true);
@@ -285,6 +311,7 @@ export default function Home() {
       createdAt: new Date().toISOString(),
     };
     setPesan((p) => [...p, sementara]);
+    const aliran = penampungStream();
 
     try {
       const sebelum = jumlahMemori;
@@ -294,7 +321,7 @@ export default function Home() {
         message: teks,
         autoMemori,
         attachmentIds: lampiranDikirim?.documentId ? [lampiranDikirim.documentId] : undefined,
-        onChunk: (bagian) => setStreaming((s) => s + bagian),
+        onChunk: aliran.tambah,
       });
 
       const data = await ambilPesan(hasil.conversationId);
@@ -303,6 +330,7 @@ export default function Home() {
           ? { ...m, durasiMs: hasil.durasiMs }
           : m,
       );
+      aliran.hentikan();
       setPesan(daftar);
       setBerkasSesi(data.berkas);
       aktifIdRef.current = data.percakapan.id;
@@ -333,6 +361,7 @@ export default function Home() {
         }
       }
     } catch (err) {
+      aliran.hentikan();
       setError(err instanceof Error ? err.message : "Gagal mengirim pesan");
       setStreaming("");
       setSibuk(false);
@@ -351,6 +380,7 @@ export default function Home() {
     setError(null);
     setStreaming("");
     setSaran([]);
+    const aliran = penampungStream();
     try {
       const hasil = await kirimPesan({
         conversationId: id,
@@ -358,7 +388,7 @@ export default function Home() {
         message: terakhirTanya.content,
         autoMemori: false,
         regenerate: true,
-        onChunk: (bagian) => setStreaming((s) => s + bagian),
+        onChunk: aliran.tambah,
       });
 
       const data = await ambilPesan(id);
@@ -369,10 +399,12 @@ export default function Home() {
             : m,
         ),
       );
+      aliran.hentikan();
       setStreaming("");
       setSibuk(false);
       if (saranAktif) void ambilSaran(id).then(setSaran).catch(() => setSaran([]));
     } catch (err) {
+      aliran.hentikan();
       setError(err instanceof Error ? err.message : "Gagal mengulang jawaban");
       setStreaming("");
       setSibuk(false);

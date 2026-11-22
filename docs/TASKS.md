@@ -16,7 +16,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M7 | Lampiran sekali pakai, markdown rapi di balasan, regenerate, saran lanjutan + sakelar navbar | T-701..T-705 | done |
 | M8 | Konteks lampiran: chip di bubble pesan, retrieval lampiran tanpa ambang, konteks hanya dari berkas terunggah | T-801..T-804 | done |
 | M9 | Berkas per sesi chat, memori paten vs otomatis (tabel terpisah), sembunyikan chip konteks global, rapikan layar awal | T-901..T-904 | done |
-| M10 | Gerak UI lanjutan: GSAP + ScrollTrigger (hero parallax chat, reveal kartu galeri), sinkron Lenis↔ScrollTrigger; poles UX chat (smart scroll, salin, drag-drop, waktu relatif) | T-1001..T-1002 | done |
+| M10 | Gerak UI lanjutan: GSAP + ScrollTrigger, sinkron Lenis↔ScrollTrigger, poles UX chat, animasi AI & aliran jawaban halus | T-1001..T-1003 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -528,6 +528,18 @@ tanpa membuang framer-motion. Ditambahkan 2026-11-23.
   - Balasan asisten bisa disalin dengan umpan balik centang.
   - Berkas bisa dilepas ke komposer; penghitung karakter tampil >3000 dan kirim terkunci >4000.
   - Daftar percakapan menampilkan waktu relatif; aksi baris muncul saat hover/fokus di desktop.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 9 file / 65 lulus.
+
+### T-1003 — Animasi AI & aliran jawaban halus
+
+- **Status**: done
+- **Dependency**: T-1002
+- **Cakupan**: `app/page.tsx` (buffer frame), `components/chat/MessageList.tsx`, `app/globals.css`
+- **Kriteria penerimaan**:
+  - Potongan stream dicat sekali per frame (tidak ada render per token).
+  - Status menunggu: titik naik-turun berskala + teks berkilau; kursor menulis pudar lembut.
+  - Balasan asisten `15px / line-height 28px`, `text-pretty`.
+  - Avatar Kirby tanpa bingkai lingkaran.
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 9 file / 65 lulus.
 
 ---
