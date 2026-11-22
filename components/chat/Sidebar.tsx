@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Icon } from "@/components/ui/Icon";
 import { Label } from "@/components/ui/Card";
 import type { Mode, Percakapan } from "@/lib/api";
+import { waktuRelatif } from "@/lib/waktu";
 
 type Props = {
   percakapan: Percakapan[];
@@ -193,7 +194,7 @@ export function Sidebar({
                   </div>
                 ) : (
                   <div
-                    className={`flex items-center gap-1 rounded-sedang px-1.5 py-1 ${
+                    className={`group/baris flex items-center gap-1 rounded-sedang px-1.5 py-1 ${
                       p.id === aktifId ? "bg-border text-teks" : "text-teks-muted hover:bg-surface"
                     }`}
                   >
@@ -204,21 +205,26 @@ export function Sidebar({
                     >
                       <Icon name={p.mode === "curhat" ? "curhat" : "chat"} size={15} className="shrink-0 opacity-70" />
                       <span className="truncate">{p.title}</span>
+                      <span className="ml-auto shrink-0 text-[10px] tabular-nums text-teks-muted-2 md:group-hover/baris:invisible">
+                        {waktuRelatif(p.updatedAt)}
+                      </span>
                     </button>
-                    <button
-                      onClick={() => setUbah({ id: p.id, teks: p.title })}
-                      aria-label={`Ganti judul ${p.title}`}
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-penuh text-teks-muted hover:bg-bg-main hover:text-teks"
-                    >
-                      <Icon name="ubah" size={15} />
-                    </button>
-                    <button
-                      onClick={() => setMauHapus(p)}
-                      aria-label={`Hapus ${p.title}`}
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-penuh text-teks-muted hover:bg-bg-main hover:text-danger"
-                    >
-                      <Icon name="hapus" size={15} />
-                    </button>
+                    <div className="flex shrink-0 items-center md:opacity-0 md:transition-opacity md:group-focus-within/baris:opacity-100 md:group-hover/baris:opacity-100">
+                      <button
+                        onClick={() => setUbah({ id: p.id, teks: p.title })}
+                        aria-label={`Ganti judul ${p.title}`}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-penuh text-teks-muted hover:bg-bg-main hover:text-teks"
+                      >
+                        <Icon name="ubah" size={15} />
+                      </button>
+                      <button
+                        onClick={() => setMauHapus(p)}
+                        aria-label={`Hapus ${p.title}`}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-penuh text-teks-muted hover:bg-bg-main hover:text-danger"
+                      >
+                        <Icon name="hapus" size={15} />
+                      </button>
+                    </div>
                   </div>
                 )}
               </li>

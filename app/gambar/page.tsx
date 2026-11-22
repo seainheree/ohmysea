@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 
 import { LockScreen } from "@/components/LockScreen";
 import { UnduhTransparan } from "@/components/image/UnduhTransparan";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Card";
-import { TRANSISI } from "@/lib/motion";
+import { DURASI, GSAP_EASE } from "@/lib/motion";
 import {
   DEFAULT_MODEL,
   DEFAULT_RATIO,
@@ -33,6 +35,32 @@ export default function HalamanGambar() {
   const [sibuk, setSibuk] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const gulirRef = useRef<HTMLDivElement>(null);
+
+  // Reveal kartu galeri saat masuk viewport (ScrollTrigger pada wadah gulir
+  // halaman ini sendiri) + header muncul halus.
+  useGSAP(
+    () => {
+      gsap.registerPlugin(useGSAP, ScrollTrigger);
+      gsap.from(".galeri-header", {
+        opacity: 0,
+        y: -14,
+        duration: DURASI.sedang,
+        ease: GSAP_EASE.standar,
+      });
+      const scroller = gulirRef.current ?? undefined;
+      gsap.utils.toArray<HTMLElement>(".kartu-galeri").forEach((el) => {
+        gsap.from(el, {
+          opacity: 0,
+          y: 26,
+          duration: DURASI.sedang,
+          ease: GSAP_EASE.standar,
+          scrollTrigger: { scroller, trigger: el, start: "top 92%", once: true },
+        });
+      });
+    },
+    { scope: gulirRef, dependencies: [galeri.length], revertOnUpdate: true },
+  );
 
   async function muat() {
     try {
@@ -92,8 +120,11 @@ export default function HalamanGambar() {
   const bolehReferensi = dukungGambarReferensi(model);
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-[900px] min-h-0 flex-1 flex-col gap-besar overflow-y-auto px-sedang py-besar">
-      <header className="flex items-center justify-between">
+    <div
+      ref={gulirRef}
+      className="mx-auto flex h-full w-full max-w-[900px] min-h-0 flex-1 flex-col gap-besar overflow-y-auto px-sedang py-besar"
+    >
+      <header className="galeri-header flex items-center justify-between">
         <h1 className="font-display text-4xl leading-none">
           oh<span className="text-aksen-terang">my</span>sea · gambar
         </h1>
@@ -214,19 +245,13 @@ export default function HalamanGambar() {
 
       <section className="flex flex-col gap-sedang">
         <Label>Galeri ({galeri.filter((g) => !g.url.startsWith("gagal://")).length})</Label>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: TRANSISI.sedang }}
-          className="grid grid-cols-1 gap-sedang sm:grid-cols-2 lg:grid-cols-3"
-        >
+        <div className="grid grid-cols-1 gap-sedang sm:grid-cols-2 lg:grid-cols-3">
           {galeri
             .filter((g) => !g.url.startsWith("gagal://"))
             .map((g, i) => (
-              <motion.figure
+              <figure
                 key={g.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0, transition: TRANSISI.sedang }}
-                className="overflow-hidden rounded-besar border border-border bg-surface"
+                className="kartu-galeri overflow-hidden rounded-besar border border-border bg-surface"
               >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -252,9 +277,9 @@ export default function HalamanGambar() {
                       </a>
                     </div>
                   </figcaption>
-                </motion.figure>
+                </figure>
               ))}
-        </motion.div>
+        </div>
         {galeri.length === 0 && (
           <p className="text-sm text-teks-muted">Belum ada gambar. Coba buat satu di atas.</p>
         )}

@@ -527,11 +527,6 @@ export default function Home() {
 
         <main ref={(el) => setWadahGulir(el)} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div ref={(el) => setIsiGulir(el)}>
-            {error && (
-              <p className="mx-auto mt-sedang max-w-[760px] rounded-sedang border border-danger/40 bg-danger/10 px-sedang py-2 text-sm text-danger">
-                {error}
-              </p>
-            )}
             <MessageList
               pesan={pesan}
               streaming={streaming}
@@ -539,6 +534,7 @@ export default function Home() {
               nama={panggilan}
               menunggu={sibuk && streaming.length === 0}
               pratinjau={pratinjau}
+              wadahGulir={wadahGulir}
               onUlangi={() => void ulangi()}
               bisaUlangi={!sibuk && pesan.some((m) => m.role === "assistant")}
               saran={saranAktif ? saran : []}
@@ -546,6 +542,18 @@ export default function Home() {
             />
           </div>
         </main>
+
+        {error && (
+          <motion.p
+            key={error}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0, transition: TRANSISI.cepat }}
+            role="alert"
+            className="shrink-0 border-t border-danger/40 bg-danger/10 px-sedang py-2 text-center text-sm text-danger"
+          >
+            {error}
+          </motion.p>
+        )}
 
         {catatanMemori && (
           <motion.p

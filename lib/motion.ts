@@ -1,7 +1,7 @@
 /**
  * Standar gerak UI ohmysea — satu sumber untuk semua animasi.
- * Aturan: 150–400 ms, kurva standar sama di semua tempat, hormati
- * `prefers-reduced-motion` (lihat app/globals.css).
+ * Aturan: 150–400 ms, kurva standar sama di semua tempat. Gerak selalu aktif
+ * (tanpa cabang `prefers-reduced-motion` — keputusan pemilik, 2026-11-23).
  */
 export type Kurva = [number, number, number, number];
 
@@ -13,6 +13,16 @@ export const DURASI = {
   cepat: 0.22,
   sedang: 0.3,
   lambat: 0.4,
+} as const;
+
+/**
+ * GSAP memakai string ease, bukan kurva bezier. `power3.out` ≈ KURVA_STANDAR
+ * (keluar cepat, masuk lembut); `power2.out` untuk gerak pendek. Hanya ekuivalen
+ * token di atas — jangan tulis nama ease GSAP langsung di komponen.
+ */
+export const GSAP_EASE = {
+  standar: "power3.out",
+  pendek: "power2.out",
 } as const;
 
 export const TRANSISI = {

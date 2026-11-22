@@ -1,9 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 
-import { TRANSISI } from "@/lib/motion";
+import { DURASI, GSAP_EASE, TRANSISI } from "@/lib/motion";
 import type { Pesan } from "@/lib/api";
 import { Icon } from "@/components/ui/Icon";
 import { Markdown } from "@/components/chat/Markdown";
@@ -29,7 +32,7 @@ function durasi(ms?: number): string | null {
   return `${menit}m ${sisa}s`;
 }
 
-/** Avatar asisten (public/image/kirby.png) — dipakai di setiap balasan & saat menulis. */
+/** Avatar asisten (public/image/kirby.png), tanpa bingkai — dipakai di setiap balasan. */
 function AvatarAsisten({ size = 36 }: { size?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -38,7 +41,7 @@ function AvatarAsisten({ size = 36 }: { size?: number }) {
       alt="ohmysea"
       width={size}
       height={size}
-      className="shrink-0 rounded-penuh border border-border-kuat bg-surface object-cover"
+      className="shrink-0 object-contain"
       style={{ width: size, height: size }}
     />
   );
@@ -55,6 +58,32 @@ function TitikMenulis() {
   );
 }
 
+/** Tombol salin isi balasan asisten (beri umpan balik centang sebentar). */
+function TombolSalin({ teks }: { teks: string }) {
+  const [tersalin, setTersalin] = useState(false);
+
+  async function salin() {
+    try {
+      await navigator.clipboard.writeText(teks);
+      setTersalin(true);
+      window.setTimeout(() => setTersalin(false), 1600);
+    } catch {
+      // Clipboard bisa diblokir browser; abaikan tanpa mengganggu chat.
+    }
+  }
+
+  return (
+    <button
+      onClick={() => void salin()}
+      aria-label={tersalin ? "Balasan tersalin" : "Salin balasan"}
+      title={tersalin ? "Tersalin" : "Salin balasan"}
+      className="grid h-7 w-7 place-items-center rounded-penuh text-teks-muted-2 transition-colors hover:bg-border hover:text-teks"
+    >
+      <Icon name={tersalin ? "centang" : "salin"} size={14} />
+    </button>
+  );
+}
+
 export function MessageList({
   pesan,
   streaming,
@@ -66,6 +95,7 @@ export function MessageList({
   saran = [],
   onSaran,
   pratinjau = {},
+  wadahGulir = null,
 }: {
   pesan: PesanTampil[];
   streaming: string;
@@ -82,11 +112,30 @@ export function MessageList({
   onSaran?: (teks: string) => void;
   /** documentId → object URL gambar yang diunggah, untuk dipratinjau di bubble. */
   pratinjau?: Record<string, string>;
+  /** Wadah gulir chat — dipakai ScrollTrigger untuk parallax sapaan. */
+  wadahGulir?: HTMLElement | null;
 }) {
   const bawah = useRef<HTMLDivElement>(null);
+  const dekatBawah = useRef(true);
+  const [tampilTurun, setTampilTurun] = useState(false);
+
+  // Gulir otomatis hanya kalau pengguna memang berada di dasar; kalau sedang
+  // membaca ke atas, jangan ditarik turun tiap potongan balasan masuk.
+  useEffect(() => {
+    const el = wadahGulir;
+    if (!el) return;
+    const pantau = () => {
+      const sisa = el.scrollHeight - el.scrollTop - el.clientHeight;
+      dekatBawah.current = sisa < 120;
+      setTampilTurun(sisa >= 120);
+    };
+    pantau();
+    el.addEventListener("scroll", pantau, { passive: true });
+    return () => el.removeEventListener("scroll", pantau);
+  }, [wadahGulir]);
 
   useEffect(() => {
-    bawah.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (dekatBawah.current) bawah.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [pesan.length, streaming, menunggu]);
 
   const sedangMenulis = menunggu || streaming.length > 0;
@@ -130,6 +179,7 @@ export function MessageList({
                   <span className="text-aksen-lembut">Kirby</span>
                   {durasi(m.durasiMs) ? ` · ${durasi(m.durasiMs)}` : ""} · {waktu(m.createdAt)}
                 </p>
+                <TombolSalin teks={m.content} />
                 {bisaUlangi && m.id === akhirAsisten && (
                   <button
                     onClick={onUlangi}
@@ -143,14 +193,16 @@ export function MessageList({
               </div>
               {bisaUlangi && m.id === akhirAsisten && saran.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {saran.map((s) => (
-                    <button
+                  {saran.map((s, i) => (
+                    <motion.button
                       key={s}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0, transition: { ...TRANSISI.cepat, delay: i * 0.06 } }}
                       onClick={() => onSaran?.(s)}
                       className="rounded-penuh border border-border-kuat bg-surface px-sedang py-1.5 text-left text-[12px] text-teks-muted transition-colors hover:border-aksen hover:text-teks"
                     >
                       {s}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               )}
@@ -256,26 +308,80 @@ export function MessageList({
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1, transition: TRANSISI.sedang }}
           >
-            <EmptyState mode={mode} nama={nama} />
+            <EmptyState mode={mode} nama={nama} scroller={wadahGulir} />
           </motion.div>
         )}
       </AnimatePresence>
+      {tampilTurun && (
+        <button
+          onClick={() => {
+            dekatBawah.current = true;
+            setTampilTurun(false);
+            bawah.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+          }}
+          className="sticky bottom-3 z-10 mx-auto flex items-center gap-1.5 rounded-penuh border border-border-kuat bg-surface/95 px-3 py-1.5 text-[11px] text-teks-muted shadow-lg backdrop-blur transition-colors hover:text-teks"
+          aria-label="Ke pesan terbaru"
+        >
+          <Icon name="bawah" size={13} /> Pesan terbaru
+        </button>
+      )}
       <div ref={bawah} />
     </div>
   );
 }
 
-function EmptyState({ mode, nama }: { mode: "chat" | "curhat"; nama?: string | null }) {
+function EmptyState({
+  mode,
+  nama,
+  scroller,
+}: {
+  mode: "chat" | "curhat";
+  nama?: string | null;
+  scroller?: HTMLElement | null;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
   const panggilan = nama ? nama.charAt(0).toUpperCase() + nama.slice(1) : null;
 
+  // Sapaan hero: masuk berurutan dengan GSAP; parallax halus mengikuti gulir chat.
+  useGSAP(
+    () => {
+      gsap.registerPlugin(useGSAP, ScrollTrigger);
+      gsap
+        .timeline({ defaults: { ease: GSAP_EASE.standar, duration: DURASI.sedang } })
+        .from(".hero-avatar", { opacity: 0, scale: 0.7, y: 12 })
+        .from(".hero-judul", { opacity: 0, y: 18 }, "-=0.15")
+        .from(".hero-sub", { opacity: 0, y: 12 }, "-=0.2");
+
+      if (scroller) {
+        gsap.to(".hero-inti", {
+          y: -48,
+          ease: "none",
+          scrollTrigger: {
+            scroller,
+            trigger: ref.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }
+    },
+    { scope: ref, dependencies: [scroller], revertOnUpdate: true },
+  );
+
   return (
-    <div className="flex flex-col items-start gap-besar py-besar text-left sm:items-center sm:text-center">
-      <div className="flex flex-col items-start sm:items-center">
-        <AvatarAsisten size={64} />
-        <h2 className="mt-sedang font-display text-4xl leading-tight">
+    <div
+      ref={ref}
+      className="flex flex-col items-start gap-besar py-besar text-left sm:items-center sm:text-center"
+    >
+      <div className="hero-inti flex flex-col items-start sm:items-center">
+        <div className="hero-avatar">
+          <AvatarAsisten size={64} />
+        </div>
+        <h2 className="hero-judul mt-sedang font-display text-4xl leading-tight">
           Hi{panggilan ? ` ${panggilan}` : ""}, Kirby <span className="text-aksen-terang">di sini</span> poyoo~
         </h2>
-        <p className="mt-2 text-sm text-teks-muted">
+        <p className="hero-sub mt-2 text-sm text-teks-muted">
           Mau ngapain hari ini?{" "}
           {mode === "curhat"
             ? "Mode curhat: aku menanggapi perasaanmu dulu, bukan menceramahi."

@@ -17,7 +17,72 @@ letakkan entri terbaru paling atas.
 
 ---
 
-### 2026-11-21 — Lampiran tak ikut konteks: produksi kedaluwarsa
+### 2026-11-23 — Poles UI/UX chatbot: smart scroll, salin, drag-drop, waktu relatif
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik minta chatbot UI/UX profesional maksimal
+- **Dikerjakan**:
+  - `components/chat/MessageList.tsx`: gulir otomatis hanya bila pengguna berada ≤120 px dari dasar (tidak lagi menarik paksa saat membaca ke atas); tombol "Pesan terbaru" muncul saat tergulir jauh; tombol salin (ikon `salin` → `centang`) di setiap balasan asisten.
+  - `components/chat/Composer.tsx`: berkas bisa dilepas (drag & drop) ke area komposer dengan overlay petunjuk; penghitung karakter muncul >3000 dan mengunci kirim >4000 (batas sama dengan zod `/api/chat`).
+  - `components/chat/Sidebar.tsx`: waktu relatif (`lib/waktu.ts`) di tiap baris; aksi ubah/hapus hanya muncul saat hover/fokus di desktop, selalu tampil di HP.
+  - `components/ui/Icon.tsx`: ikon `salin`, `bawah`.
+  - `lib/waktu.ts` + `lib/waktu.test.ts` (3 test).
+- **Keputusan**: tanpa dependensi baru. Karakter batas dikunci di klien + tetap divalidasi server.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **9 file / 65 lulus** EXIT=0
+- **Blocker**: tidak ada
+- **Next**: cek browser — gulir ke atas saat balasan streaming (harus tetap di posisi), lepas berkas ke komposer, salin balasan, hover baris sidebar.
+
+---
+
+### 2026-11-23 — Animasi selalu aktif (tanpa cabang `prefers-reduced-motion`)
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik minta "full animasi tanpa reduce motion"
+- **Dikerjakan**:
+  - `components/chat/useLenis.ts`: cabang `prefers-reduced-motion` dibuang — gulir halus selalu dipasang.
+  - `components/chat/MessageList.tsx` & `app/gambar/page.tsx`: `gsap.matchMedia` dibuang; timeline & ScrollTrigger jalan tanpa syarat.
+  - `app/globals.css`: dua blok `@media (prefers-reduced-motion)` dihapus (transisi & animasi titik/kursor selalu jalan).
+  - `lib/motion.ts` + FR-18 + T-1001 diselaraskan.
+- **Keputusan**: gerak selalu aktif; konsekuensi aksesibilitas diterima pemilik.
+- **Verifikasi**: `pnpm lint` / `pnpm build` / `pnpm test` (lihat entri sesi UI berikutnya untuk hasil akhir).
+- **Blocker**: tidak ada
+- **Next**: lanjut poles UI/UX chatbot.
+
+---
+
+### 2026-11-23 — GSAP + ScrollTrigger: hero parallax & reveal galeri
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik minta animasi kelas situs profesional; memilih opsi "GSAP + ScrollTrigger (hero pro)", framer-motion tetap, wajib hormati `prefers-reduced-motion`
+- **Dikerjakan**:
+  - Dependensi baru (disetujui pemilik): `gsap` 3.15.1 + `@gsap/react` 2.1.2
+  - `lib/motion.ts`: token `GSAP_EASE` (`power3.out` ≈ `KURVA_STANDAR`, `power2.out`) — tidak ada angka durasi baru di komponen
+  - `components/chat/useLenis.ts`: `autoRaf:false`; rAF Lenis dijalankan `gsap.ticker`, tiap gulir meneruskan `ScrollTrigger.update`; GSAP diimpor dinamis supaya tidak masuk bundel awal; semua batal saat `prefers-reduced-motion`
+  - `components/chat/MessageList.tsx`: `EmptyState` → `useGSAP` + `gsap.matchMedia("(prefers-reduced-motion: no-preference)")`; timeline masuk avatar → judul → subjudul; parallax `scrub` pada wadah gulir chat; `revertOnUpdate` supaya trigger tidak dobel saat `wadahGulir` siap
+  - `app/gambar/page.tsx`: kartu galeri (`.kartu-galeri`) reveal sekali saat masuk viewport + header masuk halus; ScrollTrigger memakai wadah gulir halaman itu sendiri
+  - `app/page.tsx`: teruskan `wadahGulir` ke `MessageList`
+  - Docs: FR-18 diperbarui, tabel Stack `AGENTS.md`, milestone M10 + T-1001
+- **Keputusan**: GSAP **tidak** menggantikan framer-motion (pesan/dialog/elemen lain tetap framer). Pin section galeri sengaja tidak dipakai — `position:fixed` di dalam wadah `overflow` rawan glitch; reveal + parallax sudah cukup. Semua motion lewat `gsap.matchMedia`, bukan cek manual.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0 (17 halaman); `pnpm test` 62 lulus (8 file) EXIT=0. Bukti visual gulir (parallax/reveal) belum diuji otomatis — perlu cek mata di browser.
+- **Blocker**: tidak ada
+- **Next**: buka `localhost:3000` — sapaan hero harus masuk berurutan lalu bergeser halus saat digulir; `/gambar` — kartu muncul saat digulir. Cek juga dengan OS "reduce motion" → tidak ada animasi.
+
+---
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik minta "fix UI". Berkas `ui-ux-fixes-analysis.md` (untracked) berisi 10 klaim perbaikan — diperiksa, sebagian besar salah/tak relevan, tidak ada perubahan kode di tree.
+- **Diagnosa**: `ui-ux-fixes-analysis.md` mengklaim "Fix Applied" + "62 tests pass" padahal `git status` hanya menampilkan berkas itu (nol perubahan kode). Cek tiap klaim: (1) sidebarRingkas tidak terbalik, (2) ModeSwitch HP sudah ada baris kedua, (3/8) chip saran sudah dibatasi 3 + `flex-wrap`, (4) ikon tema = tujuan + `title`, (6) retry gambar sudah implisit (prompt dipertahankan), (7) tampilkan "Sedang menjawab..." untuk durasi <1 dtk justru bikin kedip, (9) CSS transition pada tinggi textarea bikin jank. **Bug nyata** yang tak ada di daftar: banner error chat dirender di atas wadah gulir, sedangkan efek auto-scroll `MessageList` selalu turun ke bawah → saat kirim gagal pesan error ke luar layar.
+- **Dikerjakan**:
+  - `app/page.tsx`: banner error dipindah dari atas wadah gulir ke bawah (di atas komposer, sebaris dengan catatan memori) + `role="alert"`; selalu terlihat.
+  - `components/chat/Composer.tsx`: setelah ganti mode, fokus kembali ke kotak tulis (skip saat muat pertama) — klaim #10, satu-satunya yang nyata.
+  - `components/chat/MessageList.tsx`: chip saran lanjutan masuk berurutan pakai token `TRANSISI.cepat` (klaim #3/#8, gerak sesuai FR-18).
+  - `ui-ux-fixes-analysis.md` dihapus (klaim palsu, untracked).
+- **Keputusan**: tidak menambah dependensi. Perbaikan galeri-hover (klaim #5) ditolak — animasi `whileHover` framer tak menghormati `prefers-reduced-motion` tanpa `useReducedMotion`, sementara nilai tambah kecil.
+- **Verifikasi**: `pnpm build` EXIT=0 (17 halaman); `pnpm test` 62 lulus (8 file) EXIT=0
+- **Blocker**: tidak ada
+- **Next**: uji browser cepat — kirim pesan dengan provider mati (banner error harus terlihat di bawah), ganti mode (kursor pindah ke kotak tulis), cek chip saran muncul berurutan
+
+---
 
 - **Sesi**: lanjutan
 - **Tujuan**: pemilik melaporkan lampiran tidak ikut konteks chat & tak tampil di bubble

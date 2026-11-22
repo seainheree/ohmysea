@@ -16,6 +16,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M7 | Lampiran sekali pakai, markdown rapi di balasan, regenerate, saran lanjutan + sakelar navbar | T-701..T-705 | done |
 | M8 | Konteks lampiran: chip di bubble pesan, retrieval lampiran tanpa ambang, konteks hanya dari berkas terunggah | T-801..T-804 | done |
 | M9 | Berkas per sesi chat, memori paten vs otomatis (tabel terpisah), sembunyikan chip konteks global, rapikan layar awal | T-901..T-904 | done |
+| M10 | Gerak UI lanjutan: GSAP + ScrollTrigger (hero parallax chat, reveal kartu galeri), sinkron Lenis↔ScrollTrigger; poles UX chat (smart scroll, salin, drag-drop, waktu relatif) | T-1001..T-1002 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -496,6 +497,38 @@ tak pernah menampilkan berkas yang dibawanya.
 
 ### T-904 — Layar awal tanpa kartu saran
 - **Bukti**: `EmptyState` tinggal sapaan + satu baris penjelasan.
+
+---
+
+## M10 — Gerak UI lanjutan: GSAP + ScrollTrigger
+
+Latar: pemilik minta animasi kelas situs profesional (GSAP + ScrollTrigger),
+tanpa membuang framer-motion. Ditambahkan 2026-11-23.
+
+### T-1001 — Hero GSAP + reveal galeri + sinkron Lenis
+
+- **Status**: done
+- **Dependency**: T-604
+- **Cakupan**: `package.json` (`gsap` 3.15.1, `@gsap/react` 2.1.2), `lib/motion.ts` (`GSAP_EASE`), `components/chat/useLenis.ts`, `components/chat/MessageList.tsx` (`EmptyState`), `app/gambar/page.tsx`, `app/page.tsx` (kirim `wadahGulir`)
+- **Kriteria penerimaan**:
+  - Sapaan hero chat masuk berurutan (avatar → judul → subjudul) + parallax halus saat chat digulir.
+  - Kartu galeri ter-reveal sekali saat masuk viewport (ScrollTrigger pada wadah gulir halaman).
+  - Lenis menjalankan rAF lewat `gsap.ticker` dan meneruskan gulir ke `ScrollTrigger.update` (bukan rAF ganda).
+  - `prefers-reduced-motion` **diabaikan**: animasi & Lenis selalu aktif (keputusan pemilik, 2026-11-23).
+  - Durasi/ease dari `lib/motion.ts` (tidak ada angka durasi baru di komponen).
+- **Verifikasi**: `pnpm build` EXIT=0; `pnpm test` 62 lulus; `pnpm lint` EXIT=0. Bukti visual ScrollTrigger (gulir nyata) belum diuji otomatis — perlu mata di browser.
+
+### T-1002 — Poles UX chat (smart scroll, salin, drag-drop, waktu relatif)
+
+- **Status**: done
+- **Dependency**: T-1001
+- **Cakupan**: `components/chat/MessageList.tsx`, `components/chat/Composer.tsx`, `components/chat/Sidebar.tsx`, `components/ui/Icon.tsx`, `lib/waktu.ts` (+ test)
+- **Kriteria penerimaan**:
+  - Balasan streaming tidak menarik paksa layar bila pengguna sedang membaca ke atas; tombol "Pesan terbaru" muncul dan mengembalikan ke dasar.
+  - Balasan asisten bisa disalin dengan umpan balik centang.
+  - Berkas bisa dilepas ke komposer; penghitung karakter tampil >3000 dan kirim terkunci >4000.
+  - Daftar percakapan menampilkan waktu relatif; aksi baris muncul saat hover/fokus di desktop.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 9 file / 65 lulus.
 
 ---
 

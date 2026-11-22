@@ -1,8 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/ui/Icon";
+
+/** Sama dengan batas `message` di POST /api/chat (zod). */
+const MAKS_PESAN = 4000;
 
 export function Composer({
   onKirim,
@@ -28,22 +31,54 @@ export function Composer({
   pratinjau: Record<string, string>;
 }) {
   const [teks, setTeks] = useState("");
+  const [seret, setSeret] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
   const berkas = useRef<HTMLInputElement>(null);
   const kamera = useRef<HTMLInputElement>(null);
+  const modeAwal = useRef(true);
+
+  // Setelah ganti mode, kembalikan fokus ke kotak tulis (bukan saat muat pertama).
+  useEffect(() => {
+    if (modeAwal.current) {
+      modeAwal.current = false;
+      return;
+    }
+    area.current?.focus();
+  }, [mode]);
 
   function kirim() {
     const isi = teks.trim();
-    if (!isi || sibuk || sibukLampiran) return;
+    if (!isi || sibuk || sibukLampiran || isi.length > MAKS_PESAN) return;
     onKirim(isi);
     setTeks("");
     if (area.current) area.current.style.height = "auto";
   }
 
-  const bisaKirim = !sibuk && !sibukLampiran && teks.trim().length > 0;
+  const kepanjangan = teks.length > MAKS_PESAN;
+  const bisaKirim = !sibuk && !sibukLampiran && !kepanjangan && teks.trim().length > 0;
 
   return (
-    <div className="shrink-0 border-t border-border bg-bg-topbar/95 backdrop-blur">
+    <div
+      className={`relative shrink-0 border-t bg-bg-topbar/95 backdrop-blur ${
+        seret ? "border-aksen" : "border-border"
+      }`}
+      onDragOver={(e) => {
+        e.preventDefault();
+        if (!sibukLampiran) setSeret(true);
+      }}
+      onDragLeave={() => setSeret(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setSeret(false);
+        const berkasJatuh = e.dataTransfer.files?.[0];
+        if (berkasJatuh && !sibukLampiran) onLampirkan(berkasJatuh);
+      }}
+    >
+      {seret && (
+        <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-t-besar border-2 border-dashed border-aksen bg-bg-main/85 text-sm font-medium text-aksen-lembut">
+          Lepas berkas untuk melampirkan
+        </div>
+      )}
       <div className="mx-auto w-full max-w-[760px] px-sedang pb-aman pt-2">
         {berkasSesi.length > 0 && (
           <div className="mb-1.5 flex flex-wrap items-center gap-1">
@@ -211,9 +246,14 @@ export function Composer({
             </svg>
           </button>
         </div>
-        <p className="mt-2 hidden text-center text-[11px] text-teks-muted-2 sm:block">
-          Enter kirim · Shift + Enter baris baru
-        </p>
+        <div className="mt-2 flex items-center justify-center gap-3 text-[11px] text-teks-muted-2">
+          <span className="hidden sm:inline">Enter kirim · Shift + Enter baris baru</span>
+          {teks.length > 3000 && (
+            <span className={kepanjangan ? "text-danger" : ""}>
+              {teks.length.toLocaleString("id-ID")} / {MAKS_PESAN.toLocaleString("id-ID")}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

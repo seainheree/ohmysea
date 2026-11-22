@@ -73,15 +73,6 @@ footer {
     color 160ms ease;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  body,
-  header,
-  aside,
-  footer {
-    transition: none;
-  }
-}
-
 html {
   -webkit-text-size-adjust: 100%;
 }
@@ -179,11 +170,4 @@ html {
 
 .kursor-menulis {
   animation: kursor-kedip 1s step-end infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .titik-menulis,
-  .kursor-menulis {
-    animation: none;
-  }
 }
