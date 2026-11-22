@@ -28,8 +28,9 @@ letakkan entri terbaru paling atas.
   - `lib/session.test.ts` (4 test): kode benar/salah, HMAC stabil, cookie sah/palsu, env kosong.
 - **Keputusan**: login hanya bergantung pada `APP_ACCESS_CODE`; fitur lain tetap divalidasi penuh oleh `getEnv()` saat dipakai.
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm test` **10 file / 69 lulus** EXIT=0; `pnpm build` EXIT=0
-- **Blocker**: env produksi masih kosong — butuh unggah variabel dari `.env` ke Vercel project `sea-fee9/ohmysea`.
-- **Next**: isi env produksi lalu `vercel --prod`; cek `GET /api/health` → 200.
+- **Perbaikan produksi**: 12 env dari `.env` lokal diunggah ke Vercel production (`vercel env add`, nilai tidak dicetak), lalu `vercel --prod`. Hasil nyata: `GET /api/health` → **HTTP 200** (`env.ok true`, `db.ok true`); `POST /api/unlock` kode benar → **200 + Set-Cookie**, kode salah → **401**.
+- **Blocker**: tidak ada (selesai)
+- **Next**: tidak ada. Catatan: project `sea-fee9/ohmysea` punya Deployment Protection `vercel_authentication`; domain utama tetap publik seperti biasa.
 
 ---
 
