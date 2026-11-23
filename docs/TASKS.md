@@ -20,6 +20,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M11 | Ruang main: opsi game di chat — Tic Tac Toe, Empat Berderet, Kartu Ingatan | T-1101..T-1103 | done |
 | M12 | Ruang main dipoles: kontras keping, animasi maksimal, reaksi/ekspresi Kirby, lagu on/off | T-1201..T-1204 | done |
 | M13 | Cari riwayat chat sampai isi pesan + Kirby bersuara (TTS) | T-1301..T-1303 | done |
+| M14 | Ekspresi Kirby dari lembar sprite untuk setiap momen | T-1401 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -622,7 +623,7 @@ dengan tombol nyala/mati. Ditambahkan 2026-11-23. Tetap tanpa API/DB/dependency.
 - **Cakupan**: `components/game/reaksi.ts`, `components/game/bersama.tsx` (`AvatarKirby`, `BarKirby`), ketiga papan, `app/globals.css`
 - **Kriteria penerimaan**:
   - Bilah Kirby (avatar + ucapan) berganti hanya pada momen berarti: menghitung, memblokir langkah, lawan terancam, menang, kalah, seri, kartu ketemu/beres, ganti game.
-  - Ekspresi `tenang/hitung/senang/kaget/sedih` dari satu sprite lewat kelas CSS; ucapan Bahasa Indonesia singkat.
+  - Ekspresi `tenang/pikir/senang/kaget/sedih/malu/fokus/tertawa/bingung/sapaan` dari satu lembar sprite (potongan `background-position`), ucapan Bahasa Indonesia singkat.
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0.
 
 ### T-1203 — Lagu mode game + tombol nyala/mati
@@ -687,6 +688,26 @@ Tanpa dependency baru, tanpa perubahan skema DB.
 - **Cakupan**: `lib/suara.test.ts`
 - **Kriteria penerimaan**: pembersihan markdown, skor voice id/en, deteksi bahasa, jeda per tanda baca, dan batas frasa aman diuji.
 - **Verifikasi**: `pnpm test` **12 file / 98 lulus** EXIT=0; `pnpm build` EXIT=0.
+
+---
+
+## M14 - Ekspresi Kirby dari lembar sprite
+
+Latar: pemilik menambahkan lembar sprite Kirby (1200×896, grid 4×3) dan minta
+ekspresinya dipakai untuk setiap tampilan Kirby yang sesuai. Ditambahkan
+2026-11-23. Tanpa dependency, tanpa perubahan skema.
+
+### T-1401 — Komponen sprite + pemetaan ekspresi
+
+- **Status**: done
+- **Dependency**: M12, M13
+- **Cakupan**: `components/ui/Kirby.tsx` (baru), `components/chat/MessageList.tsx`, `components/game/bersama.tsx`, `components/game/GamePanel.tsx`, ketiga papan, `components/game/reaksi.ts`
+- **Kriteria penerimaan**:
+  - Satu komponen `Kirby` memotong lembar sprite `public/image/expressions/Gemini_Generated_Image_1hptz91hptz91hpt.png` lewat `background-position`; 12 ekspresi tersedia (`tenang/senang/pikir/nyaman/kaget/bingung/malu/sedih/tertawa/fokus/lesu/sapaan`).
+  - Chat: sapaan awal `sapaan`, saat menunggu/menulis `pikir`, balasan bernada main `senang`, balasan biasa `tenang`.
+  - Ruang main: `AvatarKirby` memetakan ekspresi game ke sprite + animasi CSS yang sudah ada; menang `tertawa`, seri `bingung`, memblokir `malu`, mengancam `fokus`, sambut game `sapaan`.
+  - Tidak ada lagi penggunaan `kirby-96.png` di komponen.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 98 lulus.
 
 ---
 

@@ -17,6 +17,28 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Ekspresi Kirby dari lembar sprite
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik menambahkan lembar sprite Kirby dan minta ekspresinya dipakai untuk setiap tampilan Kirby yang sesuai
+- **Keputusan**:
+  - Satu komponen `Kirby` memotong lembar sprite lewat `background-position` (1200×896, grid 4×3) — bukan 12 berkas terpisah, dan tetap satu permintaan jaringan karena sprite akan di-cache.
+  - Nama berkas sprite dibiarkan apa adanya (`Gemini_Generated_Image_...png`) supaya tidak mengubah aset yang diletakkan pemilik; kalau nanti ingin dirapikan, cukup ubah satu konstanta `SPRITE`.
+  - Animasi CSS yang lama (`kirby-tenang/hitung/senang/kaget/sedih`) tetap dipakai sebagai *gerak*, sprite hanya menggantikan gambar. Ekspresi baru dipetakan ke gerak terdekat (tertawa→`kirby-senang`, bingung→`kirby-kaget`, dll.).
+- **Dikerjakan**:
+  - `components/ui/Kirby.tsx` (baru): tipe `EkspresiKirby`, tabel `PETAK` 12 ekspresi, komponen `Kirby`.
+  - `components/chat/MessageList.tsx`: avatar balasan dari sprite; menunggu `pikir`; sapaan awal `sapaan`; balasan bernada main (emoji/`poyoo`) `senang`.
+  - `components/game/bersama.tsx`: `AvatarKirby` pakai sprite + tabel `WAJAH`/`GERAK`.
+  - `components/game/GamePanel.tsx`: avatar header `sapaan`, reaksi awal `sapaan`.
+  - `components/game/reaksi.ts`: `Ekspresi` diperluas (`tertawa/bingung/malu/fokus/sapaan`).
+  - Ketiga papan: menang `tertawa`, seri `bingung`, memblokir `malu`, mengancam `fokus`, kartu ketemu `malu`, semua kartu ketemu `tertawa`.
+  - `public/image/kirby-96.png` tidak lagi dipakai komponen (berkas dibiarkan).
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 12 file / 98 lulus.
+- **Blocker**: tidak ada
+- **Next**: cek mata di browser — potongan sprite tidak bergeser (grid 4×3, sel 300×298,7 px) dan ekspresi muncul pada momen yang tepat.
+
+---
+
 ### 2026-11-23 — Prosodi suara: jeda sadar tanda baca + batas frasa
 
 - **Sesi**: lanjutan

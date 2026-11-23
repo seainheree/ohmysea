@@ -3,7 +3,17 @@
  * Dipakai papan lewat prop `onReaksi` supaya bilah Kirby di panel tetap satu.
  */
 
-export type Ekspresi = "tenang" | "hitung" | "senang" | "kaget" | "sedih";
+export type Ekspresi =
+  | "tenang"
+  | "hitung"
+  | "senang"
+  | "kaget"
+  | "sedih"
+  | "tertawa"
+  | "bingung"
+  | "malu"
+  | "fokus"
+  | "sapaan";
 
 export type Reaksi = { ekspresi: Ekspresi; teks: string };
 

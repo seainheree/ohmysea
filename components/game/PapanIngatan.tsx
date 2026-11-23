@@ -41,7 +41,7 @@ export function PapanIngatan({ onReaksi }: { onReaksi: (r: Reaksi) => void }) {
   useEffect(() => {
     if (!selesai || tercatat.current) return;
     tercatat.current = true;
-    onReaksi({ ekspresi: "senang", teks: acak(REAKSI.beres) });
+    onReaksi({ ekspresi: "tertawa", teks: acak(REAKSI.beres) });
   }, [selesai, onReaksi]);
 
   function balik(i: number) {
@@ -54,7 +54,7 @@ export function PapanIngatan({ onReaksi }: { onReaksi: (r: Reaksi) => void }) {
       const [a, b] = baru;
       const sama = dek[a] === dek[b];
       if (sama && Math.random() < 0.5) {
-        onReaksi({ ekspresi: "kaget", teks: acak(REAKSI.ingat) });
+        onReaksi({ ekspresi: "malu", teks: acak(REAKSI.ingat) });
       }
       window.setTimeout(
         () => {

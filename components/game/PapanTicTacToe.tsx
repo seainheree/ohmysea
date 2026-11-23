@@ -65,11 +65,11 @@ export function PapanTicTacToe({ onReaksi }: { onReaksi: (r: Reaksi) => void }) 
 
       const sesudah = langkahMenangTTT(baru, "kamu");
       if (ancaman.length > 0 && sesudah.length === 0) {
-        onReaksi({ ekspresi: "senang", teks: acak(REAKSI.blokir) });
+        onReaksi({ ekspresi: "malu", teks: acak(REAKSI.blokir) });
       } else if (sesudah.length > 0) {
         onReaksi({ ekspresi: "kaget", teks: acak(REAKSI.kaget) });
       } else if (langkahMenangTTT(baru, "kirby").length > 0) {
-        onReaksi({ ekspresi: "senang", teks: acak(REAKSI.ancam) });
+        onReaksi({ ekspresi: "fokus", teks: acak(REAKSI.ancam) });
       }
     }, 620);
     return () => window.clearTimeout(t);
@@ -90,8 +90,8 @@ export function PapanTicTacToe({ onReaksi }: { onReaksi: (r: Reaksi) => void }) 
       juara === "kamu"
         ? { ekspresi: "sedih", teks: acak(REAKSI.kalah) }
         : juara === "kirby"
-          ? { ekspresi: "senang", teks: acak(REAKSI.menang) }
-          : { ekspresi: "kaget", teks: acak(REAKSI.seri) },
+          ? { ekspresi: "tertawa", teks: acak(REAKSI.menang) }
+          : { ekspresi: "bingung", teks: acak(REAKSI.seri) },
     );
   }, [selesai, juara, onReaksi]);
 

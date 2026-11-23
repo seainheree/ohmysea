@@ -9,6 +9,7 @@ import { useGSAP } from "@gsap/react";
 import { DURASI, GSAP_EASE, TRANSISI } from "@/lib/motion";
 import type { Pesan } from "@/lib/api";
 import { bicarakan, hentikanSuara, teksUntukSuara } from "@/lib/suara";
+import { Kirby, type EkspresiKirby } from "@/components/ui/Kirby";
 import { Icon } from "@/components/ui/Icon";
 import { Markdown } from "@/components/chat/Markdown";
 
@@ -33,19 +34,15 @@ function durasi(ms?: number): string | null {
   return `${menit}m ${sisa}s`;
 }
 
-/** Avatar asisten (public/image/kirby.png), tanpa bingkai — dipakai di setiap balasan. */
-function AvatarAsisten({ size = 36 }: { size?: number }) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src="/image/kirby-96.png"
-      alt="ohmysea"
-      width={size}
-      height={size}
-      className="shrink-0 object-contain"
-      style={{ width: size, height: size }}
-    />
-  );
+/** Avatar asisten dari lembar sprite ekspresi — dipakai di setiap balasan. */
+function AvatarAsisten({
+  size = 36,
+  ekspresi = "tenang",
+}: {
+  size?: number;
+  ekspresi?: EkspresiKirby;
+}) {
+  return <Kirby ekspresi={ekspresi} size={size} />;
 }
 
 /** Tiga titik bergerak — penanda asisten sedang menyusun jawaban. */
@@ -83,6 +80,11 @@ function TombolSalin({ teks }: { teks: string }) {
       <Icon name={tersalin ? "centang" : "salin"} size={14} />
     </button>
   );
+}
+
+/** Ekspresi balasan: ceria kalau teksnya bernada main, kalau tidak tenang. */
+function ekspresiBalasan(teks: string): EkspresiKirby {
+  return /\p{Extended_Pictographic}|poyoo|yeay|haha|seru|senang/iu.test(teks) ? "senang" : "tenang";
 }
 
 /** Tombol bacakan balasan dengan suara bawaan browser (Web Speech API). */
@@ -190,7 +192,7 @@ export function MessageList({
               animate={{ opacity: 1, y: 0, scale: 1, transition: TRANSISI.sedang }}
               className="flex w-full items-start gap-2.5"
             >
-            <AvatarAsisten />
+            <AvatarAsisten ekspresi={ekspresiBalasan(m.content)} />
             <div className="min-w-0 flex-1">
               <div className="rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-[15px] leading-7 text-pretty text-teks">
                 <Markdown teks={m.content} />
@@ -314,7 +316,7 @@ export function MessageList({
             className="flex w-full items-start gap-2.5"
             aria-live="polite"
           >
-            <AvatarAsisten />
+            <AvatarAsisten ekspresi="pikir" />
             <div className="min-w-0 flex-1">
               <div className="inline-flex max-w-full items-start rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed">
                 {streaming ? (
@@ -411,7 +413,7 @@ function EmptyState({
     >
       <div className="hero-inti flex flex-col items-start sm:items-center">
         <div className="hero-avatar">
-          <AvatarAsisten size={64} />
+          <AvatarAsisten size={64} ekspresi="sapaan" />
         </div>
         <h2 className="hero-judul mt-sedang font-display text-4xl leading-tight">
           Hi{panggilan ? ` ${panggilan}` : ""}, Kirby <span className="text-aksen-terang">di sini</span> poyoo~

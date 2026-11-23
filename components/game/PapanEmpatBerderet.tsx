@@ -68,9 +68,9 @@ export function PapanEmpatBerderet({ onReaksi }: { onReaksi: (r: Reaksi) => void
       setGiliran("kamu");
 
       if (ancaman && !bisaMenangCO(baru, "kamu")) {
-        onReaksi({ ekspresi: "senang", teks: acak(REAKSI.blokir) });
+        onReaksi({ ekspresi: "malu", teks: acak(REAKSI.blokir) });
       } else if (bisaMenangCO(baru, "kirby")) {
-        onReaksi({ ekspresi: "senang", teks: acak(REAKSI.ancam) });
+        onReaksi({ ekspresi: "fokus", teks: acak(REAKSI.ancam) });
       }
     }, 660);
     return () => window.clearTimeout(t);
@@ -90,8 +90,8 @@ export function PapanEmpatBerderet({ onReaksi }: { onReaksi: (r: Reaksi) => void
       juara === "kamu"
         ? { ekspresi: "sedih", teks: acak(REAKSI.kalah) }
         : juara === "kirby"
-          ? { ekspresi: "senang", teks: acak(REAKSI.menang) }
-          : { ekspresi: "kaget", teks: acak(REAKSI.seri) },
+          ? { ekspresi: "tertawa", teks: acak(REAKSI.menang) }
+          : { ekspresi: "bingung", teks: acak(REAKSI.seri) },
     );
   }, [selesai, juara, onReaksi]);
 

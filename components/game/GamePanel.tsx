@@ -9,6 +9,7 @@ import { PapanIngatan } from "@/components/game/PapanIngatan";
 import { PapanTicTacToe } from "@/components/game/PapanTicTacToe";
 import { REAKSI, acak, type Reaksi } from "@/components/game/reaksi";
 import { Icon, type NamaIkon } from "@/components/ui/Icon";
+import { Kirby } from "@/components/ui/Kirby";
 import { TRANSISI } from "@/lib/motion";
 import { buatLagu } from "@/lib/game/lagu";
 
@@ -26,7 +27,7 @@ const KUNCI_LAGU = "ohmysea-lagu-game";
 export function GamePanel({ onTutup }: { onTutup: () => void }) {
   const [jenis, setJenis] = useState<Jenis>("ttt");
   const [reaksi, setReaksi] = useState<Reaksi>(() => ({
-    ekspresi: "tenang",
+    ekspresi: "sapaan",
     teks: acak(REAKSI.sambut),
   }));
   const [laguNyala, setLaguNyala] = useState(false);
@@ -66,7 +67,7 @@ export function GamePanel({ onTutup }: { onTutup: () => void }) {
 
   function gantiGame(id: Jenis) {
     setJenis(id);
-    setReaksi({ ekspresi: "tenang", teks: acak(REAKSI.sambut) });
+    setReaksi({ ekspresi: "sapaan", teks: acak(REAKSI.sambut) });
   }
 
   useEffect(() => {
@@ -94,8 +95,7 @@ export function GamePanel({ onTutup }: { onTutup: () => void }) {
         className="flex max-h-[92dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-t-besar border border-border-kuat bg-bg-main shadow-glow sm:rounded-besar"
       >
         <header className="flex items-center gap-2.5 border-b border-border px-sedang py-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/image/kirby-96.png" alt="" width={32} height={32} className="object-contain" />
+          <Kirby ekspresi="sapaan" size={32} />
           <div className="min-w-0 flex-1">
             <h2 className="font-display text-xl leading-none">Ruang main</h2>
             <p className="mt-1 text-[11px] text-teks-muted">

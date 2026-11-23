@@ -4,10 +4,39 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { ReactNode } from "react";
 
 import type { Ekspresi, Reaksi } from "@/components/game/reaksi";
+import { Kirby, type EkspresiKirby } from "@/components/ui/Kirby";
 import { Icon } from "@/components/ui/Icon";
 import { TRANSISI } from "@/lib/motion";
 
-/** Avatar Kirby dengan sikap — satu sprite, banyak ekspresi (lihat app/globals.css). */
+/** Ekspresi game → potongan sprite. */
+const WAJAH: Record<Ekspresi, EkspresiKirby> = {
+  tenang: "tenang",
+  hitung: "pikir",
+  senang: "senang",
+  kaget: "kaget",
+  sedih: "sedih",
+  tertawa: "tertawa",
+  bingung: "bingung",
+  malu: "malu",
+  fokus: "fokus",
+  sapaan: "sapaan",
+};
+
+/** Ekspresi game → kelas animasi CSS (lihat app/globals.css). */
+const GERAK: Record<Ekspresi, string> = {
+  tenang: "kirby-tenang",
+  hitung: "kirby-hitung",
+  senang: "kirby-senang",
+  kaget: "kirby-kaget",
+  sedih: "kirby-sedih",
+  tertawa: "kirby-senang",
+  bingung: "kirby-kaget",
+  malu: "kirby-tenang",
+  fokus: "kirby-kaget",
+  sapaan: "kirby-tenang",
+};
+
+/** Avatar Kirby dengan sikap — potongan lembar sprite + animasi CSS. */
 export function AvatarKirby({
   ekspresi = "tenang",
   size = 44,
@@ -16,18 +45,8 @@ export function AvatarKirby({
   size?: number;
 }) {
   return (
-    <span
-      className={`kirby-${ekspresi} grid shrink-0 place-items-center`}
-      style={{ width: size, height: size }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/image/kirby-96.png"
-        alt=""
-        width={size}
-        height={size}
-        className="object-contain"
-      />
+    <span className={`${GERAK[ekspresi]} grid shrink-0 place-items-center`}>
+      <Kirby ekspresi={WAJAH[ekspresi]} size={size} />
     </span>
   );
 }
