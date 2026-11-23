@@ -36,6 +36,7 @@ letakkan entri terbaru paling atas.
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 12 file / 98 lulus.
 - **Blocker**: tidak ada
 - **Next**: cek mata di browser — potongan sprite tidak bergeser (grid 4×3, sel 300×298,7 px) dan ekspresi muncul pada momen yang tepat.
+- **Lanjutan (T-1402)**: wajah Kartu Ingatan diganti dari ikon jadi 8 ekspresi Kirby (`WAJAH_INGATAN` di `lib/game.ts`, dirender `<Kirby>`). Uji tambahan: wajah wajib unik — dua pasangan dengan wajah sama bikin kartu tak terbedakan. `pnpm test` naik ke 12 file / 99 lulus.
 
 ---
 

@@ -5,11 +5,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { Status, Ulang } from "@/components/game/bersama";
 import { REAKSI, acak, type Reaksi } from "@/components/game/reaksi";
-import { Icon } from "@/components/ui/Icon";
+import { Kirby } from "@/components/ui/Kirby";
 import { TRANSISI } from "@/lib/motion";
-import { IKON_INGATAN, dekIngatan } from "@/lib/game";
+import { WAJAH_INGATAN, dekIngatan } from "@/lib/game";
 
-const TOTAL = IKON_INGATAN.length;
+const TOTAL = WAJAH_INGATAN.length;
 
 /** Ledakan kecil saat semua pasangan ketemu. */
 function Burst() {
@@ -118,7 +118,7 @@ export function PapanIngatan({ onReaksi }: { onReaksi: (r: Reaksi) => void }) {
               disabled={tampil || terbuka.length === 2 || selesai}
               animate={{ rotateY: tampil ? 180 : 0, x: goyang ? [0, -6, 6, -4, 4, 0] : 0 }}
               transition={goyang ? { duration: 0.34 } : TRANSISI.sedang}
-              aria-label={tampil ? `Kartu terbuka: ${IKON_INGATAN[nilai]}` : `Kartu ${i + 1} tertutup`}
+              aria-label={tampil ? `Kartu terbuka: ${WAJAH_INGATAN[nilai]}` : `Kartu ${i + 1} tertutup`}
               className="relative aspect-square"
               style={{ transformStyle: "preserve-3d" }}
             >
@@ -134,7 +134,7 @@ export function PapanIngatan({ onReaksi }: { onReaksi: (r: Reaksi) => void }) {
                 }`}
                 style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
               >
-                <Icon name={IKON_INGATAN[nilai]} size={22} />
+                <Kirby ekspresi={WAJAH_INGATAN[nilai]} size={38} />
               </span>
             </motion.button>
           );

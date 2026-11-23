@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CO_JALUR,
-  IKON_INGATAN,
+  WAJAH_INGATAN,
   dekIngatan,
   garisCO,
   garisTTT,
@@ -161,11 +161,15 @@ describe("kartu ingatan", () => {
     expect(kocok(asal, acakTetap(9)).sort((a, b) => a - b)).toEqual(asal);
   });
 
-  it("menghasilkan 16 kartu dengan tiap ikon tepat dua kali", () => {
+  it("menghasilkan 16 kartu dengan tiap wajah tepat dua kali", () => {
     const dek = dekIngatan(acakTetap(11));
     expect(dek).toHaveLength(16);
-    for (let i = 0; i < IKON_INGATAN.length; i++) {
+    for (let i = 0; i < WAJAH_INGATAN.length; i++) {
       expect(dek.filter((v) => v === i)).toHaveLength(2);
     }
+  });
+
+  it("wajah kartu unik supaya tidak ada dua pasangan yang tampak sama", () => {
+    expect(new Set(WAJAH_INGATAN).size).toBe(WAJAH_INGATAN.length);
   });
 });

@@ -572,7 +572,7 @@ interaktif. Ditambahkan 2026-11-23. Tanpa API/DB/dependency baru — semua di kl
 - **Kriteria penerimaan**:
   - Tic Tac Toe: deteksi tiga sejajar, minimax penuh untuk level sulit.
   - Empat Berderet: gravitasi keping, deteksi empat sejajar 4 arah, heuristik menang/blokir.
-  - Kartu Ingatan: dek 16 kartu (8 ikon × 2) teracak.
+  - Kartu Ingatan: dek 16 kartu (8 wajah ekspresi Kirby × 2) teracak.
 - **Verifikasi**: `pnpm test` 11 file / 80 lulus (termasuk 120 permainan TTT level sulit tanpa kalah).
 
 ### T-1102 — UI papan interaktif
@@ -708,6 +708,18 @@ ekspresinya dipakai untuk setiap tampilan Kirby yang sesuai. Ditambahkan
   - Ruang main: `AvatarKirby` memetakan ekspresi game ke sprite + animasi CSS yang sudah ada; menang `tertawa`, seri `bingung`, memblokir `malu`, mengancam `fokus`, sambut game `sapaan`.
   - Tidak ada lagi penggunaan `kirby-96.png` di komponen.
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 98 lulus.
+
+### T-1402 — Wajah kartu flipcard pakai ekspresi Kirby
+
+- **Status**: done
+- **Dependency**: T-1401
+- **Cakupan**: `lib/game.ts`, `lib/game.test.ts`, `components/game/PapanIngatan.tsx`
+- **Kriteria penerimaan**:
+  - Delapan wajah kartu adalah ekspresi Kirby (`WAJAH_INGATAN`: `senang/kaget/pikir/malu/tertawa/sedih/bingung/fokus`), bukan nama ikon.
+  - Kartu yang terbuka merender potongan sprite Kirby (`<Kirby ekspresi={...} />`), bukan `<Icon>`.
+  - Wajah wajib unik supaya tidak ada dua pasangan yang tampak sama — diuji.
+  - Jumlah pasangan tetap 8 (16 kartu), `dekIngatan` tidak berubah.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 99 lulus** EXIT=0.
 
 ---
 

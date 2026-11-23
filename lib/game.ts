@@ -227,20 +227,23 @@ export function langkahCO(
 
 /* --- Kartu Ingatan ----------------------------------------------------- */
 
-/** Delapan ikon yang dipakai (indeks dipakai sebagai nilai kartu). */
-export const IKON_INGATAN = [
-  "berkas",
-  "gambar",
-  "chat",
-  "curhat",
-  "pengaturan",
-  "saran",
-  "ulang",
-  "panel",
+/**
+ * Wajah kartu: delapan ekspresi Kirby (indeks dipakai sebagai nilai kartu).
+ * Harus unik supaya tidak ada dua pasangan yang tampak sama.
+ */
+export const WAJAH_INGATAN = [
+  "senang",
+  "kaget",
+  "pikir",
+  "malu",
+  "tertawa",
+  "sedih",
+  "bingung",
+  "fokus",
 ] as const;
 
-/** 16 kartu (8 pasang) sudah diacak; tiap nilai = indeks di `IKON_INGATAN`. */
+/** 16 kartu (8 pasang) sudah diacak; tiap nilai = indeks di `WAJAH_INGATAN`. */
 export function dekIngatan(acak: () => number = Math.random): number[] {
-  const pasangan = IKON_INGATAN.flatMap((_, i) => [i, i]);
+  const pasangan = WAJAH_INGATAN.flatMap((_, i) => [i, i]);
   return kocok(pasangan, acak);
 }
