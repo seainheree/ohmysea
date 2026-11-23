@@ -576,7 +576,7 @@ export default function Home() {
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="z-10 flex shrink-0 items-center gap-1.5 border-b border-border bg-bg-topbar/95 px-sedang py-2 backdrop-blur sm:gap-2">
+        <header className="z-10 flex shrink-0 items-center gap-1 border-b border-border bg-bg-topbar/95 px-2 py-2 backdrop-blur sm:gap-2 sm:px-sedang">
           <button
             onClick={() => setSidebarTerbuka(true)}
             aria-label="Buka menu"
@@ -594,7 +594,7 @@ export default function Home() {
             <Icon name="panel" />
           </button>
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 px-1">
             <p className="truncate text-sm font-medium">
               {aktif ? aktif.title : mode === "curhat" ? "Curhat baru" : "Chat baru"}
             </p>
@@ -612,51 +612,53 @@ export default function Home() {
             <ModeSwitch mode={mode} onChange={gantiMode} />
           </div>
 
-          <button
-            onClick={gantiSaran}
-            aria-pressed={saranAktif}
-            aria-label={saranAktif ? "Matikan saran lanjutan" : "Nyalakan saran lanjutan"}
-            title={saranAktif ? "Saran lanjutan: nyala" : "Saran lanjutan: mati"}
-            className={`grid h-11 w-11 shrink-0 place-items-center rounded-penuh transition-colors hover:bg-border ${
-              saranAktif ? "text-aksen-lembut" : "text-teks-muted-2 hover:text-teks"
-            }`}
-          >
-            <Icon name="saran" />
-          </button>
-
-          {/* Di layar sempit tombol tambahan disembunyikan: 7 tombol 44 px tidak
-              muat di 320 px dan header jadi terpotong. Tema ada di Pengaturan,
-              tautan Pengaturan ada di sidebar. */}
-          <div className="hidden sm:block">
-            <ThemeToggle />
-          </div>
-
-          <button
-            onClick={() => setGameTerbuka(true)}
-            aria-label="Ruang main — main game"
-            title="Ruang main — Tic Tac Toe, Empat Berderet, Kartu Ingatan"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-penuh text-teks-muted hover:bg-border hover:text-aksen-lembut"
-          >
-            <Icon name="game" />
-          </button>
-
-          {aktif && (
+          {/* Satu grup ikon dengan jarak rapat: di 360 px sisa ruang hanya cukup
+              untuk judul bila tiap tombol dipisah 6–8 px. Tema & Pengaturan
+              disembunyikan di bawah 640 px (ada di menu sidebar). */}
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
             <button
-              onClick={() => setMauHapusIni(true)}
-              aria-label="Hapus percakapan ini"
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-penuh text-teks-muted hover:bg-border hover:text-danger"
+              onClick={gantiSaran}
+              aria-pressed={saranAktif}
+              aria-label={saranAktif ? "Matikan saran lanjutan" : "Nyalakan saran lanjutan"}
+              title={saranAktif ? "Saran lanjutan: nyala" : "Saran lanjutan: mati"}
+              className={`grid h-11 w-11 place-items-center rounded-penuh transition-colors hover:bg-border ${
+                saranAktif ? "text-aksen-lembut" : "text-teks-muted-2 hover:text-teks"
+              }`}
             >
-              <Icon name="hapus" />
+              <Icon name="saran" />
             </button>
-          )}
 
-          <Link
-            href="/pengaturan"
-            aria-label="Pengaturan"
-            className="hidden h-11 w-11 shrink-0 place-items-center rounded-penuh text-teks-muted hover:bg-border hover:text-teks sm:grid"
-          >
-            <Icon name="pengaturan" />
-          </Link>
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
+
+            <button
+              onClick={() => setGameTerbuka(true)}
+              aria-label="Ruang main — main game"
+              title="Ruang main — Tic Tac Toe, Empat Berderet, Kartu Ingatan"
+              className="grid h-11 w-11 place-items-center rounded-penuh text-teks-muted hover:bg-border hover:text-aksen-lembut"
+            >
+              <Icon name="game" />
+            </button>
+
+            {aktif && (
+              <button
+                onClick={() => setMauHapusIni(true)}
+                aria-label="Hapus percakapan ini"
+                className="grid h-11 w-11 place-items-center rounded-penuh text-teks-muted hover:bg-border hover:text-danger"
+              >
+                <Icon name="hapus" />
+              </button>
+            )}
+
+            <Link
+              href="/pengaturan"
+              aria-label="Pengaturan"
+              className="hidden h-11 w-11 place-items-center rounded-penuh text-teks-muted hover:bg-border hover:text-teks sm:grid"
+            >
+              <Icon name="pengaturan" />
+            </Link>
+          </div>
         </header>
 
         <div className="shrink-0 border-b border-border px-sedang py-2 sm:hidden">

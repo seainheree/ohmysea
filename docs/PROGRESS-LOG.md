@@ -17,6 +17,22 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Perapian mobile + hapus panel perangkat aktif
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik meminta (1) panel "Perangkat aktif" dihapus dari UI, (2) navbar mobile (ikon game & saran) dirapikan margin-nya, (3) tombol ikon di halaman Pengaturan dirapikan, (4) game layar penuh di HP, (5) ikon Stop saat thinking tidak merah lagi tapi abu
+- **Dikerjakan**:
+  - T-1605: `components/settings/Perangkat.tsx`, `app/api/sessions/route.ts`, `app/api/sessions/[id]/route.ts` dihapus; `daftarSesi`/`cabutSesi` dan tipe `Perangkat` (`lib/api.ts`, `lib/session.ts`) dihapus. `buatSesi()` sekarang mengembalikan `Promise<string>` dan mengeluarkan sesi tertua otomatis kalau slot penuh — tanpa panel, tak ada layar untuk memilih siapa yang dicabut.
+  - Perapian mobile: header chat jadi satu grup ikon `gap-0.5` + `px-2` di `<sm`; header Pengaturan ikon kembali `h-11`, judul `min-w-0 truncate`; "Mode terang" jadi baris berlabel dengan `ThemeToggle`; tab GamePanel `flex-wrap`; `GamePanel` layar penuh di HP (`h-full w-full` di `<sm`, kartu mengambang tetap di `sm+`); tombol Stop thinking `bg-danger` → `bg-border` + `text-teks-muted`.
+- **Keputusan**:
+  - Slot perangkat penuh kini **mengeluarkan yang tertua**, bukan menolak login ke-5: tanpa panel, menolak berarti pemilik terkunci 24 jam sampai sesi kedaluwarsa.
+  - Kolom `device` di tabel `sessions` tetap diisi `labelPerangkat()` (skema DB tidak diubah; cuma UInya yang hilang).
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 111 lulus**; tangkapan Chrome headless 390×844 (chat, ruang main, Pengaturan) sesuai maksud.
+- **Blocker**: tidak ada
+- **Next**: commit + `vercel --prod`, verifikasi build produksi.
+
+---
+
 ### 2026-11-23 — Latensi: function region salah, plus gerbang akses 4 perangkat
 
 - **Sesi**: lanjutan

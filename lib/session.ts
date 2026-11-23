@@ -1,5 +1,5 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, eq, gt, inArray, lt } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
 import { getDb } from "@/lib/db/client";
@@ -10,7 +10,7 @@ export const SESSION_COOKIE = "ohmysea_sesi";
 const MAX_AGE_SECONDS = 60 * 60 * 24;
 const UMUR_SESI_MS = MAX_AGE_SECONDS * 1000;
 /** Maksimal perangkat yang boleh masuk sekaligus. */
-export const MAKS_PERANGKAT = 4;
+const MAKS_PERANGKAT = 4;
 
 /**
  * Kode akses dibaca langsung dari env, bukan lewat `getEnv()`.
@@ -80,8 +80,6 @@ export function labelPerangkat(agen: string): string {
   return `${os} · ${peramban}`;
 }
 
-export type Perangkat = { id: string; device: string; createdAt: string; sekarang: boolean };
-
 /** Token sesi dari cookie. Null kalau belum login. */
 export function sessionToken(request: NextRequest): string | null {
   const nilai = request.cookies.get(SESSION_COOKIE)?.value;
@@ -89,31 +87,29 @@ export function sessionToken(request: NextRequest): string | null {
 }
 
 /**
- * Buka sesi baru: bersihkan yang kedaluwarsa, tolak kalau perangkat aktif sudah
- * penuh, lalu simpan token acak. Token inilah isi cookie.
+ * Buka sesi baru: bersihkan yang kedaluwarsa, keluarkan yang paling lama kalau
+ * perangkat aktif sudah penuh, lalu simpan token acak. Token inilah isi cookie.
  *
  * ponytail: hitung-lalu-sisip tanpa transaksi. Pemakainya satu orang, jadi balapan
  * dua login bersamaan paling buruk menambah satu perangkat. Pakai `serializable`
  * atau kolom counter kalau suatu saat dipakai banyak orang.
  */
-export async function buatSesi(
-  agen: string,
-): Promise<{ ok: true; token: string } | { ok: false; pesan: string }> {
+export async function buatSesi(agen: string): Promise<string> {
   const db = getDb();
   const batas = new Date(Date.now() - UMUR_SESI_MS);
   await db.delete(sessions).where(lt(sessions.createdAt, batas));
 
-  const aktif = await db.select({ id: sessions.id }).from(sessions);
+  const aktif = await db.select({ id: sessions.id }).from(sessions).orderBy(sessions.createdAt);
   if (aktif.length >= MAKS_PERANGKAT) {
-    return {
-      ok: false,
-      pesan: `Sudah ${MAKS_PERANGKAT} perangkat aktif. Cabut salah satu di Pengaturan, lalu coba lagi.`,
-    };
+    // Tidak ada lagi layar untuk memilih perangkat mana yang dicabut, jadi yang
+    // paling lama masuk dikeluarkan supaya pemilik tidak terkunci 24 jam.
+    const buang = aktif.slice(0, aktif.length - MAKS_PERANGKAT + 1).map((s) => s.id);
+    await db.delete(sessions).where(inArray(sessions.id, buang));
   }
 
   const token = randomBytes(32).toString("hex");
   await db.insert(sessions).values({ token, device: labelPerangkat(agen) });
-  return { ok: true, token };
+  return token;
 }
 
 /** true kalau cookie membawa token yang masih terdaftar dan belum kedaluwarsa. */
@@ -131,30 +127,4 @@ export async function isAuthorized(request: NextRequest): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-/** Daftar perangkat aktif, terbaru dulu. `sekarang` = perangkat pemanggil. */
-export async function daftarSesi(token: string | null): Promise<Perangkat[]> {
-  const batas = new Date(Date.now() - UMUR_SESI_MS);
-  const rows = await getDb()
-    .select()
-    .from(sessions)
-    .where(gt(sessions.createdAt, batas));
-  return rows
-    .map((r) => ({
-      id: r.id,
-      device: r.device,
-      createdAt: r.createdAt.toISOString(),
-      sekarang: r.token === token,
-    }))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-}
-
-/** Cabut satu perangkat. Kembalikan true kalau yang dicabut perangkat pemanggil. */
-export async function cabutSesi(id: string, token: string | null): Promise<boolean> {
-  const [dihapus] = await getDb()
-    .delete(sessions)
-    .where(eq(sessions.id, id))
-    .returning({ token: sessions.token });
-  return dihapus?.token === token && token !== null;
 }

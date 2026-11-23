@@ -92,7 +92,7 @@ export function GamePanel({ onTutup }: { onTutup: () => void }) {
         initial={{ opacity: 0, y: 28, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1, transition: TRANSISI.sedang }}
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[92dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-t-besar border border-border-kuat bg-bg-main shadow-glow sm:rounded-besar"
+        className="flex h-full w-full flex-col overflow-hidden bg-bg-main sm:h-auto sm:max-h-[92dvh] sm:max-w-[520px] sm:rounded-besar sm:border sm:border-border-kuat sm:shadow-glow"
       >
         <header className="flex items-center gap-2.5 border-b border-border px-sedang py-3">
           <Kirby ekspresi="sapaan" size={32} />
@@ -122,7 +122,7 @@ export function GamePanel({ onTutup }: { onTutup: () => void }) {
           </button>
         </header>
 
-        <div className="flex shrink-0 gap-1.5 overflow-x-auto border-b border-border px-sedang py-2">
+        <div className="flex shrink-0 flex-wrap gap-1.5 border-b border-border px-sedang py-2">
           {DAFTAR.map((g) => (
             <button
               key={g.id}
@@ -146,7 +146,7 @@ export function GamePanel({ onTutup }: { onTutup: () => void }) {
           ))}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-sedang">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-sedang pb-aman sm:pb-sedang">
           <div className="flex flex-col gap-sedang">
             <BarKirby reaksi={reaksi} />
             {jenis === "ttt" && <PapanTicTacToe onReaksi={setReaksi} />}

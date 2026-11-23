@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { MemoryAutoToggle } from "@/components/settings/MemoryAutoToggle";
-import { PerangkatAktif } from "@/components/settings/Perangkat";
 import { SuaraKirby } from "@/components/settings/SuaraKirby";
 import {
   cekSehat,
@@ -67,20 +66,21 @@ export default function HalamanPengaturan() {
       <header className="flex items-center gap-3">
         <Link
           href="/"
-          className="grid h-10 w-10 place-items-center rounded-penuh border border-border-kuat text-teks-muted hover:text-teks"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-penuh border border-border-kuat text-teks-muted transition-colors hover:border-aksen hover:text-teks"
           aria-label="Kembali ke chat"
+          title="Kembali ke chat"
         >
           <Icon name="chat" size={18} />
         </Link>
-        <div>
-          <h1 className="font-display text-3xl leading-none">
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate font-display text-3xl leading-none">
             Pengaturan<span className="text-aksen-terang">.</span>
           </h1>
           <p className="mt-1 text-xs text-teks-muted">
             Tampilan, memori asisten, riwayat percakapan, dan status layanan.
           </p>
         </div>
-        <div className="ml-auto">
+        <div className="shrink-0">
           <ThemeToggle />
         </div>
       </header>
@@ -90,7 +90,8 @@ export default function HalamanPengaturan() {
         <p className="text-xs text-teks-muted">
           Pilihanmu disimpan di perangkat ini. Ikut pengaturan sistem saat pertama kali dibuka.
         </p>
-        <div>
+        <div className="flex items-center justify-between gap-3 rounded-sedang border border-border px-3 py-1.5">
+          <span className="text-sm text-teks-muted">Mode terang</span>
           <ThemeToggle />
         </div>
       </section>
@@ -100,8 +101,6 @@ export default function HalamanPengaturan() {
       <MemoryAutoToggle />
 
       <SuaraKirby />
-
-      <PerangkatAktif />
 
       <section className="flex flex-col gap-sedang rounded-besar border border-border-kuat bg-surface p-sedang">
         <header>

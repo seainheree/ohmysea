@@ -338,27 +338,3 @@ export async function buatGambar(input: {
   const data = await baca<{ gambar: Gambar }>(res);
   return data.gambar;
 }
-
-export type Perangkat = {
-  id: string;
-  device: string;
-  createdAt: string;
-  /** true = perangkat yang sedang membuka halaman ini. */
-  sekarang: boolean;
-};
-
-export async function daftarPerangkat(): Promise<{ perangkat: Perangkat[]; maks: number }> {
-  const res = await fetchAman("/api/sessions", { cache: "no-store" });
-  return baca<{ perangkat: Perangkat[]; maks: number }>(res);
-}
-
-/** Cabut satu perangkat. `sekarang` = perangkat ini juga ikut keluar. */
-export async function cabutPerangkat(id: string): Promise<{ sekarang: boolean; pesan: string }> {
-  const res = await fetchAman(`/api/sessions/${id}`, { method: "DELETE" });
-  return baca<{ sekarang: boolean; pesan: string }>(res);
-}
-
-export async function cabutSemuaPerangkat(): Promise<{ jumlah: number; pesan: string }> {
-  const res = await fetchAman("/api/sessions", { method: "DELETE" });
-  return baca<{ jumlah: number; pesan: string }>(res);
-}

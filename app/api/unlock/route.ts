@@ -20,15 +20,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, pesan: "Kode akses salah." }, { status: 401 });
     }
 
-    // Kode benar, tapi perangkat aktif sudah penuh — jangan diam-diam menendang
-    // perangkat lain; pemilik yang memilih siapa yang dicabut.
-    const sesi = await buatSesi(request.headers.get("user-agent") ?? "");
-    if (!sesi.ok) {
-      return NextResponse.json({ ok: false, pesan: sesi.pesan }, { status: 403 });
-    }
+    // Kode benar. Sesi lama yang paling tua dikeluarkan otomatis kalau slot penuh
+    // (tidak ada lagi layar "Perangkat aktif" untuk memilih).
+    const token = await buatSesi(request.headers.get("user-agent") ?? "");
 
     const response = NextResponse.json({ ok: true, pesan: "Akses dibuka." });
-    response.cookies.set(SESSION_COOKIE, sesi.token, cookieOptions());
+    response.cookies.set(SESSION_COOKIE, token, cookieOptions());
     return response;
   } catch (err) {
     // Env server belum siap: beri pesan jelas, bukan 500 kosong.

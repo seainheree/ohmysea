@@ -235,7 +235,7 @@ export function Composer({
               onClick={onStop}
               aria-label="Hentikan jawaban"
               title="Hentikan jawaban"
-              className="mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-penuh bg-danger text-white transition-colors hover:bg-danger/90"
+              className="mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-penuh bg-border text-teks-muted transition-colors hover:bg-border-kuat hover:text-teks"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" />
