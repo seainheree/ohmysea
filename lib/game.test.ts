@@ -161,9 +161,9 @@ describe("kartu ingatan", () => {
     expect(kocok(asal, acakTetap(9)).sort((a, b) => a - b)).toEqual(asal);
   });
 
-  it("menghasilkan 16 kartu dengan tiap wajah tepat dua kali", () => {
+  it("menghasilkan dua kartu per wajah", () => {
     const dek = dekIngatan(acakTetap(11));
-    expect(dek).toHaveLength(16);
+    expect(dek).toHaveLength(WAJAH_INGATAN.length * 2);
     for (let i = 0; i < WAJAH_INGATAN.length; i++) {
       expect(dek.filter((v) => v === i)).toHaveLength(2);
     }

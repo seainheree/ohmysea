@@ -18,7 +18,7 @@ type Jenis = "ttt" | "berderet" | "ingatan";
 const DAFTAR: { id: Jenis; nama: string; ikon: NamaIkon; ringkas: string }[] = [
   { id: "ttt", nama: "Tic Tac Toe", ikon: "kisi", ringkas: "3×3 · lawan Kirby" },
   { id: "berderet", nama: "Empat Berderet", ikon: "bawah", ringkas: "7×6 · sambung empat" },
-  { id: "ingatan", nama: "Kartu Ingatan", ikon: "salin", ringkas: "16 kartu · cari pasangan" },
+  { id: "ingatan", nama: "Kartu Ingatan", ikon: "salin", ringkas: "12 kartu · cari pasangan" },
 ];
 
 const KUNCI_LAGU = "ohmysea-lagu-game";

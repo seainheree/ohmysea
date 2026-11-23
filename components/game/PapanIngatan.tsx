@@ -105,7 +105,7 @@ export function PapanIngatan({ onReaksi }: { onReaksi: (r: Reaksi) => void }) {
         {selesai && <Burst />}
       </div>
 
-      <div className="papan-3d mx-auto grid w-full max-w-[330px] grid-cols-4 gap-2">
+      <div className="papan-3d mx-auto grid w-full max-w-[300px] grid-cols-3 gap-2">
         {dek.map((nilai, i) => {
           const terbukaIni = terbuka.includes(i);
           const ketemu = cocok.includes(i);
@@ -134,7 +134,7 @@ export function PapanIngatan({ onReaksi }: { onReaksi: (r: Reaksi) => void }) {
                 }`}
                 style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
               >
-                <Kirby ekspresi={WAJAH_INGATAN[nilai]} size={38} />
+                <Kirby ekspresi={WAJAH_INGATAN[nilai]} size={46} />
               </span>
             </motion.button>
           );
@@ -142,7 +142,7 @@ export function PapanIngatan({ onReaksi }: { onReaksi: (r: Reaksi) => void }) {
       </div>
 
       <Status>
-        {selesai ? `Selesai dalam ${langkah} langkah! poyoo~` : "Temukan 8 pasangan yang sama"}
+        {selesai ? `Selesai dalam ${langkah} langkah! poyoo~` : `Temukan ${TOTAL} pasangan yang sama`}
       </Status>
 
       <div className="flex justify-center">

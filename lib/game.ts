@@ -1,6 +1,6 @@
 /**
  * Logika murni ruang main (tanpa React/DOM) supaya bisa diuji langsung.
- * Game: Tic Tac Toe (9 sel), Empat Berderet (7×6), Kartu Ingatan (16 kartu).
+ * Game: Tic Tac Toe (9 sel), Empat Berderet (7×6), Kartu Ingatan (12 kartu).
  */
 
 export type Pemain = "kamu" | "kirby";
@@ -228,21 +228,20 @@ export function langkahCO(
 /* --- Kartu Ingatan ----------------------------------------------------- */
 
 /**
- * Wajah kartu: delapan ekspresi Kirby (indeks dipakai sebagai nilai kartu).
- * Harus unik supaya tidak ada dua pasangan yang tampak sama.
+ * Wajah kartu: enam ekspresi Kirby paling beda (indeks dipakai sebagai nilai
+ * kartu). Enam, bukan delapan: sisa ekspresi di lembar sprite kembar sekilas
+ * di ukuran kartu, dan wajah kembar bikin pasangan tak bisa dibedakan.
  */
 export const WAJAH_INGATAN = [
-  "senang",
-  "kaget",
-  "pikir",
-  "malu",
   "tertawa",
-  "sedih",
-  "bingung",
   "fokus",
+  "lesu",
+  "sapaan",
+  "pikir",
+  "bingung",
 ] as const;
 
-/** 16 kartu (8 pasang) sudah diacak; tiap nilai = indeks di `WAJAH_INGATAN`. */
+/** Kartu flipcard sudah diacak; tiap nilai = indeks di `WAJAH_INGATAN`. */
 export function dekIngatan(acak: () => number = Math.random): number[] {
   const pasangan = WAJAH_INGATAN.flatMap((_, i) => [i, i]);
   return kocok(pasangan, acak);

@@ -17,6 +17,26 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Kartu ingatan: 6 pasangan, wajah paling beda
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik melaporkan kartu flipcard sulit diidentifikasi — lembar sprite cuma berisi 12 gambar sementara papan 16 kartu, dan beberapa pasangan tampak memakai gambar yang sama
+- **Keputusan**:
+  - Akar masalah: bukan jumlah sel, tapi wajah yang saya pilih **saling mirip** di ukuran kartu (`sedih`≈`malu`, `senang`≈`kaget`, `tenang`≈`nyaman`).
+  - Solusi: pakai **6 ekspresi paling beda** (`tertawa`, `fokus`, `lesu`, `sapaan`, `pikir`, `bingung`) → 6 pasangan / 12 kartu, sepadan dengan 12 sel sprite.
+  - Warna latar per pasangan **tidak** dipakai: butuh token warna baru di `docs/DESIGN.md`, dan warna jadi jalan pintas yang menghilangkan tantangan menghafal wajah.
+  - Papan 3 kolom (`max-w-[300px]`) supaya wajah 46 px, bukan 38 px — lebih mudah dibedakan.
+  - Tidak ada angka pasangan yang ditulis tetap lagi: `TOTAL = WAJAH_INGATAN.length`, teks status memakai `TOTAL`, uji memakai `WAJAH_INGATAN.length * 2`.
+- **Dikerjakan**:
+  - `lib/game.ts`: `WAJAH_INGATAN` 8 → 6 wajah.
+  - `components/game/PapanIngatan.tsx`: grid 4 → 3 kolom, sprite 38 → 46 px, teks status dinamis.
+  - `components/game/GamePanel.tsx`, `lib/game.ts` (komentar), `docs/PRD.md`, `docs/TASKS.md`: "16 kartu / 8 pasangan" → "12 kartu / 6 pasangan".
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` 12 file / 99 lulus.
+- **Blocker**: tidak ada
+- **Next**: lihat papan di browser — kalau masih ada dua wajah yang terasa sama, tukar dari daftar 6 (kandidat berikutnya: `kaget`, `malu`).
+
+---
+
 ### 2026-11-23 — Ekspresi Kirby dari lembar sprite
 
 - **Sesi**: lanjutan
