@@ -9,6 +9,7 @@ const MAKS_PESAN = 4000;
 
 export function Composer({
   onKirim,
+  onStop,
   sibuk,
   mode,
   onLampirkan,
@@ -19,6 +20,8 @@ export function Composer({
   pratinjau,
 }: {
   onKirim: (teks: string) => void;
+  /** Hentikan jawaban yang sedang dialirkan (klik tombol Stop). */
+  onStop: () => void;
   sibuk: boolean;
   mode: "chat" | "curhat";
   onLampirkan: (berkas: File) => void;
@@ -109,7 +112,7 @@ export function Composer({
         {lampiran && (
           <div
             className={`mb-2 flex items-center gap-2 rounded-besar border px-3 py-2 text-[12px] ${
-              lampiran.galat ? "border-bahaya/40 text-bahaya" : "border-border text-teks"
+              lampiran.galat ? "border-danger/40 text-danger" : "border-border text-teks"
             }`}
           >
             {lampiran.pratinjau ? (
@@ -227,24 +230,37 @@ export function Composer({
               <circle cx="12" cy="12.5" r="3.2" stroke="currentColor" strokeWidth="1.8" />
             </svg>
           </button>
-          <button
-            onClick={kirim}
-            disabled={!bisaKirim}
-            aria-label="Kirim pesan"
-            className={`mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-penuh transition-colors ${
-              bisaKirim ? "bg-aksen text-white hover:bg-aksen-terang" : "bg-border text-teks-muted"
-            }`}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M12 19V5m0 0l-6 6m6-6l6 6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+          {sibuk ? (
+            <button
+              onClick={onStop}
+              aria-label="Hentikan jawaban"
+              title="Hentikan jawaban"
+              className="mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-penuh bg-danger text-white transition-colors hover:bg-danger/90"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={kirim}
+              disabled={!bisaKirim}
+              aria-label="Kirim pesan"
+              className={`mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-penuh transition-colors ${
+                bisaKirim ? "bg-aksen text-white hover:bg-aksen-terang" : "bg-border text-teks-muted"
+              }`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M12 19V5m0 0l-6 6m6-6l6 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
         </div>
         <div className="mt-2 flex items-center justify-center gap-3 text-[11px] text-teks-muted-2">
           <span className="hidden sm:inline">Enter kirim · Shift + Enter baris baru</span>

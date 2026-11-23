@@ -285,6 +285,32 @@ function tungguSuara(): Promise<SpeechSynthesisVoice[]> {
 /** Naik setiap kali suara dihentikan, supaya permintaan lama tidak berbunyi. */
 let generasi = 0;
 
+/** Nada bawaan: kartun (pitch tinggi) tapi tidak cempreng. */
+export const NADA_BAWAAN = { pitch: 1.65, rate: 1.03 };
+export const KUNCI_NADA = "ohmysea-suara-nada";
+export const KUNCI_LAJU = "ohmysea-suara-laju";
+
+function batasi(nilai: number, min: number, maks: number): number {
+  return Math.min(maks, Math.max(min, nilai));
+}
+
+/** Rentang aman slider nada: di luar ini suara pecah atau jadi terlalu lambat. */
+export function batasiNada(pitch: number, rate: number): { pitch: number; rate: number } {
+  return { pitch: batasi(pitch, 1, 2), rate: batasi(rate, 0.7, 1.6) };
+}
+
+/** Nada pilihan pengguna (Pengaturan). Tanpa window/localStorage → bawaan. */
+export function bacaNada(): { pitch: number; rate: number } {
+  if (typeof window === "undefined") return NADA_BAWAAN;
+  try {
+    const pitch = Number(localStorage.getItem(KUNCI_NADA));
+    const rate = Number(localStorage.getItem(KUNCI_LAJU));
+    return batasiNada(pitch || NADA_BAWAAN.pitch, rate || NADA_BAWAAN.rate);
+  } catch {
+    return NADA_BAWAAN;
+  }
+}
+
 /** Bacakan teks. `selesai` dipanggil saat selesai, dihentikan, atau gagal. */
 export async function bicarakan(
   teks: string,
@@ -317,9 +343,10 @@ export async function bicarakan(
     else if (suaraPer.id) u.voice = suaraPer.id;
     u.lang = u.voice?.lang ?? (b.bahasa === "en" ? "en-US" : "id-ID");
     // Pendekatan "kartun": pitch tinggi supaya terdengar seperti Kirby kecil.
-    // Semakin tinggi, semakin mirip karakter tapi semakin terasa sintetis.
-    u.rate = 1.03;
-    u.pitch = 1.65;
+    // Nilainya bisa diatur di Pengaturan → bacaNada() (dibatasi ke rentang aman).
+    const nada = bacaNada();
+    u.rate = nada.rate;
+    u.pitch = nada.pitch;
 
     let beres = false;
     const lanjut = () => {

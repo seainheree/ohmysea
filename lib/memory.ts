@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { generateText } from "ai";
 
 import { memoriModel } from "@/lib/ai/groq";
@@ -163,6 +163,29 @@ export function terlaluMirip(a: string, b: string): boolean {
   return sama / gabungan >= 0.5;
 }
 
+/** Kata penyangkal: dipakai membedakan "berubah pikiran" dari "kembar". */
+const PENYANGKAL = /\b(tidak|bukan|nggak|gak|ga|jarang|belum|benci|ogah|anti)\b/i;
+
+/**
+ * Dua memori bertentangan kalau membahas hal yang (hampir) sama tetapi satu
+ * menyangkal dan yang lain tidak: "Aku suka kopi" vs "Aku tidak suka kopi".
+ * Yang bertentangan **diganti**, bukan ditambahkan — kalau tidak, prompt sistem
+ * memuat dua kebenaran berlawanan dan Kirby jadi tidak konsisten.
+ */
+export function bertentangan(a: string, b: string): boolean {
+  // Kembar persis bukan pertentangan. Sengaja TIDAK memakai `terlaluMirip`:
+  // "suka kopi" vs "tidak suka kopi" justru lolos uji itu (kata intinya sama)
+  // dan itulah pasangan yang harus diganti, bukan ditolak sebagai duplikat.
+  if (normalkanTeks(a) === normalkanTeks(b)) return false;
+  const ta = kataInti(a);
+  const tb = kataInti(b);
+  if (ta.size === 0 || tb.size === 0) return false;
+  let sama = 0;
+  for (const t of ta) if (tb.has(t)) sama++;
+  if (sama / Math.min(ta.size, tb.size) < 0.6) return false;
+  return PENYANGKAL.test(a) !== PENYANGKAL.test(b);
+}
+
 export function layakDisimpan(
   kandidat: KandidatMemori,
   sudahAda: string[],
@@ -183,6 +206,9 @@ export function layakDisimpan(
   if (POLA_NAMA_ASISTEN.test(teks)) return { ok: false, alasan: "nama asisten, bukan fakta pengguna" };
   if (POLA_SEMENTARA.test(teks)) return { ok: false, alasan: "peristiwa sesaat" };
   if (!POLA_TENTANG_PENGGUNA.test(teks)) return { ok: false, alasan: "bukan tentang pengguna" };
+  // Cek pertentangan DULU: pasangan seperti "suka kopi" vs "tidak suka kopi"
+  // lolos uji kemiripan kata inti, jadi tanpa urutan ini malah ditolak "sudah ada".
+  if (sudahAda.some((lama) => bertentangan(lama, teks))) return { ok: true, teks };
   if (sudahAda.some((lama) => terlaluMirip(lama, teks))) {
     return { ok: false, alasan: "sudah ada" };
   }
@@ -255,6 +281,9 @@ export async function ekstrakKandidatMemori(
       temperature: 0,
       maxOutputTokens: 600,
       maxRetries: 1,
+      // gpt-oss menghabiskan token untuk "reasoning" lebih dulu; tanpa jatah
+      // yang cukup balasannya kosong dengan finish_reason=length (lihat F6).
+      providerOptions: { groq: { reasoningEffort: "low" } },
       prompt: `${PROMPT_FILTER_MEMORI}\n\nPENGGUNA: ${pesanPengguna}\n\nKIRBY: ${balasanAsisten.slice(0, 1500)}`,
     });
 
@@ -292,22 +321,55 @@ export async function simpanMemoriOtomatis(
 ): Promise<string[]> {
   try {
     const db = getDb();
-    const [otomatis, paten] = await Promise.all([
-      db.select({ content: memories.content }).from(memories),
-      db.select({ content: permanentMemories.content }).from(permanentMemories),
-    ]);
-    const acuan = [...otomatis, ...paten].map((m) => m.content.trim()).filter(Boolean);
-    const sisa = MAKS_SEMUA_MEMORI - acuan.length;
-    if (sisa <= 0) return [];
+    const paten = await db.select({ content: permanentMemories.content }).from(permanentMemories);
+    let otomatis = await db
+      .select({ id: memories.id, content: memories.content })
+      .from(memories)
+      .orderBy(asc(memories.createdAt));
+
+    const teks = (rows: { content: string }[]) =>
+      rows.map((r) => r.content.trim()).filter(Boolean);
+    const total = () => teks(otomatis).length + teks(paten).length;
+
+    // Tabel penuh: buang memori otomatis TERTUA (memori paten milik pengguna
+    // tidak pernah disentuh). Dulu fungsi ini berhenti diam-diam begitu penuh,
+    // jadi Kirby berhenti mengingat apa pun tanpa gejala.
+    if (total() >= MAKS_SEMUA_MEMORI && otomatis.length > 0) {
+      const buang = otomatis.slice(0, Math.min(MAKS_OTOMATIS_PER_TURAN, otomatis.length));
+      await db.delete(memories).where(
+        inArray(
+          memories.id,
+          buang.map((r) => r.id),
+        ),
+      );
+      otomatis = otomatis.slice(buang.length);
+    }
+
+    const acuan = [...teks(otomatis), ...teks(paten)];
+    if (acuan.length >= MAKS_SEMUA_MEMORI) return [];
 
     const kandidat = await ekstrakKandidatMemori(pesanPengguna, balasanAsisten);
     if (kandidat.length === 0) return [];
 
-    const lolos = saringKandidat(kandidat, acuan, Math.min(MAKS_OTOMATIS_PER_TURAN, sisa));
+    const lolos = saringKandidat(kandidat, acuan);
     if (lolos.length === 0) return [];
 
-    await db.insert(memories).values(lolos.map((content) => ({ content })));
-    return lolos;
+    const disimpan: string[] = [];
+    for (const isi of lolos) {
+      const lama = otomatis.find((r) => bertentangan(r.content, isi));
+      if (lama) {
+        // Fakta berubah: ganti barisnya supaya prompt tidak memuat dua versi
+        // yang berlawanan ("suka kopi" dan "tidak suka kopi" sekaligus).
+        await db
+          .update(memories)
+          .set({ content: isi, updatedAt: new Date() })
+          .where(eq(memories.id, lama.id));
+      } else {
+        await db.insert(memories).values({ content: isi });
+      }
+      disimpan.push(isi);
+    }
+    return disimpan;
   } catch (err) {
     console.error("gagal menyimpan memori otomatis:", err instanceof Error ? err.message : String(err));
     return [];

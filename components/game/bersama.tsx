@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import type { Ekspresi, Reaksi } from "@/components/game/reaksi";
 import { Kirby, type EkspresiKirby } from "@/components/ui/Kirby";
@@ -158,4 +158,45 @@ export function Ulang({ onKlik }: { onKlik: () => void }) {
       <Icon name="ulang" size={13} /> Mulai ulang
     </motion.button>
   );
+}
+
+export type NilaiSkor = { kamu: number; kirby: number; seri: number };
+
+const AWAL_SKOR: NilaiSkor = { kamu: 0, kirby: 0, seri: 0 };
+
+/**
+ * Skor yang diingat di perangkat. Menutup ruang main tidak lagi menghapus
+ * riwayat menang/kalah; "Mulai ulang" hanya mengulang papan, skornya tetap.
+ */
+export function useSkorTersimpan(kunci: string) {
+  const [skor, setSkor] = useState<NilaiSkor>(AWAL_SKOR);
+
+  useEffect(() => {
+    try {
+      const isi = localStorage.getItem(kunci);
+      if (!isi) return;
+      const lama = JSON.parse(isi) as Partial<NilaiSkor>;
+      setSkor({
+        kamu: Number(lama.kamu) || 0,
+        kirby: Number(lama.kirby) || 0,
+        seri: Number(lama.seri) || 0,
+      });
+    } catch {
+      // localStorage bisa diblokir atau isinya rusak — mulai dari nol.
+    }
+  }, [kunci]);
+
+  function simpan(ubah: (lama: NilaiSkor) => NilaiSkor) {
+    setSkor((lama) => {
+      const baru = ubah(lama);
+      try {
+        localStorage.setItem(kunci, JSON.stringify(baru));
+      } catch {
+        // abaikan: skor tetap jalan di sesi ini
+      }
+      return baru;
+    });
+  }
+
+  return [skor, simpan] as const;
 }

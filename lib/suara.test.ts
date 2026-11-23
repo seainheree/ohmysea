@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { deteksiBahasa, potongBahasa, potongBicara, potongKalimat, skorSuara, teksUntukSuara } from "./suara";
+import {
+  NADA_BAWAAN,
+  batasiNada,
+  bacaNada,
+  deteksiBahasa,
+  potongBahasa,
+  potongBicara,
+  potongKalimat,
+  skorSuara,
+  teksUntukSuara,
+} from "./suara";
 
 describe("teks untuk suara", () => {
   it("membuang penanda markdown tanpa membuang isi", () => {
@@ -97,5 +107,17 @@ describe("jeda & batas frasa", () => {
     }
     // Potongan karena panjang tanpa tanda baca tidak diberi jeda buatan.
     expect(bagian[0].jeda).toBe(0);
+  });
+});
+
+describe("nada suara", () => {
+  it("membatasi nilai slider ke rentang aman", () => {
+    expect(batasiNada(9, 9)).toEqual({ pitch: 2, rate: 1.6 });
+    expect(batasiNada(0.2, 0.1)).toEqual({ pitch: 1, rate: 0.7 });
+    expect(batasiNada(1.65, 1.03)).toEqual({ pitch: 1.65, rate: 1.03 });
+  });
+
+  it("memakai bawaan saat tidak ada window (server)", () => {
+    expect(bacaNada()).toEqual(NADA_BAWAAN);
   });
 });

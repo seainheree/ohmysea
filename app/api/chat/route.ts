@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   const tolak = requireSession(request);
   if (tolak) return tolak;
 
-  const batas = rateLimit(`chat:${kunciRateLimit(request)}`, 30, 60_000);
+  const batas = await rateLimit(`chat:${kunciRateLimit(request)}`, 30, 60_000);
   if (!batas.ok) {
     return NextResponse.json(
       { ok: false, pesan: "Terlalu banyak permintaan. Tunggu satu menit lagi." },
@@ -70,13 +70,17 @@ export async function POST(request: NextRequest) {
         .where(eq(messages.conversationId, conversationId!))
         .orderBy(desc(messages.createdAt))
         .limit(1);
-      if (!akhir || akhir.role !== "assistant") {
+      if (!akhir) {
         return NextResponse.json(
           { ok: false, pesan: "Belum ada jawaban terakhir yang bisa diulang." },
           { status: 400 },
         );
       }
-      await db.delete(messages).where(eq(messages.id, akhir.id));
+      // Kalau pesan terakhir adalah pertanyaan pengguna (jawaban sebelumnya
+      // dihentikan sebelum tersimpan), biarkan apa adanya dan jawab sekarang.
+      if (akhir.role === "assistant") {
+        await db.delete(messages).where(eq(messages.id, akhir.id));
+      }
     } else if (!conversationId) {
       const [baru] = await db
         .insert(conversations)

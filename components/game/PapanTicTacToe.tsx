@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
-import { Skor, Status, Tingkat, Ulang } from "@/components/game/bersama";
+import { Skor, Status, Tingkat, Ulang, useSkorTersimpan } from "@/components/game/bersama";
 import { REAKSI, acak, type Reaksi } from "@/components/game/reaksi";
 import { DURASI, KURVA_STANDAR, TRANSISI } from "@/lib/motion";
 import {
@@ -39,7 +39,7 @@ export function PapanTicTacToe({ onReaksi }: { onReaksi: (r: Reaksi) => void }) 
   const [papan, setPapan] = useState(papanTTTKosong);
   const [giliran, setGiliran] = useState<Pemain>("kamu");
   const [sulit, setSulit] = useState(true);
-  const [skor, setSkor] = useState({ kamu: 0, kirby: 0, seri: 0 });
+  const [skor, setSkor] = useSkorTersimpan("ohmysea-skor-ttt");
   const [terakhir, setTerakhir] = useState<number | null>(null);
   const [sorot, setSorot] = useState<number | null>(null);
   const tercatat = useRef(false);

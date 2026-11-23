@@ -222,12 +222,15 @@ export async function kirimPesan(input: {
   regenerate?: boolean;
   /** Dokumen lampiran yang dibawa pesan ini (chip "Konteks" di bubble pengguna). */
   attachmentIds?: string[];
+  /** Batal dari tombol Stop — fetch dihentikan, sisa stream tidak dipakai. */
+  signal?: AbortSignal;
   onChunk: (teks: string) => void;
 }): Promise<{ conversationId: string; sources: Pesan["sources"]; durasiMs: number }> {
   const mulai = Date.now();
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "content-type": "application/json" },
+    signal: input.signal,
     body: JSON.stringify({
       conversationId: input.conversationId,
       mode: input.mode,

@@ -1,5 +1,7 @@
+import { sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getDb } from "@/lib/db/client";
 import { isAuthorized } from "@/lib/session";
 
 /**
@@ -15,24 +17,36 @@ export function requireSession(request: NextRequest): NextResponse | null {
 }
 
 /**
- * Batas laju sederhana per cookie (in-memory, per instance server).
- * Cukup untuk mencegah kuota habis karena kecelakaan; bukan pelindung kuat —
- * batas sebenarnya ada di kuota provider.
+ * Batas laju per cookie, disimpan di Postgres lewat satu upsert.
+ * Di Vercel tiap instance serverless punya memori sendiri, jadi `Map` in-memory
+ * dulu praktis tidak membatasi apa pun. Ini bukan pelindung kuat — batas
+ * sebenarnya tetap kuota provider — tapi cukup menahan kirim-ulang tak sengaja.
+ *
+ * ponytail: satu baris per kunci, tanpa TTL cleanup. Kuncinya hanya beberapa
+ * (chat/images/saran), jadi tidak perlu; pakai Redis kalau kuncinya jadi ribuan.
  */
-const catatan = new Map<string, { jumlah: number; resetAt: number }>();
+export async function rateLimit(
+  key: string,
+  limit = 30,
+  windowMs = 60_000,
+): Promise<{ ok: boolean; sisa: number }> {
+  const reset = new Date(Date.now() + windowMs);
+  try {
+    const rows = (await getDb().execute(sql`
+      insert into rate_limits (key, jumlah, reset_at) values (${key}, 1, ${reset})
+      on conflict (key) do update set
+        jumlah = case when rate_limits.reset_at < now() then 1 else rate_limits.jumlah + 1 end,
+        reset_at = case when rate_limits.reset_at < now() then ${reset} else rate_limits.reset_at end
+      returning jumlah
+    `)) as unknown as { jumlah: number }[];
 
-export function rateLimit(key: string, limit = 30, windowMs = 60_000): { ok: boolean; sisa: number } {
-  const sekarang = Date.now();
-  const entri = catatan.get(key);
-
-  if (!entri || entri.resetAt < sekarang) {
-    catatan.set(key, { jumlah: 1, resetAt: sekarang + windowMs });
-    return { ok: true, sisa: limit - 1 };
+    const jumlah = Number(rows[0]?.jumlah ?? 1);
+    return { ok: jumlah <= limit, sisa: Math.max(0, limit - jumlah) };
+  } catch (err) {
+    // Batas laju hanya pelengkap: kalau DB bermasalah, chat tetap boleh jalan.
+    console.error("rate limit gagal:", pesanError(err));
+    return { ok: true, sisa: limit };
   }
-
-  entri.jumlah += 1;
-  if (entri.jumlah > limit) return { ok: false, sisa: 0 };
-  return { ok: true, sisa: limit - entri.jumlah };
 }
 
 export function kunciRateLimit(request: NextRequest): string {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  bertentangan,
   buildMemoryBlock,
   layakDisimpan,
   saringKandidat,
@@ -115,6 +116,29 @@ describe("layakDisimpan (saringan memori otomatis)", () => {
       ["aku suka kopi hitam"],
     );
     expect(hasil.ok).toBe(false);
+  });
+
+  it("meloloskan yang bertentangan supaya bisa mengganti memori lama", () => {
+    const hasil = layakDisimpan(
+      { teks: "Aku tidak suka kopi", kategori: "preferensi", keyakinan: 0.9 },
+      ["Aku suka kopi"],
+    );
+    expect(hasil.ok).toBe(true);
+  });
+});
+
+describe("bertentangan (fakta berubah, bukan duplikat)", () => {
+  it("menangkap penyangkalan atas hal yang sama", () => {
+    expect(bertentangan("Aku suka kopi", "Aku tidak suka kopi")).toBe(true);
+    expect(bertentangan("Aku suka kopi", "Aku bukan penggemar kopi")).toBe(true);
+  });
+
+  it("tidak menandai kalimat kembar sebagai pertentangan", () => {
+    expect(bertentangan("Aku suka kopi", "aku suka kopi")).toBe(false);
+  });
+
+  it("tidak menandai fakta berbeda sebagai pertentangan", () => {
+    expect(bertentangan("Aku suka kopi", "Aku tinggal di Bandung")).toBe(false);
   });
 });
 

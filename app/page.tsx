@@ -73,6 +73,8 @@ export default function Home() {
   // id percakapan aktif disimpan di ref juga: `aktif` (state) bisa belum ter-render
   // saat pesan dikirim tepat setelah lampiran membuat percakapan baru.
   const aktifIdRef = useRef<string | null>(null);
+  /** Pengendali fetch aktif — dipakai tombol Stop di komposer. */
+  const batalRef = useRef<AbortController | null>(null);
   /** Lewati percobaan pertama: daftar awal sudah dimuat efek mode. */
   const cariPertama = useRef(true);
 
@@ -323,6 +325,11 @@ export default function Home() {
     };
   }
 
+  /** Hentikan jawaban yang sedang dialirkan (tombol Stop di komposer). */
+  function hentikanJawaban() {
+    batalRef.current?.abort();
+  }
+
   async function kirim(teks: string) {
     if (sibukLampiran) return;
     setSibuk(true);
@@ -348,6 +355,8 @@ export default function Home() {
     };
     setPesan((p) => [...p, sementara]);
     const aliran = penampungStream();
+    const kendali = new AbortController();
+    batalRef.current = kendali;
 
     try {
       const sebelum = jumlahMemori;
@@ -357,6 +366,7 @@ export default function Home() {
         message: teks,
         autoMemori,
         attachmentIds: lampiranDikirim?.documentId ? [lampiranDikirim.documentId] : undefined,
+        signal: kendali.signal,
         onChunk: aliran.tambah,
       });
 
@@ -398,11 +408,33 @@ export default function Home() {
       }
     } catch (err) {
       aliran.hentikan();
-      setError(err instanceof Error ? err.message : "Gagal mengirim pesan");
       setStreaming("");
       setSibuk(false);
+
+      if (kendali.signal.aborted) {
+        // Tombol Stop: pertanyaan sudah tersimpan di server, jawabannya tidak.
+        // Muat ulang supaya layar sama dengan isi DB, lalu beri tahu pengguna
+        // bahwa pertanyaannya tidak hilang dan bisa diulang.
+        setCatatanMemori("Jawaban dihentikan. Pertanyaanmu tetap tersimpan.");
+        const id = aktifIdRef.current;
+        if (id) {
+          void ambilPesan(id)
+            .then((data) => {
+              setPesan(data.pesan);
+              setBerkasSesi(data.berkas);
+            })
+            .catch(() => {
+              // Gagal memuat ulang: biarkan tampilan apa adanya.
+            });
+        }
+        return;
+      }
+
+      setError(err instanceof Error ? err.message : "Gagal mengirim pesan");
       // Kirim gagal: lampiran belum terpakai, kembalikan ke komposer supaya bisa diulang.
       if (lampiranDikirim) setLampiran(lampiranDikirim);
+    } finally {
+      if (batalRef.current === kendali) batalRef.current = null;
     }
   }
 
@@ -658,6 +690,7 @@ export default function Home() {
 
         <Composer
           onKirim={kirim}
+          onStop={hentikanJawaban}
           sibuk={sibuk}
           mode={mode}
           onLampirkan={lampirkan}

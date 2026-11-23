@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   const tolak = requireSession(request);
   if (tolak) return tolak;
 
-  const batas = rateLimit(`images:${kunciRateLimit(request)}`, 10, 60_000);
+  const batas = await rateLimit(`images:${kunciRateLimit(request)}`, 10, 60_000);
   if (!batas.ok) {
     return NextResponse.json(
       { ok: false, pesan: "Terlalu banyak permintaan gambar. Tunggu satu menit lagi." },

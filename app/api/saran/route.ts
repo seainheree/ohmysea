@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   const tolak = requireSession(request);
   if (tolak) return tolak;
 
-  const batas = rateLimit(`saran:${kunciRateLimit(request)}`, 20, 60_000);
+  const batas = await rateLimit(`saran:${kunciRateLimit(request)}`, 20, 60_000);
   if (!batas.ok) return NextResponse.json({ ok: false, pesan: "Terlalu sering.", saran: [] }, { status: 429 });
 
   let body: z.infer<typeof bodySchema>;

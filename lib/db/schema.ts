@@ -122,6 +122,18 @@ export const permanentMemories = pgTable(
   (t) => [index("permanent_memories_aktif_idx").on(t.aktif, t.createdAt)],
 );
 
+/**
+ * Batas laju per kunci (route + cookie). Disimpan di DB, bukan `Map` in-memory:
+ * di Vercel tiap instance punya hitungannya sendiri, jadi batas in-memory praktis
+ * tidak melindungi gerbang kode akses. Kuncinya sedikit (per route), jadi tabel
+ * ini tidak tumbuh liar.
+ */
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  jumlah: integer("jumlah").notNull().default(0),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+});
+
 export type Conversation = typeof conversations.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Document = typeof documents.$inferSelect;
