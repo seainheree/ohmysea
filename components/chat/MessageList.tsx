@@ -194,7 +194,7 @@ export function MessageList({
             >
             <AvatarAsisten ekspresi={ekspresiBalasan(m.content)} />
             <div className="min-w-0 flex-1">
-              <div className="rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-[15px] leading-7 text-pretty text-teks">
+              <div className="min-w-0 rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-[15px] leading-7 break-words text-pretty text-teks">
                 <Markdown teks={m.content} />
               </div>
               {m.sources && m.sources.length > 0 && (
@@ -256,7 +256,7 @@ export function MessageList({
               animate={{ opacity: 1, y: 0, scale: 1, transition: TRANSISI.sedang }}
               className="flex justify-end"
             >
-              <div className="max-w-[85%]">
+              <div className="min-w-0 max-w-[85%]">
                 {(() => {
                   const gambar = (m.sources ?? []).filter((s) => pratinjau[s.documentId]);
                   return gambar.length > 0 ? (
@@ -280,7 +280,7 @@ export function MessageList({
                     </div>
                   ) : null;
                 })()}
-                <div className="whitespace-pre-wrap rounded-besar rounded-br-kecil bg-aksen px-sedang py-3 text-sm leading-relaxed text-white">
+                <div className="whitespace-pre-wrap break-words rounded-besar rounded-br-kecil bg-aksen px-sedang py-3 text-sm leading-relaxed text-white">
                   {m.content}
                 </div>
                 {m.sources && m.sources.length > 0 && (
@@ -318,7 +318,7 @@ export function MessageList({
           >
             <AvatarAsisten ekspresi="pikir" />
             <div className="min-w-0 flex-1">
-              <div className="inline-flex max-w-full items-start rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed">
+              <div className="inline-flex min-w-0 max-w-full items-start rounded-besar rounded-tl-kecil border border-border bg-surface px-sedang py-3 text-sm leading-relaxed">
                 {streaming ? (
                   <>
                     <Markdown teks={streaming} />

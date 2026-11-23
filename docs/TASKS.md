@@ -83,6 +83,7 @@ Jangan lompat milestone.
 | T-1504 | done | Pencarian hibrida: `urutkanHibrida()` + `kataKunciKhas()` menaikkan potongan yang memuat istilah khas (`FR-19`, `0.30`) tanpa mengubah skor cosine; `pnpm rag:query "ambang kosinus 0.30"` → potongan `0.30` masuk peringkat 1 |
 | T-1601 | done | Function region pindah ke `sin1` (`vercel.json`) — sebelumnya `x-vercel-id` menunjukkan function di `iad1` sementara DB di `ap-southeast-1`; `lib/api.ts` dapat `fetchAman()` (ulang sekali untuk GET, pesan "Koneksi ke server terputus"), `muatDaftar`/`ambilPesan` menerima `AbortSignal` (pindah mode tak lagi memunculkan "Failed to fetch") |
 | T-1602 | done | Tabel `sessions` (migrasi `0005_narrow_bulldozer.sql`): cookie berisi token acak 32 byte, bukan HMAC statis; maks 4 perangkat (`MAKS_PERANGKAT`), login ke-5 → 403; `/api/sessions` + `/api/sessions/[id]` (daftar & cabut); panel "Perangkat aktif" di Pengaturan |
+| T-1603 | done | Tata letak mobile tahan overflow: `html,body` `max-width:100%` + `break-word`, `img,svg` `max-width:100%`, `<main>` `overflow-x-hidden`, `min-w-0` di bubble & Markdown, `h-svh` + `overscroll-none`, tombol Tema/Pengaturan disembunyikan di `<sm` |
 | T-705 | done | Saran lanjutan `/api/saran` (model `GROQ_MODEL_MEMORI`) + sakelar navbar tersimpan di `localStorage`; uji nyata: 3 chip muncul ("Apa tujuan utama ohmysea?", …) |
 
 ---
@@ -805,6 +806,19 @@ ekspor percakapan (permintaan pemilik). Ditambahkan 2026-11-23.
   - Mencabut perangkat sendiri membuat permintaan berikutnya 401 → layar kode akses (tanpa endpoint logout khusus).
 - **Verifikasi**: `pnpm db:generate` → `0005_narrow_bulldozer.sql`; `pnpm db:migrate` EXIT=0 (9 tabel); `pnpm test` 111 lulus (5 uji `lib/session.test.ts`).
 
+### T-1603 — Tata letak mobile tahan overflow
+
+- **Status**: done
+- **Dependency**: T-1602
+- **Cakupan**: `app/layout.tsx`, `app/globals.css`, `app/page.tsx`, `components/chat/Markdown.tsx`, `components/chat/MessageList.tsx`, `components/chat/Sidebar.tsx`
+- **Kriteria penerimaan**:
+  - Konten lebih lebar dari layar (URL/token/base64, blok kode) tidak lagi melebarkan tata letak: `max-width:100%` + `overflow-wrap:break-word` di akar, `img,svg` dibatasi, `min-w-0` di rantai flex bubble dan Markdown.
+  - `<main>` memakai `overflow-x-hidden`, jadi sisa overflow dipotong di kolom chat sendiri — bukan mendorong lebar halaman sampai HP mengecil-zoom (yang membuat tampilan terlihat seperti desktop dan sidebar jadi statis 310px).
+  - Blok kode tetap digeser horizontal di kotaknya sendiri (`pre { overflow-wrap: normal }`) supaya kode tidak patah.
+  - Tinggi aplikasi `h-svh` (bukan `dvh`) + `overscroll-none`: kolom chat dan komposer tidak melompat saat toolbar HP muncul/hilang.
+  - Header di bawah 640px tidak lagi memuat 7 tombol 44px; tombol Tema dan tautan Pengaturan disembunyikan (Pengaturan tetap lewat menu sidebar).
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 111 lulus**; HTML live memuat `<meta name="viewport" content="width=device-width, initial-scale=1">`.
+
 ---
 
 ## Temuan di luar cakupan
@@ -821,6 +835,7 @@ ekspor percakapan (permintaan pemilik). Ditambahkan 2026-11-23.
 | F8 | Function deploy di `iad1` (Washington DC) sementara Supabase di `ap-southeast-1` (Singapura): tiap query menyeberang Atlantik, terukur 0,9–3,4 detik per request walau kuerinya sepele | keluhan pemilik | tinggi | selesai (T-1601) |
 | F9 | Klien tak pernah membatalkan fetch saat pindah halaman/mode, dan `TypeError: Failed to fetch` mentah ditampilkan sebagai pesan error; tak ada percobaan ulang | keluhan pemilik | sedang | selesai (T-1601) |
 | F10 | Sesi = HMAC statis dari kode akses, jadi jumlah device tak terbatas dan tak ada cara mencabut satu perangkat | keluhan pemilik | tinggi | selesai (T-1602) |
+| F11 | Tata letak tak menjaga overflow: teks tanpa spasi/kode melebarkan halaman, `<body overflow-hidden>` memotongnya tanpa bisa digeser; di HP efeknya halaman mengecil seperti desktop dan sidebar `md:` ikut aktif | keluhan pemilik | tinggi | selesai (T-1603) |
 
 Jangan perbaiki temuan di luar cakupan saat sesi aktif. Catat saja di sini.
 

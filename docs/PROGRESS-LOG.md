@@ -35,7 +35,25 @@ letakkan entri terbaru paling atas.
   - Perubahan ini membuat cookie lama tak sah: semua perangkat harus memasukkan kode akses sekali lagi setelah deploy.
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 111 lulus**; `pnpm db:generate`/`db:migrate` EXIT=0 (9 tabel, `sessions` ada).
 - **Blocker**: tidak ada
-- **Next**: deploy `vercel --prod`, cek `X-Vercel-Id` sudah `sin1::sin1` + TTFB, lalu hapus sesi uji supaya 4 slot bebas untuk pemilik.
+- **Next**: deploy `vercel --prod`, cek `X-Vercel-Id` sudah `sin1::sin1` + TTFB, lalu hapus sesi uji supaya 4 slot bebas untuk pemilik. → **selesai**: `sin1::sin1`, `/api/health` 0,20 s, `/api/memories` 0,25 s.
+
+---
+
+### 2026-11-23 — Tata letak mobile: hentikan overflow
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik melaporkan ukuran tampilan mobile berubah-ubah (sesekali terlihat seperti tampilan web, sidebar berubah size) dan chat lebar kadang terpotong tanpa bisa digeser ke kanan
+- **Diagnosa**: satu akar. Konten lebih lebar dari layar (URL/token/base64, blok kode) melebarkan tata letak. Browser HP mengecil-zoom supaya muat → terlihat seperti desktop, dan media query `md:` (768px) ikut aktif → sidebar jadi statis 310px. `<body>` memakai `overflow-hidden`, jadi lebihan itu dipotong, bukan bisa digeser. Meta viewport sudah benar sejak awal (`width=device-width, initial-scale=1`), jadi bukan itu sebabnya.
+- **Dikerjakan**:
+  - T-1603: `html,body` `max-width:100%` + `overflow-wrap:break-word`; `img,svg` `max-width:100%`; `pre` tetap `overflow-wrap:normal` (kode geser di kotaknya sendiri).
+  - `components/chat/Markdown.tsx` dan bubble pesan dapat `min-w-0 break-words`; `<main>` dapat `overflow-x-hidden min-w-0`.
+  - `h-dvh` → `h-svh` + `overscroll-none` supaya tinggi tidak lompat saat toolbar HP muncul/hilang.
+  - Header di `<sm` tak lagi memuat tombol Tema & tautan Pengaturan (7 tombol 44px tak muat di 320px); Pengaturan tetap lewat menu sidebar.
+  - Sidebar `w-[86vw] max-w-[310px]` → `w-[310px] max-w-[86%]`.
+- **Keputusan**: overflow dipotong di kolom chat, bukan dibiarkan bisa digeser — teks patah, kode menggulir di kotaknya sendiri. Tampilan tidak boleh punya lebar yang bergantung pada isi pesan.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 111 lulus**.
+- **Blocker**: tidak ada
+- **Next**: deploy, lalu uji di HP dengan pesan berisi URL/base64 panjang (tak ada geser horizontal).
 
 ---
 

@@ -80,7 +80,7 @@ export function Sidebar({
       <aside
         aria-hidden={tersembunyi}
         inert={tersembunyi}
-        className={`fixed inset-y-0 left-0 z-30 flex w-[86vw] max-w-[310px] shrink-0 flex-col border-r border-border bg-bg-sidebar transition-transform duration-200 md:static md:w-[310px] md:max-w-none md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-30 flex w-[310px] max-w-[86%] shrink-0 flex-col border-r border-border bg-bg-sidebar transition-transform duration-200 md:static md:w-[310px] md:max-w-none md:translate-x-0 ${
           terbuka ? "translate-x-0" : "-translate-x-full"
         } ${ringkas ? "md:hidden" : "md:flex"}`}
       >

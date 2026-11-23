@@ -89,7 +89,9 @@ function SatuBlok({ b }: { b: Blok }) {
 export function Markdown({ teks }: { teks: string }) {
   const blok = parseMarkdown(teks);
   return (
-    <div className="flex flex-col gap-2">
+    // min-w-0 + break-words: kata panjang tanpa spasi patah di dalam bubble,
+    // bukan mendorong lebar tata letak sampai halaman bisa digeser ke kanan.
+    <div className="flex min-w-0 flex-col gap-2 break-words">
       {blok.map((b, i) => (
         <SatuBlok key={i} b={b} />
       ))}

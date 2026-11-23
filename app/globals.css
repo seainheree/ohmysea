@@ -77,6 +77,29 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Teks panjang tanpa spasi (URL, token, base64) tidak boleh melebarkan tata
+   letak: <body> memakai overflow-hidden, jadi apa pun yang melebar akan
+   terpotong dan tidak bisa digeser ke kanan. `break-word` mematahkan kata yang
+   tidak cukup di satu baris; elemen yang tetap lebar sendiri (kode, tabel,
+   gambar) menangani gulirnya masing-masing. */
+html,
+body {
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+/* Blok kode tidak ikut patah: baris panjang digeser di dalam kotaknya sendiri
+   (pre punya `overflow-x-auto`), bukan memaksa halaman melebar. */
+pre {
+  max-width: 100%;
+  overflow-wrap: normal;
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
 }

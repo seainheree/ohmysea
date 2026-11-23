@@ -56,8 +56,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       {/* grid-rows-[1fr_auto]: isi aplikasi (termasuk sidebar & chat) menggulir di baris pertama,
-          footer selalu duduk di bawah viewport — tidak terpotong dan tidak menimpa kolom chat. */}
-      <body className="grid h-dvh grid-rows-[1fr_auto] overflow-hidden bg-bg-main font-sans text-teks antialiased">
+          footer selalu duduk di bawah viewport — tidak terpotong dan tidak menimpa kolom chat.
+          Tingginya `svh` (viewport terkecil), bukan `dvh`: `dvh` ikut berubah saat toolbar
+          browser muncul/hilang, dan itu membuat kolom chat serta komposer melompat-lompat
+          di HP. Dengan `svh` ukurannya tetap; sisa ruang di bawah hanya latar. */}
+      <body className="grid h-svh grid-rows-[1fr_auto] overflow-hidden overscroll-none bg-bg-main font-sans text-teks antialiased">
         {children}
         <footer className="w-full shrink-0 border-t border-border bg-bg-topbar px-sedang py-2.5 text-center text-xs text-teks-muted-2">
           <span className="font-display text-sm text-aksen-lembut">Ohmysea</span> By Sasha

@@ -624,7 +624,12 @@ export default function Home() {
             <Icon name="saran" />
           </button>
 
-          <ThemeToggle />
+          {/* Di layar sempit tombol tambahan disembunyikan: 7 tombol 44 px tidak
+              muat di 320 px dan header jadi terpotong. Tema ada di Pengaturan,
+              tautan Pengaturan ada di sidebar. */}
+          <div className="hidden sm:block">
+            <ThemeToggle />
+          </div>
 
           <button
             onClick={() => setGameTerbuka(true)}
@@ -648,7 +653,7 @@ export default function Home() {
           <Link
             href="/pengaturan"
             aria-label="Pengaturan"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-penuh text-teks-muted hover:bg-border hover:text-teks"
+            className="hidden h-11 w-11 shrink-0 place-items-center rounded-penuh text-teks-muted hover:bg-border hover:text-teks sm:grid"
           >
             <Icon name="pengaturan" />
           </Link>
@@ -658,7 +663,14 @@ export default function Home() {
           <ModeSwitch mode={mode} onChange={gantiMode} />
         </div>
 
-        <main ref={(el) => setWadahGulir(el)} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        {/* overflow-x-hidden: apa pun yang lebih lebar dari kolom ini (tabel/kode
+            hasil markdown) dipotong di sini, tidak melebarkan tata letak — yang
+            dulu bikin HP kadang tampil seperti desktop dan chat tak bisa digeser.
+            Isi yang memang lebar menggulir di dalam kotaknya sendiri. */}
+        <main
+          ref={(el) => setWadahGulir(el)}
+          className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"
+        >
           <div ref={(el) => setIsiGulir(el)}>
             <MessageList
               pesan={pesan}
