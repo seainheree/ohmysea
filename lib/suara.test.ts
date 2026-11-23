@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { deteksiBahasa, potongBahasa, potongKalimat, skorSuara, teksUntukSuara } from "./suara";
+import { deteksiBahasa, potongBahasa, potongBicara, potongKalimat, skorSuara, teksUntukSuara } from "./suara";
 
 describe("teks untuk suara", () => {
   it("membuang penanda markdown tanpa membuang isi", () => {
@@ -66,5 +66,36 @@ describe("pemecah kalimat", () => {
     const hasil = potongKalimat("A".repeat(50) + ". " + "B".repeat(300), 180);
     expect(hasil.length).toBeGreaterThan(1);
     for (const bagian of hasil) expect(bagian.length).toBeLessThanOrEqual(180);
+  });
+});
+
+describe("jeda & batas frasa", () => {
+  it("jeda mengikuti tanda baca, bukan satu nilai untuk semua batas", () => {
+    const bagian = potongBicara("Halo, apa kabar? Aku baik.");
+    expect(bagian.map((b) => [b.teks, b.jeda])).toEqual([
+      ["Halo, apa kabar?", 220],
+      ["Aku baik.", 220],
+    ]);
+  });
+
+  it("koma sebelum ganti bahasa tetap jadi jeda pendek", () => {
+    const bagian = potongBicara("Halo, how are you?");
+    expect(bagian.map((b) => [b.teks, b.bahasa, b.jeda])).toEqual([
+      ["Halo,", "id", 80],
+      ["how are you?", "en", 220],
+    ]);
+  });
+
+  it("tidak memotong setelah preposisi/konjungsi dan tidak berhenti di tengah frasa", () => {
+    const kalimat = "Aku pergi ke pasar untuk membeli sayur yang segar dan murah sekali";
+    const bagian = potongBicara(kalimat, 40);
+    const menggantung = ["di", "ke", "dari", "untuk", "dengan", "yang", "dan", "atau"];
+    for (const b of bagian) {
+      expect(b.teks.length).toBeLessThanOrEqual(40);
+      const akhir = b.teks.split(/\s+/).pop()?.toLowerCase() ?? "";
+      expect(menggantung).not.toContain(akhir);
+    }
+    // Potongan karena panjang tanpa tanda baca tidak diberi jeda buatan.
+    expect(bagian[0].jeda).toBe(0);
   });
 });

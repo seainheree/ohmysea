@@ -134,31 +134,137 @@ export function deteksiBahasa(teks: string): Bahasa {
 }
 
 export type BagianSuara = { teks: string; bahasa: Bahasa };
+export type BagianBicara = BagianSuara & { jeda: number };
 
 /**
- * Pecah teks jadi bagian per bahasa. Kalimat dipecah lagi di koma/titik-koma
- * supaya sisipan bahasa lain ikut dapat voice-nya.
- *
- * ponytail: per klausa, bukan per deret kata — istilah Inggris tanpa koma di
- * tengah kalimat Indonesia tetap dibaca voice Indonesia. Naikkan granularitas
- * kalau campuran seperti itu sering.
+ * Kata yang tidak boleh menggantung di akhir potongan: preposisi, konjungsi,
+ * artikel, kata bantu. Memotong setelah kata ini menghasilkan jeda yang
+ * terdengar salah ("aku pergi ke | pasar").
  */
-export function potongBahasa(teks: string): BagianSuara[] {
-  const hasil: BagianSuara[] = [];
-  for (const kalimat of potongKalimat(teks)) {
-    let kini: BagianSuara | null = null;
-    for (const klausa of kalimat.split(/(?<=[,;:])\s+/)) {
-      const bahasa = deteksiBahasa(klausa);
-      if (kini && kini.bahasa === bahasa) {
-        kini.teks = `${kini.teks} ${klausa}`;
+const PENGHUBUNG = new Set([
+  "di", "ke", "dari", "untuk", "dengan", "yang", "dan", "atau", "tapi",
+  "tetapi", "karena", "kalau", "jika", "pada", "dalam", "oleh", "sebagai",
+  "serta", "supaya", "biar", "agar", "tanpa", "seperti", "antara", "tentang",
+  "the", "a", "an", "to", "of", "in", "on", "at", "for", "with", "and", "or",
+  "but", "from", "by", "as", "that", "this", "these", "those", "is", "are",
+  "was", "were", "be", "been", "being", "my", "your", "his", "her", "their",
+  "our", "its", "not", "no", "so", "than", "then", "very", "can", "will",
+]);
+
+/** Jeda setelah potongan, mengikuti tanda baca terakhirnya (milidetik). */
+function jedaAkhir(teks: string): number {
+  const inti = teks.replace(/["'”’)\]]+$/u, "").trimEnd();
+  const akhir = inti.slice(-1);
+  if (".!?".includes(akhir) || akhir === "\u2026") return 220; // akhir kalimat
+  if (";:\u2014".includes(akhir)) return 140; // jeda klausa
+  if (akhir === ",") return 80; // jeda napas pendek
+  return 0; // potongan karena panjang, bukan tanda baca: jangan berhenti
+}
+
+/**
+ * Titik potong aman untuk kalimat kepanjangan: utamakan tanda baca, lalu
+ * spasi terakhir yang tidak membuat preposisi/konjungsi menggantung.
+ */
+function titikPotongAman(teks: string, maks: number): number {
+  const min = Math.max(20, Math.floor(maks * 0.45));
+  let terbaik = -1;
+  let skorTerbaik = -1;
+  for (let p = teks.indexOf(" "); p > 0 && p <= maks; p = teks.indexOf(" ", p + 1)) {
+    if (p < min) continue;
+    const kiri = teks.slice(0, p).trimEnd();
+    const kanan = teks.slice(p + 1).trimStart();
+    if (!kiri || !kanan) continue;
+    const kataKiri = (kiri.match(/[\p{L}\p{N}']+$/u)?.[0] ?? "").toLowerCase();
+    const kataKanan = (kanan.match(/^[\p{L}\p{N}']+/u)?.[0] ?? "").toLowerCase();
+    if (!kataKiri || !kataKanan) continue;
+    if (PENGHUBUNG.has(kataKiri) || PENGHUBUNG.has(kataKanan)) continue;
+    // Tanda baca klausa selalu menang; selain itu pilih potongan terpanjang.
+    const tanda = /[,;:\u2014]$/u.test(kiri) ? 1000 : 0;
+    const skor = tanda + p;
+    if (skor > skorTerbaik) {
+      skorTerbaik = skor;
+      terbaik = p;
+    }
+  }
+  if (terbaik > 0) return terbaik;
+  // Tidak ada batas aman (mis. teks tanpa spasi): pakai spasi terakhir.
+  const spasi = teks.lastIndexOf(" ", maks);
+  return spasi > 0 ? spasi : maks;
+}
+
+/** Potong paksa hanya kalau kalimat masih lebih panjang dari `maks`. */
+function potongAman(teks: string, maks: number): string[] {
+  const hasil: string[] = [];
+  let sisa = teks.trim();
+  while (sisa.length > maks) {
+    const p = titikPotongAman(sisa, maks);
+    hasil.push(sisa.slice(0, p).trim());
+    sisa = sisa.slice(p).trim();
+  }
+  if (sisa) hasil.push(sisa);
+  return hasil;
+}
+
+/**
+ * Pecah teks jadi bagian siap baca: bahasa + jeda setelahnya.
+ *
+ * Aturan jeda:
+ * - akhir kalimat (`.!?…`) → 220 ms, klausa (`;:—`) → 140 ms, koma → 80 ms;
+ * - potongan yang dipaksa karena panjang (tanpa tanda baca) → 0 ms, supaya
+ *   tidak ada jeda di tengah frasa preposisional.
+ *
+ * Kalimat pendek tetap satu potongan walau ada koma: TTS memberi jeda koma
+ * secara alami di dalam satu utterance, lebih halus daripada memotong.
+ *
+ * ponytail: deteksi bahasa per klausa; istilah Inggris tanpa koma di tengah
+ * kalimat Indonesia tetap dibaca voice Indonesia. Naikkan granularitas kalau
+ * campuran seperti itu sering.
+ */
+export function potongBicara(teks: string, maks = 220): BagianBicara[] {
+  const hasil: BagianBicara[] = [];
+
+  const dorong = (potongan: string, bahasa: Bahasa) => {
+    for (const bagian of potongAman(potongan, maks)) {
+      hasil.push({ teks: bagian, bahasa, jeda: jedaAkhir(bagian) });
+    }
+  };
+
+  for (const kalimat of teks.split(/(?<=[.!?\u2026])\s+/)) {
+    let gabung = "";
+    let bahasa: Bahasa = "id";
+    let ada = false;
+
+    const dorongGabung = () => {
+      if (ada && gabung) dorong(gabung, bahasa);
+      gabung = "";
+      ada = false;
+    };
+
+    for (const klausa of kalimat.split(/(?<=[,;:\u2014])\s+/)) {
+      const bagian = klausa.trim();
+      if (!bagian) continue;
+      const b = deteksiBahasa(bagian);
+      if (!ada) {
+        gabung = bagian;
+        bahasa = b;
+        ada = true;
+      } else if (b === bahasa && gabung.length + 1 + bagian.length <= maks) {
+        gabung = `${gabung} ${bagian}`;
       } else {
-        if (kini) hasil.push(kini);
-        kini = { teks: klausa, bahasa };
+        dorongGabung();
+        gabung = bagian;
+        bahasa = b;
+        ada = true;
       }
     }
-    if (kini) hasil.push(kini);
+    dorongGabung();
   }
   return hasil;
+}
+
+/** Bagian teks + bahasa saja (tanpa jeda) — dipakai pengujian/voice. */
+export function potongBahasa(teks: string): BagianSuara[] {
+  return potongBicara(teks).map(({ teks: isi, bahasa }) => ({ teks: isi, bahasa }));
 }
 
 /** Tunggu daftar voice terisi (Chrome mengisinya setelah halaman siap). */
@@ -190,7 +296,7 @@ export async function bicarakan(
 
   const daftar = await tungguSuara();
   if (gen !== generasi) return true; // dibatalkan saat menunggu voice
-  const bagian = potongBahasa(teks);
+  const bagian = potongBicara(teks);
   if (bagian.length === 0) return false;
 
   const suaraPer: Record<Bahasa, SpeechSynthesisVoice | null> = {
@@ -198,7 +304,11 @@ export async function bicarakan(
     en: pilihSuara(daftar, "en"),
   };
 
-  bagian.forEach((b, i) => {
+  // Utterance diantre satu per satu supaya jeda mengikuti tanda baca (bukan
+  // jeda bawaan browser yang sama untuk semua batas).
+  function putar(i: number) {
+    if (gen !== generasi || i >= bagian.length) return;
+    const b = bagian[i];
     const u = new SpeechSynthesisUtterance(b.teks);
     const pilihan = suaraPer[b.bahasa];
     // Hanya pakai voice yang bahasanya benar-benar cocok; kalau voice Inggris
@@ -210,12 +320,25 @@ export async function bicarakan(
     // Semakin tinggi, semakin mirip karakter tapi semakin terasa sintetis.
     u.rate = 1.03;
     u.pitch = 1.65;
-    if (i === bagian.length - 1) {
-      u.onend = () => opsi.selesai?.();
-      u.onerror = () => opsi.selesai?.();
-    }
+
+    let beres = false;
+    const lanjut = () => {
+      if (beres) return;
+      beres = true;
+      if (gen !== generasi) return;
+      if (i === bagian.length - 1) {
+        opsi.selesai?.();
+        return;
+      }
+      if (b.jeda > 0) window.setTimeout(() => putar(i + 1), b.jeda);
+      else putar(i + 1);
+    };
+    u.onend = lanjut;
+    u.onerror = lanjut;
     window.speechSynthesis.speak(u);
-  });
+  }
+
+  putar(0);
   return true;
 }
 

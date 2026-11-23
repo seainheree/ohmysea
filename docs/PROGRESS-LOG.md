@@ -17,6 +17,24 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Prosodi suara: jeda sadar tanda baca + batas frasa
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik minta prosodi lebih alami, jeda mengikuti tanda baca, dan tidak ada jeda di tengah frasa preposisional / antar kata yang terikat tata bahasa
+- **Keputusan**:
+  - Tiap utterance sekarang diantre satu per satu dengan jeda eksplisit, bukan menyerahkan jarak ke browser: akhir kalimat 220 ms, klausa (`;:`/`—`) 140 ms, koma 80 ms, dan **0 ms** untuk potongan yang dipaksa karena panjang (tanpa tanda baca) supaya tidak berhenti di tengah frasa.
+  - Kalimat pendek **tidak** dipecah walau ada koma: TTS memberi jeda koma sendiri di dalam satu utterance, hasilnya lebih halus daripada memotong.
+  - Batas potong dipilih dari daftar kandidat spasi: tanda baca klausa menang; kandidat yang membuat kata di daftar `PENGHUBUNG` (preposisi/konjungsi/artikel, id + en) menggantung di ujung atau jadi kata pertama potongan berikutnya dibuang.
+  - `onerror` juga melanjutkan antrean (bukan berhenti), dan penanda `generasi` tetap mencegah potongan lama berbunyi setelah dihentikan.
+- **Dikerjakan**:
+  - `lib/suara.ts`: `potongBicara` (bagian + bahasa + jeda), `jedaAkhir`, `titikPotongAman`, `potongAman`, daftar `PENGHUBUNG`; `potongBahasa` jadi pembungkus tanpa jeda; `bicarakan` mengantre lewat `putar(i)`.
+  - `lib/suara.test.ts`: +3 uji (jeda per tanda baca, koma sebelum ganti bahasa, batas frasa aman) → 14 uji.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 98 lulus** EXIT=0.
+- **Blocker**: tidak ada
+- **Next**: dengarkan kalimat panjang di browser; kalau masih ada jeda aneh, kirim teksnya untuk ditambah ke daftar kata penghubung.
+
+---
+
 ### 2026-11-23 — Suara Kirby: voice natural, dwibahasa, pitch kartun
 
 - **Sesi**: lanjutan

@@ -674,17 +674,19 @@ Tanpa dependency baru, tanpa perubahan skema DB.
   - Markdown dibersihkan sebelum dibaca: blok kode dan gambar dilewati, penanda tebal/miring/tautan/daftar dibuang, emoji tidak ikut dibaca.
   - Voice dipilih dengan skor (Natural/Neural/Online, utamakan `id-ID`); daftar voice ditunggu (`voiceschanged`) supaya klik pertama tidak jatuh ke voice default.
   - Teks dipecah per kalimat; klausa Inggris memakai voice Inggris, klausa Indonesia memakai voice Indonesia. Pitch 1.65 + rate 1.03 (pendekatan kartun).
+  - Jeda mengikuti tanda baca: akhir kalimat 220 ms, klausa (`;:`/`—`) 140 ms, koma 80 ms. Potongan karena panjang tanpa tanda baca diberi jeda 0.
+  - Kalimat panjang dipotong di batas aman: tidak setelah preposisi/konjungsi/artikel (`di`, `ke`, `untuk`, `yang`, `the`, `of`, dst.) dan tidak sebelum kata sambung.
   - Suara berhenti saat komponen dilepas (pindah halaman/mode).
   - Tanpa dependency, tanpa file audio; browser tanpa `speechSynthesis` tidak error (tombol tidak melakukan apa pun).
-- **Verifikasi**: `pnpm test` — `lib/suara.test.ts` 11 uji lulus (markdown, emoji, skor voice id/en, deteksi bahasa, pemecahan klausa, pemecah kalimat).
+- **Verifikasi**: `pnpm test` — `lib/suara.test.ts` 14 uji lulus (markdown, emoji, skor voice id/en, deteksi bahasa, pemecahan klausa, jeda per tanda baca, batas frasa aman).
 
 ### T-1303 — Uji & verifikasi
 
 - **Status**: done
 - **Dependency**: T-1301, T-1302
 - **Cakupan**: `lib/suara.test.ts`
-- **Kriteria penerimaan**: pembersihan markdown, skor voice id/en, deteksi bahasa, dan pemecah kalimat/klausa diuji.
-- **Verifikasi**: `pnpm test` **12 file / 95 lulus** EXIT=0; `pnpm build` EXIT=0.
+- **Kriteria penerimaan**: pembersihan markdown, skor voice id/en, deteksi bahasa, jeda per tanda baca, dan batas frasa aman diuji.
+- **Verifikasi**: `pnpm test` **12 file / 98 lulus** EXIT=0; `pnpm build` EXIT=0.
 
 ---
 
