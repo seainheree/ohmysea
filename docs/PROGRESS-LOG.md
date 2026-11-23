@@ -17,6 +17,25 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Poles keandalan: batas laju DB, memori tahan penuh, pencarian hibrida, Stop, nada suara, skor awet
+
+- **Sesi**: lanjutan
+- **Tujuan**: kerjakan rekomendasi lanjutan pemilik (8 item, ekspor percakapan dikecualikan) — F6, F7, batas laju, skor game, tombol Stop, memori, nada TTS, pencarian hibrida
+- **Dikerjakan**:
+  - T-1501: F7 `border-bahaya`/`text-bahaya` → `border-danger`/`text-danger`; F6 `ekstrakKandidatMemori` dapat `reasoningEffort:"low"`; skor TTT & Empat Berderet lewat `useSkorTersimpan` (localStorage); tombol Stop di komposer (`AbortController` + `signal` di `kirimPesan`); slider nada/laju di Pengaturan (`components/settings/SuaraKirby.tsx`).
+  - T-1502: tabel `rate_limits` + `rateLimit()` async satu upsert Postgres (migrasi `0004_rich_titania.sql`) — batas laju tidak lagi per-instance serverless.
+  - T-1503: `bertentangan()` mengganti fakta yang berubah, tabel penuh → buang memori otomatis tertua dulu.
+  - T-1504: `urutkanHibrida()` + `kataKunciKhas()` — istilah khas (`FR-19`, `0.30`) menaikkan potongan tanpa mengubah skor cosine.
+- **Keputusan**:
+  - Memori TIDAK pakai kolom TTL — cukup dedup-kontradiksi + eviction, supaya tidak ada migrasi untuk `memories`.
+  - Hibrida awalnya dicoba lewat `ts_rank`/`websearch_to_tsquery` di SQL; bonusnya terlalu berisik (`ruang` di DESIGN.md ikut naik) dan `to_tsquery` memecah "FR-19". Diganti pencocokan substring JS yang presisi dan bisa diuji; skor cosine dikembalikan apa adanya.
+  - `vercel` tidak perlu: deploy manual setelah izin pemilik.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 110 lulus** EXIT=0; `pnpm db:generate`/`db:migrate` EXIT=0 (8 tabel); `pnpm rag:query "ambang kosinus 0.30"` → potongan ber-"0.30" peringkat 1.
+- **Blocker**: tidak ada
+- **Next**: minta izin pemilik untuk commit + push + `vercel --prod`.
+
+---
+
 ### 2026-11-23 — Kartu ingatan: 6 pasangan, wajah paling beda
 
 - **Sesi**: lanjutan

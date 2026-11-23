@@ -21,6 +21,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M12 | Ruang main dipoles: kontras keping, animasi maksimal, reaksi/ekspresi Kirby, lagu on/off | T-1201..T-1204 | done |
 | M13 | Cari riwayat chat sampai isi pesan + Kirby bersuara (TTS) | T-1301..T-1303 | done |
 | M14 | Ekspresi Kirby dari lembar sprite untuk setiap momen | T-1401 | done |
+| M15 | Poles keandalan & kualitas: batas laju di DB, memori tahan penuh, pencarian hibrida, tombol Stop, skor game awet, nada suara bisa diatur | T-1501..T-1504 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -75,6 +76,10 @@ Jangan lompat milestone.
 | T-902 | done | Tabel baru `permanent_memories` (memori paten) terpisah dari `memories` (otomatis); migrasi `0003_high_iron_fist.sql`; panel Pengaturan dua bagian; prompt memakai keduanya |
 | T-903 | done | Chip "Konteks" di balasan hanya berisi berkas unggahan; dokumen global tetap dipakai menjawab tapi tidak ditampilkan |
 | T-904 | done | Empat kartu saran di layar awal chat dihapus; hanya sapaan Kirby yang tersisa |
+| T-1501 | done | F7 `border-bahaya`/`text-bahaya` → `border-danger`/`text-danger`; F6 `ekstrakKandidatMemori` dapat `providerOptions.groq.reasoningEffort:"low"`; skor TTT & Empat Berderet lewat `useSkorTersimpan` (`localStorage`); tombol Stop di komposer (`AbortController` + `signal` di `kirimPesan`); slider nada/laju di Pengaturan (`components/settings/SuaraKirby.tsx`) |
+| T-1502 | done | Tabel `rate_limits` (migrasi `0004_rich_titania.sql`); `rateLimit()` jadi async & satu upsert Postgres — batas laju tidak lagi per-instance serverless |
+| T-1503 | done | Memori: `bertentangan()` menandai fakta berubah (diganti, bukan ditambah), penuh → buang otomatis tertua dulu; `lib/memory.test.ts` 22 uji |
+| T-1504 | done | Pencarian hibrida: `urutkanHibrida()` + `kataKunciKhas()` menaikkan potongan yang memuat istilah khas (`FR-19`, `0.30`) tanpa mengubah skor cosine; `pnpm rag:query "ambang kosinus 0.30"` → potongan `0.30` masuk peringkat 1 |
 | T-705 | done | Saran lanjutan `/api/saran` (model `GROQ_MODEL_MEMORI`) + sakelar navbar tersimpan di `localStorage`; uji nyata: 3 chip muncul ("Apa tujuan utama ohmysea?", …) |
 
 ---
@@ -724,6 +729,57 @@ ekspresinya dipakai untuk setiap tampilan Kirby yang sesuai. Ditambahkan
 
 ---
 
+## M15 - Poles keandalan & kualitas
+
+Latar: sesi lanjutan setelah M14. Delapan temuan/rekomendasi dikerjakan kecuali
+ekspor percakapan (permintaan pemilik). Ditambahkan 2026-11-23.
+
+### T-1501 — Perbaikan cepat tanpa skema
+
+- **Status**: done
+- **Dependency**: M13, M14
+- **Cakupan**: `components/chat/Composer.tsx`, `lib/memory.ts`, `lib/api.ts`, `app/page.tsx`, `components/game/{bersama,PapanTicTacToe,PapanEmpatBerderet}.tsx`, `lib/suara.ts` + `lib/suara.test.ts`, `components/settings/SuaraKirby.tsx`, `app/pengaturan/page.tsx`
+- **Kriteria penerimaan**:
+  - F7: status lampiran gagal pakai `border-danger`/`text-danger` (kelas lama tak menghasilkan gaya).
+  - F6: `ekstrakKandidatMemori()` memakai `providerOptions.groq.reasoningEffort: "low"` supaya token tidak habis untuk reasoning.
+  - Skor Tic Tac Toe & Empat Berderet bertahan setelah panel ditutup (`localStorage` lewat `useSkorTersimpan`).
+  - Tombol Stop saat streaming: `AbortController` dibatalkan klien, pertanyaan tetap tersimpan, pesan di UI diberi tahu.
+  - Nada & laju suara diatur di Pengaturan (slider), dibatasi ke rentang aman, tersimpan per perangkat.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm test` **12 file / 110 lulus** EXIT=0.
+
+### T-1502 — Batas laju pindah ke Postgres
+
+- **Status**: done
+- **Dependency**: T-002
+- **Cakupan**: `lib/db/schema.ts` (tabel `rate_limits`), `lib/guard.ts`, ketiga route (`chat`/`images`/`saran`), `drizzle/0004_rich_titania.sql`
+- **Kriteria penerimaan**: `rateLimit()` async dan memakai satu upsert `insert ... on conflict`; di Vercel hitungan tidak lagi per-instance; kalau DB error, chat tetap jalan (batas laju hanya pelengkap).
+- **Verifikasi**: `pnpm db:generate` → `0004_rich_titania.sql`; `pnpm db:migrate` EXIT=0 (8 tabel termasuk `rate_limits`).
+
+### T-1503 — Memori tahan penuh & fakta berubah
+
+- **Status**: done
+- **Dependency**: T-401, T-902
+- **Cakupan**: `lib/memory.ts`, `lib/memory.test.ts`
+- **Kriteria penerimaan**:
+  - `bertentangan()`: fakta lama yang disangkal pengganti (mis. "suka kopi" → "tidak suka kopi") **diganti** di barisnya, bukan ditambah, supaya prompt tidak memuat dua versi berlawanan.
+  - Tabel penuh → buang memori otomatis tertua lebih dulu (memori paten tidak disentuh); dulu fungsi berhenti diam-diam.
+  - Tanpa kolom/TTL baru — tidak ada migrasi untuk `memories`.
+- **Verifikasi**: `pnpm exec vitest run lib/memory.test.ts` → 22 lulus.
+
+### T-1504 — Pencarian hibrida (kata kunci khas + cosine)
+
+- **Status**: done
+- **Dependency**: T-102
+- **Cakupan**: `lib/rag/retrieve.ts`, `lib/rag/retrieve.test.ts`
+- **Kriteria penerimaan**:
+  - Pertanyaan yang menyebut nama persis (`FR-19`, `GROQ_MODEL_CHAT`, `0.30`) menaikkan potongan yang memuat istilah itu — di atas potongan yang cuma "mirip makna".
+  - Hanya istilah khas yang dihitung (angka/garis bawah/tanda hubung/HURUF BESAR); kata biasa seperti "ruang" sengaja diabaikan karena justru menyeret dokumen tak relevan.
+  - Skor cosine yang dikembalikan tidak berubah, jadi ambang `MIN_SCORE` tetap sama artinya.
+  - Tanpa dependency dan tanpa migrasi/indeks baru.
+- **Verifikasi**: `pnpm test` 110 lulus; `pnpm rag:query "ambang kosinus 0.30"` → potongan ADR-002 yang memuat "0.30" jadi peringkat 1.
+
+---
+
 ## Temuan di luar cakupan
 
 | # | Temuan | Ditemukan saat | Prioritas | Jadi task? |
@@ -733,8 +789,8 @@ ekspresinya dipakai untuk setiap tampilan Kirby yang sesuai. Ditambahkan
 | F3 | Kunci Cloudflare/Groq/Firecrawl pernah ditulis di file contoh → dulu disarankan rotasi. **Pemilik memutuskan tidak merotasi.** Risiko diterima: file contoh lama sudah dihapus dan tidak pernah ter-commit/ter-push (untracked sejak awal) | setup repo | tinggi | ditutup oleh keputusan pemilik |
 | F4 | Provider gambar pernah menolak prompt wajar dengan error NSFW (false positive) | uji provider | sedang | ya — ditangani di T-301 |
 | F5 | `flux-1-schnell` tidak mendukung image-to-image meski ada di katalog "Text-to-Image" | uji provider | rendah | ya — divalidasi di T-203 |
-| F6 | `simpanMemoriOtomatis()` memakai `gpt-oss-20b` dengan jatah token kecil; pola yang sama seperti `/api/saran` berisiko balasan kosong karena token reasoning dihabiskan lebih dulu. Kalau memori otomatis terasa tidak jalan, ini penyebab pertamanya | T-705 | sedang | belum — perlu uji terpisah |
-| F7 | `components/chat/Composer.tsx` memakai kelas `border-bahaya` / `text-bahaya`, padahal token yang ada `--color-danger` (`border-danger` / `text-danger`). Kelas itu tidak menghasilkan gaya apa pun, jadi status lampiran gagal tidak berwarna merah | T-1101 (lihat Composer) | rendah | belum — perbaikan satu kata |
+| F6 | ~~`simpanMemoriOtomatis()` memakai `gpt-oss-20b` dengan jatah token kecil...~~ — **dibereskan di T-1501**: `providerOptions.groq.reasoningEffort: "low"` supaya token tidak habis untuk reasoning | T-705 | sedang | selesai (T-1501) |
+| F7 | ~~`components/chat/Composer.tsx` memakai kelas `border-bahaya`/`text-bahaya`...~~ — **dibereskan di T-1501**: sekarang `border-danger`/`text-danger` | T-1101 (lihat Composer) | rendah | selesai (T-1501) |
 
 Jangan perbaiki temuan di luar cakupan saat sesi aktif. Catat saja di sini.
 
