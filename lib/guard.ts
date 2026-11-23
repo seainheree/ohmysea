@@ -7,9 +7,10 @@ import { isAuthorized } from "@/lib/session";
 /**
  * Semua route kecuali /api/unlock dan /api/health wajib melewati ini.
  * Kembalikan NextResponse (401) kalau belum dibuka, atau null kalau boleh lanjut.
+ * Async karena sesi diperiksa ke DB (token perangkat, lihat `sessions`).
  */
-export function requireSession(request: NextRequest): NextResponse | null {
-  if (isAuthorized(request)) return null;
+export async function requireSession(request: NextRequest): Promise<NextResponse | null> {
+  if (await isAuthorized(request)) return null;
   return NextResponse.json(
     { ok: false, pesan: "Belum dibuka. Kirim kode akses ke /api/unlock dulu." },
     { status: 401 },

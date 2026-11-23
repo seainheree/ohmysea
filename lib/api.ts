@@ -48,12 +48,41 @@ async function baca<T>(res: Response): Promise<T> {
   return data as T;
 }
 
-export async function daftarPercakapan(mode?: Mode, cari?: string): Promise<Percakapan[]> {
+/**
+ * `fetch` dengan pesan gagal yang bisa dibaca pengguna.
+ * Browser memberi TypeError "Failed to fetch" yang membingungkan saat koneksi
+ * terputus atau serverless tidak sempat menjawab; itu diganti kalimat Indonesia.
+ *
+ * Hanya GET yang diulang sekali: percobaan ulang POST/PATCH/DELETE bisa menggandakan
+ * efeknya (pertanyaan tersimpan dua kali, gambar dibuat dua kali).
+ */
+async function fetchAman(input: string, init: RequestInit = {}): Promise<Response> {
+  const metode = (init.method ?? "GET").toUpperCase();
+  const maks = metode === "GET" ? 2 : 1;
+
+  for (let percobaan = 0; percobaan < maks; percobaan++) {
+    try {
+      return await fetch(input, init);
+    } catch (err) {
+      // Dibatalkan pemanggil (mis. tombol Stop, pindah halaman) bukan kesalahan.
+      if (init.signal?.aborted || (err as Error | undefined)?.name === "AbortError") throw err;
+      if (percobaan < maks - 1) await new Promise((selesai) => setTimeout(selesai, 300));
+    }
+  }
+
+  throw new Error("Koneksi ke server terputus. Periksa jaringan, lalu coba lagi.");
+}
+
+export async function daftarPercakapan(
+  mode?: Mode,
+  cari?: string,
+  signal?: AbortSignal,
+): Promise<Percakapan[]> {
   const params = new URLSearchParams();
   if (mode) params.set("mode", mode);
   if (cari?.trim()) params.set("cari", cari.trim());
   const q = params.size > 0 ? `?${params.toString()}` : "";
-  const res = await fetch(`/api/conversations${q}`, { cache: "no-store" });
+  const res = await fetchAman(`/api/conversations${q}`, { cache: "no-store", signal });
   const data = await baca<{ percakapan: Percakapan[] }>(res);
   return data.percakapan;
 }
@@ -62,14 +91,15 @@ export type BerkasSesi = { id: string; title: string };
 
 export async function ambilPesan(
   id: string,
+  signal?: AbortSignal,
 ): Promise<{ percakapan: Percakapan; pesan: Pesan[]; berkas: BerkasSesi[] }> {
-  const res = await fetch(`/api/conversations/${id}`, { cache: "no-store" });
+  const res = await fetchAman(`/api/conversations/${id}`, { cache: "no-store", signal });
   return baca<{ percakapan: Percakapan; pesan: Pesan[]; berkas: BerkasSesi[] }>(res);
 }
 
 /** Buat percakapan kosong — dipakai saat melampirkan berkas sebelum pesan pertama. */
 export async function buatPercakapan(input: { title?: string; mode: Mode }): Promise<Percakapan> {
-  const res = await fetch("/api/conversations", {
+  const res = await fetchAman("/api/conversations", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(input),
@@ -93,7 +123,7 @@ export async function unggahLampiran(input: {
   size: number;
   text: string;
 }): Promise<HasilLampiran> {
-  const res = await fetch("/api/attachments", {
+  const res = await fetchAman("/api/attachments", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(input),
@@ -114,12 +144,12 @@ export async function unggahLampiranGambar(input: {
   form.set("ocrText", input.ocrText);
   form.set("image", input.image, input.filename);
 
-  const res = await fetch("/api/attachments/image", { method: "POST", body: form });
+  const res = await fetchAman("/api/attachments/image", { method: "POST", body: form });
   return baca<HasilLampiran & { model: string }>(res);
 }
 
 export async function gantiJudul(id: string, title: string): Promise<void> {
-  const res = await fetch(`/api/conversations/${id}`, {
+  const res = await fetchAman(`/api/conversations/${id}`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ title }),
@@ -128,14 +158,14 @@ export async function gantiJudul(id: string, title: string): Promise<void> {
 }
 
 export async function hapusPercakapan(id: string): Promise<void> {
-  const res = await fetch(`/api/conversations/${id}`, { method: "DELETE" });
+  const res = await fetchAman(`/api/conversations/${id}`, { method: "DELETE" });
   await baca(res);
 }
 
 /** Hapus seluruh riwayat (opsional: hanya satu mode). */
 export async function hapusSemuaPercakapan(mode?: Mode): Promise<number> {
   const q = mode ? `?mode=${mode}` : "";
-  const res = await fetch(`/api/conversations${q}`, { method: "DELETE" });
+  const res = await fetchAman(`/api/conversations${q}`, { method: "DELETE" });
   const data = await baca<{ jumlah: number }>(res);
   return data.jumlah;
 }
@@ -151,13 +181,13 @@ export type Memori = {
 };
 
 export async function daftarMemori(): Promise<Memori[]> {
-  const res = await fetch("/api/memories", { cache: "no-store" });
+  const res = await fetchAman("/api/memories", { cache: "no-store" });
   const data = await baca<{ memori: Memori[] }>(res);
   return data.memori;
 }
 
 export async function tambahMemori(content: string): Promise<Memori> {
-  const res = await fetch("/api/memories", {
+  const res = await fetchAman("/api/memories", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ content }),
@@ -170,7 +200,7 @@ export async function ubahMemori(
   id: string,
   perubahan: { content?: string; aktif?: boolean; paten?: boolean },
 ): Promise<Memori> {
-  const res = await fetch(`/api/memories/${id}`, {
+  const res = await fetchAman(`/api/memories/${id}`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(perubahan),
@@ -181,7 +211,7 @@ export async function ubahMemori(
 
 export async function hapusMemori(id: string, paten = false): Promise<void> {
   const q = paten ? "?paten=1" : "";
-  const res = await fetch(`/api/memories/${id}${q}`, { method: "DELETE" });
+  const res = await fetchAman(`/api/memories/${id}${q}`, { method: "DELETE" });
   await baca(res);
 }
 
@@ -193,12 +223,12 @@ export type RingkasanSehat = {
 };
 
 export async function cekSehat(): Promise<RingkasanSehat> {
-  const res = await fetch("/api/health", { cache: "no-store" });
+  const res = await fetchAman("/api/health", { cache: "no-store" });
   return baca<RingkasanSehat>(res);
 }
 
 export async function buka(kode: string): Promise<void> {
-  const res = await fetch("/api/unlock", {
+  const res = await fetchAman("/api/unlock", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ code: kode }),
@@ -207,7 +237,7 @@ export async function buka(kode: string): Promise<void> {
 }
 
 export async function daftarGambar(): Promise<Gambar[]> {
-  const res = await fetch("/api/images", { cache: "no-store" });
+  const res = await fetchAman("/api/images", { cache: "no-store" });
   const data = await baca<{ gambar: Gambar[] }>(res);
   return data.gambar;
 }
@@ -227,7 +257,7 @@ export async function kirimPesan(input: {
   onChunk: (teks: string) => void;
 }): Promise<{ conversationId: string; sources: Pesan["sources"]; durasiMs: number }> {
   const mulai = Date.now();
-  const res = await fetch("/api/chat", {
+  const res = await fetchAman("/api/chat", {
     method: "POST",
     headers: { "content-type": "application/json" },
     signal: input.signal,
@@ -279,7 +309,7 @@ export async function kirimPesan(input: {
 
 /** 3 pertanyaan lanjutan untuk percakapan ini (kosong kalau model gagal). */
 export async function ambilSaran(conversationId: string): Promise<string[]> {
-  const res = await fetch("/api/saran", {
+  const res = await fetchAman("/api/saran", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ conversationId }),
@@ -304,7 +334,31 @@ export async function buatGambar(input: {
   form.set("transparan", input.transparan ? "1" : "0");
   if (input.reference) form.set("reference", input.reference);
 
-  const res = await fetch("/api/images", { method: "POST", body: form });
+  const res = await fetchAman("/api/images", { method: "POST", body: form });
   const data = await baca<{ gambar: Gambar }>(res);
   return data.gambar;
+}
+
+export type Perangkat = {
+  id: string;
+  device: string;
+  createdAt: string;
+  /** true = perangkat yang sedang membuka halaman ini. */
+  sekarang: boolean;
+};
+
+export async function daftarPerangkat(): Promise<{ perangkat: Perangkat[]; maks: number }> {
+  const res = await fetchAman("/api/sessions", { cache: "no-store" });
+  return baca<{ perangkat: Perangkat[]; maks: number }>(res);
+}
+
+/** Cabut satu perangkat. `sekarang` = perangkat ini juga ikut keluar. */
+export async function cabutPerangkat(id: string): Promise<{ sekarang: boolean; pesan: string }> {
+  const res = await fetchAman(`/api/sessions/${id}`, { method: "DELETE" });
+  return baca<{ sekarang: boolean; pesan: string }>(res);
+}
+
+export async function cabutSemuaPerangkat(): Promise<{ jumlah: number; pesan: string }> {
+  const res = await fetchAman("/api/sessions", { method: "DELETE" });
+  return baca<{ jumlah: number; pesan: string }>(res);
 }

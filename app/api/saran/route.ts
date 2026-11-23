@@ -13,7 +13,7 @@ const bodySchema = z.object({ conversationId: z.uuid() });
 
 /** POST /api/saran — 3 pertanyaan lanjutan dari pertukaran pesan terakhir. */
 export async function POST(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   const batas = await rateLimit(`saran:${kunciRateLimit(request)}`, 20, 60_000);

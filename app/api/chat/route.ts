@@ -35,7 +35,7 @@ function judulDari(pesan: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   const batas = await rateLimit(`chat:${kunciRateLimit(request)}`, 30, 60_000);

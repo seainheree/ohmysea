@@ -14,7 +14,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 /** GET /api/conversations/[id] — semua pesan dalam percakapan. */
 export async function GET(request: NextRequest, ctx: Ctx) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   const { id } = await ctx.params;
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest, ctx: Ctx) {
 
 /** PATCH /api/conversations/[id] — ganti judul. */
 export async function PATCH(request: NextRequest, ctx: Ctx) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   const { id } = await ctx.params;
@@ -81,7 +81,7 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
 
 /** DELETE /api/conversations/[id] — hapus percakapan beserta pesannya (cascade). */
 export async function DELETE(request: NextRequest, ctx: Ctx) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   const { id } = await ctx.params;

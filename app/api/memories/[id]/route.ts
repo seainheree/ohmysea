@@ -24,7 +24,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 /** PATCH /api/memories/[id] — ubah isi atau aktif/nonaktifkan. */
 export async function PATCH(request: NextRequest, ctx: Ctx) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   const { id } = await ctx.params;
@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
 
 /** DELETE /api/memories/[id]?paten=1 — hapus dari tabel paten atau otomatis. */
 export async function DELETE(request: NextRequest, ctx: Ctx) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   const { id } = await ctx.params;

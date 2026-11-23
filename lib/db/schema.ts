@@ -134,6 +134,22 @@ export const rateLimits = pgTable("rate_limits", {
   resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
 });
 
+/**
+ * Perangkat yang sedang boleh masuk. Sebelumnya cookie = HMAC statis dari kode
+ * akses, jadi nilainya sama di semua device dan jumlah pemakai tak terbatas.
+ * Sekarang cookie berisi token acak, dan tokennya harus ada di tabel ini.
+ * Batasnya kecil (4) supaya kalau kode akses bocor, orang lain tidak bisa
+ * membuka tanpa mencabut perangkat lain.
+ */
+export const sessions = pgTable("sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  /** Unik sekaligus terindeks: pencarian sesi selalu lewat kolom ini. */
+  token: text("token").notNull().unique(),
+  /** Label kasar dari User-Agent, hanya untuk ditampilkan di Pengaturan. */
+  device: text("device").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Conversation = typeof conversations.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Document = typeof documents.$inferSelect;

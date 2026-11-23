@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 /** GET /api/rag/query?q=...&k=4 — untuk memverifikasi FR-4. */
 export async function GET(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   const q = request.nextUrl.searchParams.get("q")?.trim();

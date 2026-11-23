@@ -22,7 +22,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   let body: z.infer<typeof bodySchema>;

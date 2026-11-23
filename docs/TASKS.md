@@ -22,6 +22,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M13 | Cari riwayat chat sampai isi pesan + Kirby bersuara (TTS) | T-1301..T-1303 | done |
 | M14 | Ekspresi Kirby dari lembar sprite untuk setiap momen | T-1401 | done |
 | M15 | Poles keandalan & kualitas: batas laju di DB, memori tahan penuh, pencarian hibrida, tombol Stop, skor game awet, nada suara bisa diatur | T-1501..T-1504 | done |
+| M16 | Latensi & gerbang akses: function region sin1, higiene fetch di klien, batas 4 perangkat | T-1601..T-1602 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -80,6 +81,8 @@ Jangan lompat milestone.
 | T-1502 | done | Tabel `rate_limits` (migrasi `0004_rich_titania.sql`); `rateLimit()` jadi async & satu upsert Postgres — batas laju tidak lagi per-instance serverless |
 | T-1503 | done | Memori: `bertentangan()` menandai fakta berubah (diganti, bukan ditambah), penuh → buang otomatis tertua dulu; `lib/memory.test.ts` 22 uji |
 | T-1504 | done | Pencarian hibrida: `urutkanHibrida()` + `kataKunciKhas()` menaikkan potongan yang memuat istilah khas (`FR-19`, `0.30`) tanpa mengubah skor cosine; `pnpm rag:query "ambang kosinus 0.30"` → potongan `0.30` masuk peringkat 1 |
+| T-1601 | done | Function region pindah ke `sin1` (`vercel.json`) — sebelumnya `x-vercel-id` menunjukkan function di `iad1` sementara DB di `ap-southeast-1`; `lib/api.ts` dapat `fetchAman()` (ulang sekali untuk GET, pesan "Koneksi ke server terputus"), `muatDaftar`/`ambilPesan` menerima `AbortSignal` (pindah mode tak lagi memunculkan "Failed to fetch") |
+| T-1602 | done | Tabel `sessions` (migrasi `0005_narrow_bulldozer.sql`): cookie berisi token acak 32 byte, bukan HMAC statis; maks 4 perangkat (`MAKS_PERANGKAT`), login ke-5 → 403; `/api/sessions` + `/api/sessions/[id]` (daftar & cabut); panel "Perangkat aktif" di Pengaturan |
 | T-705 | done | Saran lanjutan `/api/saran` (model `GROQ_MODEL_MEMORI`) + sakelar navbar tersimpan di `localStorage`; uji nyata: 3 chip muncul ("Apa tujuan utama ohmysea?", …) |
 
 ---
@@ -778,6 +781,30 @@ ekspor percakapan (permintaan pemilik). Ditambahkan 2026-11-23.
   - Tanpa dependency dan tanpa migrasi/indeks baru.
 - **Verifikasi**: `pnpm test` 110 lulus; `pnpm rag:query "ambang kosinus 0.30"` → potongan ADR-002 yang memuat "0.30" jadi peringkat 1.
 
+### T-1601 — Function region & higiene fetch
+
+- **Status**: done
+- **Dependency**: T-1502
+- **Cakupan**: `vercel.json` (baru), `lib/api.ts`, `app/page.tsx`
+- **Kriteria penerimaan**:
+  - Function jalan di `sin1` (Singapura), se-region dengan Supabase `ap-southeast-1`; sebelumnya `x-vercel-id` = `sin1::iad1` dan tiap request 0,9–3,4 detik karena menyeberang Atlantik tiap query.
+  - `fetchAman()` mengganti `TypeError: Failed to fetch` dengan "Koneksi ke server terputus. Periksa jaringan, lalu coba lagi." dan mengulang sekali **hanya** untuk GET (POST/PATCH/DELETE bisa menggandakan efek).
+  - `muatDaftar()` dan `ambilPesan()` menerima `AbortSignal`; permintaan yang ditimpa (pindah mode, buka percakapan lain) dibatalkan diam-diam, bukan muncul sebagai error.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 111 lulus**; sesudah deploy: `X-Vercel-Id` = `sin1::sin1` dan TTFB `/api/memories` turun dari 1,44 s ke < 0,6 s.
+
+### T-1602 — Batas 4 perangkat
+
+- **Status**: done
+- **Dependency**: T-1601
+- **Cakupan**: `lib/db/schema.ts` (tabel `sessions`), `lib/session.ts`, `lib/guard.ts` (`requireSession` jadi async), seluruh route API (`await requireSession`), `app/api/unlock/route.ts`, `app/api/sessions/*` (baru), `components/settings/Perangkat.tsx` (baru), `app/pengaturan/page.tsx`, `lib/api.ts`, `lib/session.test.ts`, `drizzle/0005_narrow_bulldozer.sql`
+- **Kriteria penerimaan**:
+  - Cookie sesi berisi token acak (64 hex) yang harus ada di tabel `sessions`; sebelumnya HMAC statis dari kode akses sehingga nilainya sama di semua device.
+  - Maks 4 perangkat aktif; login ke-5 ditolak 403 dengan pesan yang menjelaskan cara mencabut, bukan menendang perangkat lain diam-diam.
+  - Sesi kedaluwarsa (> 24 jam) dibersihkan saat login, jadi slot tidak bocor.
+  - Pengaturan → "Perangkat aktif": label perangkat (dari User-Agent), waktu masuk, tombol Cabut, "perangkat ini", dan cabut semua.
+  - Mencabut perangkat sendiri membuat permintaan berikutnya 401 → layar kode akses (tanpa endpoint logout khusus).
+- **Verifikasi**: `pnpm db:generate` → `0005_narrow_bulldozer.sql`; `pnpm db:migrate` EXIT=0 (9 tabel); `pnpm test` 111 lulus (5 uji `lib/session.test.ts`).
+
 ---
 
 ## Temuan di luar cakupan
@@ -791,6 +818,9 @@ ekspor percakapan (permintaan pemilik). Ditambahkan 2026-11-23.
 | F5 | `flux-1-schnell` tidak mendukung image-to-image meski ada di katalog "Text-to-Image" | uji provider | rendah | ya — divalidasi di T-203 |
 | F6 | ~~`simpanMemoriOtomatis()` memakai `gpt-oss-20b` dengan jatah token kecil...~~ — **dibereskan di T-1501**: `providerOptions.groq.reasoningEffort: "low"` supaya token tidak habis untuk reasoning | T-705 | sedang | selesai (T-1501) |
 | F7 | ~~`components/chat/Composer.tsx` memakai kelas `border-bahaya`/`text-bahaya`...~~ — **dibereskan di T-1501**: sekarang `border-danger`/`text-danger` | T-1101 (lihat Composer) | rendah | selesai (T-1501) |
+| F8 | Function deploy di `iad1` (Washington DC) sementara Supabase di `ap-southeast-1` (Singapura): tiap query menyeberang Atlantik, terukur 0,9–3,4 detik per request walau kuerinya sepele | keluhan pemilik | tinggi | selesai (T-1601) |
+| F9 | Klien tak pernah membatalkan fetch saat pindah halaman/mode, dan `TypeError: Failed to fetch` mentah ditampilkan sebagai pesan error; tak ada percobaan ulang | keluhan pemilik | sedang | selesai (T-1601) |
+| F10 | Sesi = HMAC statis dari kode akses, jadi jumlah device tak terbatas dan tak ada cara mencabut satu perangkat | keluhan pemilik | tinggi | selesai (T-1602) |
 
 Jangan perbaiki temuan di luar cakupan saat sesi aktif. Catat saja di sini.
 

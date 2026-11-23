@@ -75,6 +75,10 @@ export default function Home() {
   const aktifIdRef = useRef<string | null>(null);
   /** Pengendali fetch aktif — dipakai tombol Stop di komposer. */
   const batalRef = useRef<AbortController | null>(null);
+  /** Muat daftar/pesan punya pengendali sendiri: pindah mode saat masih memuat
+   *  tidak boleh muncul sebagai error "Failed to fetch". */
+  const daftarRef = useRef<AbortController | null>(null);
+  const pesanRef = useRef<AbortController | null>(null);
   /** Lewati percobaan pertama: daftar awal sudah dimuat efek mode. */
   const cariPertama = useRef(true);
 
@@ -122,12 +126,17 @@ export default function Home() {
   }
 
   const muatDaftar = useCallback(async (m: Mode, kata = "") => {
+    daftarRef.current?.abort();
+    const kendali = new AbortController();
+    daftarRef.current = kendali;
     try {
-      const daftar = await daftarPercakapan(m, kata);
+      const daftar = await daftarPercakapan(m, kata, kendali.signal);
       setPercakapan(daftar);
       setTerkunci(false);
       return daftar;
     } catch (err) {
+      // Ditimpa permintaan yang lebih baru (pindah mode / ketik lagi): senyap.
+      if (kendali.signal.aborted || (err as Error).name === "AbortError") return [];
       const teks = err instanceof Error ? err.message : "Gagal memuat";
       if (/401|Belum dibuka/i.test(teks)) setTerkunci(true);
       else setError(teks);
@@ -185,6 +194,15 @@ export default function Home() {
     };
   }, [mode, muatDaftar, muatMemori]);
 
+  /** Muat pesan satu percakapan; hasil muat yang sudah kedaluwarsa dibuang. */
+  async function ambilPesanTerbaru(id: string) {
+    pesanRef.current?.abort();
+    const kendali = new AbortController();
+    pesanRef.current = kendali;
+    const data = await ambilPesan(id, kendali.signal);
+    return kendali.signal.aborted ? null : data;
+  }
+
   async function bukaPercakapan(p: Percakapan) {
     aktifIdRef.current = p.id;
     setAktif(p);
@@ -192,10 +210,12 @@ export default function Home() {
     setSaran([]);
     setSidebarTerbuka(false);
     try {
-      const data = await ambilPesan(p.id);
+      const data = await ambilPesanTerbaru(p.id);
+      if (!data) return;
       setPesan(data.pesan);
       setBerkasSesi(data.berkas);
     } catch (err) {
+      if ((err as Error).name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Gagal memuat pesan");
     }
   }
@@ -418,8 +438,9 @@ export default function Home() {
         setCatatanMemori("Jawaban dihentikan. Pertanyaanmu tetap tersimpan.");
         const id = aktifIdRef.current;
         if (id) {
-          void ambilPesan(id)
+          void ambilPesanTerbaru(id)
             .then((data) => {
+              if (!data) return;
               setPesan(data.pesan);
               setBerkasSesi(data.berkas);
             })

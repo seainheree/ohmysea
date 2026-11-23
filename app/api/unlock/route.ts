@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { pesanError } from "@/lib/guard";
-import { SESSION_COOKIE, cookieOptions, isValidCode, sessionValue } from "@/lib/session";
+import { SESSION_COOKIE, buatSesi, cookieOptions, isValidCode } from "@/lib/session";
 
 const bodySchema = z.object({ code: z.string().min(1, "Kode akses wajib diisi") });
 
@@ -20,8 +20,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, pesan: "Kode akses salah." }, { status: 401 });
     }
 
+    // Kode benar, tapi perangkat aktif sudah penuh — jangan diam-diam menendang
+    // perangkat lain; pemilik yang memilih siapa yang dicabut.
+    const sesi = await buatSesi(request.headers.get("user-agent") ?? "");
+    if (!sesi.ok) {
+      return NextResponse.json({ ok: false, pesan: sesi.pesan }, { status: 403 });
+    }
+
     const response = NextResponse.json({ ok: true, pesan: "Akses dibuka." });
-    response.cookies.set(SESSION_COOKIE, sessionValue(), cookieOptions());
+    response.cookies.set(SESSION_COOKIE, sesi.token, cookieOptions());
     return response;
   } catch (err) {
     // Env server belum siap: beri pesan jelas, bukan 500 kosong.

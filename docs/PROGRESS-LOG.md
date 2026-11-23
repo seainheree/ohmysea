@@ -17,6 +17,28 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Latensi: function region salah, plus gerbang akses 4 perangkat
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik melaporkan "Failed to fetch" sering, memori & riwayat lama dimuat, dan kode akses bisa dipakai di 4 device (bahkan ke-5) tanpa reset
+- **Diagnosa**:
+  - Latensi bukan soal query: `X-Vercel-Id: sin1::iad1` → function di Washington DC, Supabase di Singapura. Tiap request 0,9–3,4 detik (`/api/health` 2,32 s; `/api/memories` 1,44 s; `/api/images` 3,43 s).
+  - "Failed to fetch" = `fetch` klien tanpa pembatalan: pindah mode/halaman saat request jalan → promise reject dan `err.message` mentah ditampilkan. Tak ada retry.
+  - Sesi = HMAC statis dari kode akses, identik di semua device: tak ada token perangkat, tak ada hitungan, jadi memang tak terbatas.
+- **Dikerjakan**:
+  - T-1601: `vercel.json` `regions:["sin1"]`; `fetchAman()` di `lib/api.ts` (ulang sekali untuk GET + pesan Indonesia); `AbortSignal` untuk daftar & pesan.
+  - T-1602: tabel `sessions` (token acak di cookie, maks 4 perangkat, bersih-bersih sesi kedaluwarsa), `/api/sessions` + `/api/sessions/[id]`, panel "Perangkat aktif" di Pengaturan, `requireSession` jadi async.
+- **Keputusan**:
+  - Perangkat ke-5 **ditolak**, bukan menendang yang tertua: pemilik yang memilih siapa yang dicabut, biar tidak ada perangkat yang diam-diam keluar.
+  - Hanya `sin1` yang di-set — Hobby cuma boleh satu region.
+  - Pencabutan perangkat sendiri tidak memakai endpoint logout: setelah barisnya hilang, request berikutnya 401 dan app kembali ke layar kode akses.
+  - Perubahan ini membuat cookie lama tak sah: semua perangkat harus memasukkan kode akses sekali lagi setelah deploy.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 111 lulus**; `pnpm db:generate`/`db:migrate` EXIT=0 (9 tabel, `sessions` ada).
+- **Blocker**: tidak ada
+- **Next**: deploy `vercel --prod`, cek `X-Vercel-Id` sudah `sin1::sin1` + TTFB, lalu hapus sesi uji supaya 4 slot bebas untuk pemilik.
+
+---
+
 ### 2026-11-23 — Poles keandalan: batas laju DB, memori tahan penuh, pencarian hibrida, Stop, nada suara, skor awet
 
 - **Sesi**: lanjutan

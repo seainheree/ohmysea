@@ -20,7 +20,7 @@ const bodySchema = z
 
 /** POST /api/rag/ingest — masukkan dokumen (teks langsung atau URL) ke basis pengetahuan. */
 export async function POST(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   let body: z.infer<typeof bodySchema>;

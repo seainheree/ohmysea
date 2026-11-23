@@ -22,7 +22,7 @@ const idSchema = z.uuid();
  * dengan teks OCR yang dikirim browser. Hasilnya masuk jalur ingest yang sama.
  */
 export async function POST(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   let form: FormData;

@@ -14,7 +14,7 @@ export const runtime = "nodejs";
  * (potongan pesan yang cocok) supaya barisnya bisa menjelaskan kenapa muncul.
  */
 export async function GET(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   try {
@@ -79,7 +79,7 @@ const bodySchema = z.object({
 
 /** POST /api/conversations — buat percakapan kosong. */
 export async function POST(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   try {
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
  * Hapus riwayat percakapan (semua, atau hanya satu mode). Pesan ikut terhapus (cascade).
  */
 export async function DELETE(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   try {

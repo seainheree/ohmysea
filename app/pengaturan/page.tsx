@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { MemoryAutoToggle } from "@/components/settings/MemoryAutoToggle";
+import { PerangkatAktif } from "@/components/settings/Perangkat";
 import { SuaraKirby } from "@/components/settings/SuaraKirby";
 import {
   cekSehat,
@@ -99,6 +100,8 @@ export default function HalamanPengaturan() {
       <MemoryAutoToggle />
 
       <SuaraKirby />
+
+      <PerangkatAktif />
 
       <section className="flex flex-col gap-sedang rounded-besar border border-border-kuat bg-surface p-sedang">
         <header>

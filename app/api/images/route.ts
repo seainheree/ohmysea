@@ -25,7 +25,7 @@ export const maxDuration = 120;
 const TIPE_DIIZINKAN = ["image/png", "image/jpeg", "image/webp"];
 
 export async function POST(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   const batas = await rateLimit(`images:${kunciRateLimit(request)}`, 10, 60_000);
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   try {

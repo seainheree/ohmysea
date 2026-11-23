@@ -13,7 +13,7 @@ export const runtime = "nodejs";
  * browser (canvas butuh gambar "same-origin" supaya tidak jadi tainted).
  */
 export async function GET(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   const id = z.uuid().safeParse(new URL(request.url).searchParams.get("id"));

@@ -22,7 +22,7 @@ const bodySchema = z.object({
  * Tiap butir punya `paten: true|false` supaya UI bisa memisahkannya.
  */
 export async function GET(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   try {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 
 /** POST /api/memories — tambah satu memori paten. */
 export async function POST(request: NextRequest) {
-  const tolak = requireSession(request);
+  const tolak = await requireSession(request);
   if (tolak) return tolak;
 
   let body: z.infer<typeof bodySchema>;
