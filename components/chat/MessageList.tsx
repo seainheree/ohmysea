@@ -150,10 +150,11 @@ export function MessageList({
     const teks = teksUntukSuara(m.content);
     if (!teks) return;
     setBerbicaraId(m.id);
-    const jalan = bicarakan(teks, {
+    void bicarakan(teks, {
       selesai: () => setBerbicaraId((id) => (id === m.id ? null : id)),
+    }).then((jalan) => {
+      if (!jalan) setBerbicaraId(null);
     });
-    if (!jalan) setBerbicaraId(null);
   }
 
   // Gulir otomatis hanya kalau pengguna memang berada di dasar; kalau sedang

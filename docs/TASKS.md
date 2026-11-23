@@ -670,19 +670,21 @@ Tanpa dependency baru, tanpa perubahan skema DB.
 - **Dependency**: M10
 - **Cakupan**: `lib/suara.ts`, `components/chat/MessageList.tsx`, `lib/suara.test.ts`
 - **Kriteria penerimaan**:
-  - Tombol speaker di setiap balasan asisten; klik membacakan teks (Web Speech API `id-ID` bila tersedia, pitch sedikit tinggi), klik lagi menghentikan.
-  - Markdown dibersihkan sebelum dibaca: blok kode dan gambar dilewati, penanda tebal/miring/tautan/daftar dibuang.
+  - Tombol speaker di setiap balasan asisten; klik membacakan teks, klik lagi menghentikan.
+  - Markdown dibersihkan sebelum dibaca: blok kode dan gambar dilewati, penanda tebal/miring/tautan/daftar dibuang, emoji tidak ikut dibaca.
+  - Voice dipilih dengan skor (Natural/Neural/Online, utamakan `id-ID`); daftar voice ditunggu (`voiceschanged`) supaya klik pertama tidak jatuh ke voice default.
+  - Teks dipecah per kalimat; klausa Inggris memakai voice Inggris, klausa Indonesia memakai voice Indonesia. Pitch 1.65 + rate 1.03 (pendekatan kartun).
   - Suara berhenti saat komponen dilepas (pindah halaman/mode).
   - Tanpa dependency, tanpa file audio; browser tanpa `speechSynthesis` tidak error (tombol tidak melakukan apa pun).
-- **Verifikasi**: `pnpm test` — `lib/suara.test.ts` 3 uji lulus (markdown, blok kode/gambar, daftar/kutipan).
+- **Verifikasi**: `pnpm test` — `lib/suara.test.ts` 11 uji lulus (markdown, emoji, skor voice id/en, deteksi bahasa, pemecahan klausa, pemecah kalimat).
 
 ### T-1303 — Uji & verifikasi
 
 - **Status**: done
 - **Dependency**: T-1301, T-1302
 - **Cakupan**: `lib/suara.test.ts`
-- **Kriteria penerimaan**: `teksUntukSuara` diuji untuk tiga bentuk markdown umum.
-- **Verifikasi**: `pnpm test` **12 file / 87 lulus** EXIT=0; `pnpm build` EXIT=0.
+- **Kriteria penerimaan**: pembersihan markdown, skor voice id/en, deteksi bahasa, dan pemecah kalimat/klausa diuji.
+- **Verifikasi**: `pnpm test` **12 file / 95 lulus** EXIT=0; `pnpm build` EXIT=0.
 
 ---
 

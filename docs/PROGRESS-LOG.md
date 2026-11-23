@@ -17,6 +17,25 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Suara Kirby: voice natural, dwibahasa, pitch kartun
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik minta suara tidak seperti bot, lalu memilih pendekatan pitch kartun dan ingin teks Indonesia dibaca voice Indonesia, teks Inggris dibaca voice Inggris
+- **Keputusan**:
+  - Voice dipilih **dengan skor**, bukan voice pertama: `id/en` (+100), `Natural`/`Neural` (+40), `Online` (+20), `Google` (+15). Daftar voice ditunggu lewat `voiceschanged` (maks 1,2 dtk) karena Chrome mengisinya async dan klik pertama sering jatuh ke voice default.
+  - Deteksi bahasa memakai kata fungsi (stopword), bukan kamus besar. Ambang: ≥2 kata fungsi Inggris dan lebih banyak dari kata Indonesia. Istilah teknis (`deploy`, `error`) sengaja tidak dihitung.
+  - Pemecahan bahasa **per klausa** (setelah koma/titik-koma), bukan per kata: menghindari suara berganti di tengah frasa. Batas ini dicatat sebagai `ponytail:` — istilah Inggris tanpa koma tetap dibaca voice Indonesia.
+  - Pitch 1.65 + rate 1.03 = pendekatan kartun. Semakin tinggi pitch semakin mirip karakter tapi semakin terasa sintetis; 1.45 jadi cadangan kalau terlalu cempreng.
+- **Dikerjakan**:
+  - `lib/suara.ts`: `skorSuara(v, bahasa)`, `pilihSuara` per bahasa, `deteksiBahasa`, `potongBahasa`, teks dipecah per kalimat sebelum dibaca, emoji dibuang, `generasi` supaya permintaan lama tidak berbunyi setelah dihentikan.
+  - `components/chat/MessageList.tsx`: `bicarakan()` sekarang async; hasil `false` mengembalikan tombol ke keadaan mati.
+  - `lib/suara.test.ts`: 11 uji (markdown, emoji, skor voice id/en, deteksi bahasa, pemecahan klausa, pemecah kalimat).
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 95 lulus** EXIT=0.
+- **Blocker**: tidak ada
+- **Next**: dengarkan di browser — kalau pitch 1.65 terlalu cempreng, turunkan ke 1.45; kalau kalimat campuran tanpa koma masih salah voice, naikkan granularitas ke per deret kata.
+
+---
+
 ### 2026-11-23 — Cari riwayat sampai isi pesan + Kirby bersuara (TTS)
 
 - **Sesi**: lanjutan
