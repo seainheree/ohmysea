@@ -50,6 +50,7 @@ letakkan entri terbaru paling atas.
   - `h-dvh` → `h-svh` + `overscroll-none` supaya tinggi tidak lompat saat toolbar HP muncul/hilang.
   - Header di `<sm` tak lagi memuat tombol Tema & tautan Pengaturan (7 tombol 44px tak muat di 320px); Pengaturan tetap lewat menu sidebar.
   - Sidebar `w-[86vw] max-w-[310px]` → `w-[310px] max-w-[86%]`.
+  - T-1604: `viewport` diberi `maximumScale:1` + `userScalable:false`. Pinch/double-tap zoom di Chrome Android tidak lagi mengecilkan seluruh tata letak; halaman tidak bisa diperlebar/digeser, hanya kolom chat yang bergulir (blok kode bergulir mendatar di kotaknya sendiri).
 - **Keputusan**: overflow dipotong di kolom chat, bukan dibiarkan bisa digeser — teks patah, kode menggulir di kotaknya sendiri. Tampilan tidak boleh punya lebar yang bergantung pada isi pesan.
 - **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 111 lulus**.
 - **Blocker**: tidak ada

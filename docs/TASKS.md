@@ -84,6 +84,7 @@ Jangan lompat milestone.
 | T-1601 | done | Function region pindah ke `sin1` (`vercel.json`) — sebelumnya `x-vercel-id` menunjukkan function di `iad1` sementara DB di `ap-southeast-1`; `lib/api.ts` dapat `fetchAman()` (ulang sekali untuk GET, pesan "Koneksi ke server terputus"), `muatDaftar`/`ambilPesan` menerima `AbortSignal` (pindah mode tak lagi memunculkan "Failed to fetch") |
 | T-1602 | done | Tabel `sessions` (migrasi `0005_narrow_bulldozer.sql`): cookie berisi token acak 32 byte, bukan HMAC statis; maks 4 perangkat (`MAKS_PERANGKAT`), login ke-5 → 403; `/api/sessions` + `/api/sessions/[id]` (daftar & cabut); panel "Perangkat aktif" di Pengaturan |
 | T-1603 | done | Tata letak mobile tahan overflow: `html,body` `max-width:100%` + `break-word`, `img,svg` `max-width:100%`, `<main>` `overflow-x-hidden`, `min-w-0` di bubble & Markdown, `h-svh` + `overscroll-none`, tombol Tema/Pengaturan disembunyikan di `<sm` |
+| T-1604 | done | Kunci skala viewport (`maximumScale:1`, `userScalable:false`): pinch/double-tap zoom Chrome Android tidak lagi mengecilkan tata letak (sidebar berubah ukuran, terlihat seperti versi web); yang bergulir hanya kolom chat |
 | T-705 | done | Saran lanjutan `/api/saran` (model `GROQ_MODEL_MEMORI`) + sakelar navbar tersimpan di `localStorage`; uji nyata: 3 chip muncul ("Apa tujuan utama ohmysea?", …) |
 
 ---

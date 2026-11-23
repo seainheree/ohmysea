@@ -35,6 +35,12 @@ export const viewport: Viewport = {
   themeColor: "#1A1A26",
   width: "device-width",
   initialScale: 1,
+  // Kunci skala: tanpa ini pinch/double-tap zoom di Chrome Android mengecilkan
+  // seluruh tata letak (sidebar berubah ukuran, tampak seperti versi web), dan
+  // halaman bisa digeser melebar. Yang boleh bergulir hanya kolom chat; blok
+  // kode bergulir mendatar di kotaknya sendiri.
+  maximumScale: 1,
+  userScalable: false,
 };
 
 /**
