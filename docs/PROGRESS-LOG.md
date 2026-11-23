@@ -17,6 +17,28 @@ letakkan entri terbaru paling atas.
 
 ---
 
+### 2026-11-23 — Cari riwayat sampai isi pesan + Kirby bersuara (TTS)
+
+- **Sesi**: lanjutan
+- **Tujuan**: pemilik memilih B1 (cari riwayat chat) dan B3 (Kirby bersuara) dari daftar usulan pengembangan
+- **Keputusan**:
+  - Pencarian memakai `ILIKE` di Postgres, bukan indeks full-text: data pribadi satu pengguna (maks 50 hasil), jadi tidak perlu kolom/index baru — dan skema DB tidak boleh diubah tanpa izin.
+  - Cuplikan diambil lewat subquery `substring(... position(lower(kata) ...))`. Kolom luar harus ditulis `${conversations}.id` (bukan `${conversations.id}`) karena Drizzle menyingkat nama kolom utama menjadi `"id"` di dalam subquery, yang lalu bertabrakan dengan `messages.id` dan membuat cuplikan selalu `null` (ketemu saat uji langsung ke DB).
+  - TTS memakai Web Speech API bawaan (`speechSynthesis`) — tanpa dependency, tanpa file audio, kualitas mengikuti OS.
+- **Dikerjakan**:
+  - `app/api/conversations/route.ts`: `?cari=` mencocokkan judul + isi pesan, `cuplikan` 160 karakter, wildcard dinetralkan.
+  - `lib/api.ts`: `daftarPercakapan(mode, cari)` + tipe `cuplikan` opsional.
+  - `components/chat/Sidebar.tsx`: kotak cari dikendalikan halaman, jumlah hasil, cuplikan di baris, tombol bersihkan.
+  - `app/page.tsx`: state `cari` + jeda 280 ms; kosong = daftar penuh; ganti mode membersihkan pencarian.
+  - `lib/suara.ts` (baru): `teksUntukSuara`, `bicarakan`, `hentikanSuara`, pemilihan suara `id-ID`.
+  - `components/chat/MessageList.tsx`: tombol speaker per balasan asisten, klik lagi berhenti, suara berhenti saat unmount.
+  - `lib/suara.test.ts` (baru): 3 uji pembersihan markdown.
+- **Verifikasi**: `pnpm lint` EXIT=0; `pnpm build` EXIT=0; `pnpm test` **12 file / 87 lulus** EXIT=0. Endpoint diuji dengan cookie sesi: `?cari=kamu` → 200, 3 baris dengan `cuplikan`; `?cari=%` → hanya baris judul (wildcard netral).
+- **Blocker**: tidak ada
+- **Next**: cek di browser — tombol speaker di balasan, suara berhenti saat ganti percakapan; cari kata yang hanya ada di isi pesan, pastikan cuplikan tampil.
+
+---
+
 ### 2026-11-23 — Ruang main dipoles: kontras, animasi, reaksi Kirby, lagu
 
 - **Sesi**: lanjutan

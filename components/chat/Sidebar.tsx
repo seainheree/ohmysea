@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Icon } from "@/components/ui/Icon";
@@ -14,6 +14,9 @@ type Props = {
   aktifId: string | null;
   mode: Mode;
   jumlahMemori: number;
+  /** Kata kunci pencarian riwayat (judul + isi pesan) — dikendalikan halaman. */
+  cari: string;
+  onCari: (teks: string) => void;
   onPilih: (p: Percakapan) => void;
   onBaru: () => void;
   onGantiJudul: (p: Percakapan, judul: string) => void;
@@ -29,6 +32,8 @@ export function Sidebar({
   aktifId,
   mode,
   jumlahMemori,
+  cari,
+  onCari,
   onPilih,
   onBaru,
   onGantiJudul,
@@ -40,7 +45,6 @@ export function Sidebar({
 }: Props) {
   // Di mobile sidebar adalah drawer: saat tertutup isinya tidak boleh difokus Tab.
   const [layarLebar, setLayarLebar] = useState(true);
-  const [cari, setCari] = useState("");
   const [ubah, setUbah] = useState<{ id: string; teks: string } | null>(null);
   const [mauHapus, setMauHapus] = useState<Percakapan | null>(null);
   const [mauHapusSemua, setMauHapusSemua] = useState(false);
@@ -54,12 +58,6 @@ export function Sidebar({
   }, []);
 
   const tersembunyi = !terbuka && !layarLebar;
-
-  const tersaring = useMemo(() => {
-    const q = cari.trim().toLowerCase();
-    if (!q) return percakapan;
-    return percakapan.filter((p) => p.title.toLowerCase().includes(q));
-  }, [percakapan, cari]);
 
   function simpanJudul() {
     if (!ubah) return;
@@ -146,22 +144,27 @@ export function Sidebar({
             <Icon name="cari" size={15} className="text-teks-muted-2" />
             <input
               value={cari}
-              onChange={(e) => setCari(e.target.value)}
-              placeholder="Cari percakapan..."
-              aria-label="Cari percakapan"
+              onChange={(e) => onCari(e.target.value)}
+              placeholder="Cari judul & isi pesan..."
+              aria-label="Cari percakapan dan isi pesan"
               className="w-full bg-transparent text-sm outline-none placeholder:text-teks-muted-2"
             />
             {cari && (
-              <button onClick={() => setCari("")} aria-label="Bersihkan pencarian">
+              <button onClick={() => onCari("")} aria-label="Bersihkan pencarian">
                 <Icon name="tutup" size={14} className="text-teks-muted-2" />
               </button>
             )}
           </div>
+          {cari && (
+            <p className="px-2 pt-1.5 text-[10px] text-teks-muted-2">
+              {percakapan.length} hasil untuk “{cari}”
+            </p>
+          )}
         </div>
 
         <nav className="mt-2 flex-1 overflow-y-auto px-2 pb-sedang" aria-label="Riwayat percakapan">
           <ul className="flex flex-col gap-1">
-            {tersaring.map((p) => (
+            {percakapan.map((p) => (
               <li key={p.id} className="group">
                 {ubah?.id === p.id ? (
                   <div className="flex flex-col gap-2 rounded-sedang border border-aksen/60 p-2">
@@ -200,12 +203,23 @@ export function Sidebar({
                   >
                     <button
                       onClick={() => onPilih(p)}
-                      className="flex min-w-0 flex-1 items-center gap-2 px-1.5 py-2 text-left text-sm"
+                      className="flex min-w-0 flex-1 items-start gap-2 px-1.5 py-2 text-left text-sm"
                       title={p.title}
                     >
-                      <Icon name={p.mode === "curhat" ? "curhat" : "chat"} size={15} className="shrink-0 opacity-70" />
-                      <span className="truncate">{p.title}</span>
-                      <span className="ml-auto shrink-0 text-[10px] tabular-nums text-teks-muted-2 md:group-hover/baris:invisible">
+                      <Icon
+                        name={p.mode === "curhat" ? "curhat" : "chat"}
+                        size={15}
+                        className="mt-0.5 shrink-0 opacity-70"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate">{p.title}</span>
+                        {p.cuplikan && (
+                          <span className="mt-0.5 block truncate text-[11px] text-teks-muted-2">
+                            {p.cuplikan}
+                          </span>
+                        )}
+                      </span>
+                      <span className="ml-auto shrink-0 pt-0.5 text-[10px] tabular-nums text-teks-muted-2 md:group-hover/baris:invisible">
                         {waktuRelatif(p.updatedAt)}
                       </span>
                     </button>
@@ -229,9 +243,9 @@ export function Sidebar({
                 )}
               </li>
             ))}
-            {tersaring.length === 0 && (
+            {percakapan.length === 0 && (
               <li className="px-2 py-2 text-xs text-teks-muted-2">
-                {cari ? "Tidak ada judul yang cocok." : "Belum ada percakapan di mode ini."}
+                {cari ? "Tidak ada judul atau isi pesan yang cocok." : "Belum ada percakapan di mode ini."}
               </li>
             )}
           </ul>

@@ -50,6 +50,7 @@ export default function Home() {
   const [mauHapusIni, setMauHapusIni] = useState(false);
   const [gameTerbuka, setGameTerbuka] = useState(false);
   const [sidebarRingkas, setSidebarRingkas] = useState(false);
+  const [cari, setCari] = useState("");
   const [autoMemori, setAutoMemori] = useState(true);
   const [catatanMemori, setCatatanMemori] = useState<string | null>(null);
   const [lampiran, setLampiran] = useState<{
@@ -72,6 +73,8 @@ export default function Home() {
   // id percakapan aktif disimpan di ref juga: `aktif` (state) bisa belum ter-render
   // saat pesan dikirim tepat setelah lampiran membuat percakapan baru.
   const aktifIdRef = useRef<string | null>(null);
+  /** Lewati percobaan pertama: daftar awal sudah dimuat efek mode. */
+  const cariPertama = useRef(true);
 
   useLenis(wadahGulir, isiGulir);
 
@@ -116,9 +119,9 @@ export default function Home() {
     });
   }
 
-  const muatDaftar = useCallback(async (m: Mode) => {
+  const muatDaftar = useCallback(async (m: Mode, kata = "") => {
     try {
-      const daftar = await daftarPercakapan(m);
+      const daftar = await daftarPercakapan(m, kata);
       setPercakapan(daftar);
       setTerkunci(false);
       return daftar;
@@ -139,6 +142,17 @@ export default function Home() {
       // jumlah memori hanya lencana; kegagalan di sini tidak boleh mengganggu chat
     }
   }, []);
+
+  // Pencarian riwayat: jeda 280 ms supaya tidak memanggil server tiap ketikan.
+  // Kosong = daftar penuh lagi (termasuk setelah tombol bersihkan).
+  useEffect(() => {
+    if (cariPertama.current) {
+      cariPertama.current = false;
+      return;
+    }
+    const t = window.setTimeout(() => void muatDaftar(mode, cari), 280);
+    return () => window.clearTimeout(t);
+  }, [cari, mode, muatDaftar]);
 
   useEffect(() => {
     let batal = false;
@@ -467,6 +481,7 @@ export default function Home() {
 
   function gantiMode(m: Mode) {
     setMode(m);
+    setCari("");
     percakapanBaru();
   }
 
@@ -495,6 +510,8 @@ export default function Home() {
         aktifId={aktif?.id ?? null}
         mode={mode}
         jumlahMemori={jumlahMemori}
+        cari={cari}
+        onCari={setCari}
         ringkas={sidebarRingkas}
         onPilih={bukaPercakapan}
         onBaru={percakapanBaru}

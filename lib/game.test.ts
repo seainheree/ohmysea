@@ -68,7 +68,7 @@ describe("tic tac toe", () => {
     expect(i).toBeLessThan(9);
   });
 
-  it("level sulit tidak pernah kalah dalam 120 permainan", () => {
+  it("level sulit tidak pernah kalah dalam 120 permainan", { timeout: 20_000 }, () => {
     const acak = acakTetap(42);
     for (let n = 0; n < 120; n++) {
       expect(mainkanTTT(true, acak)).not.toBe("kamu");

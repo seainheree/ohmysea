@@ -8,6 +8,7 @@ import { useGSAP } from "@gsap/react";
 
 import { DURASI, GSAP_EASE, TRANSISI } from "@/lib/motion";
 import type { Pesan } from "@/lib/api";
+import { bicarakan, hentikanSuara, teksUntukSuara } from "@/lib/suara";
 import { Icon } from "@/components/ui/Icon";
 import { Markdown } from "@/components/chat/Markdown";
 
@@ -84,6 +85,23 @@ function TombolSalin({ teks }: { teks: string }) {
   );
 }
 
+/** Tombol bacakan balasan dengan suara bawaan browser (Web Speech API). */
+function TombolSuara({ aktif, onKlik }: { aktif: boolean; onKlik: () => void }) {
+  return (
+    <button
+      onClick={onKlik}
+      aria-pressed={aktif}
+      aria-label={aktif ? "Hentikan suara Kirby" : "Bacakan balasan Kirby"}
+      title={aktif ? "Hentikan suara" : "Bacakan balasan"}
+      className={`grid h-7 w-7 place-items-center rounded-penuh transition-colors hover:bg-border ${
+        aktif ? "text-aksen-lembut" : "text-teks-muted-2 hover:text-teks"
+      }`}
+    >
+      <Icon name={aktif ? "bisu" : "suara"} size={14} />
+    </button>
+  );
+}
+
 export function MessageList({
   pesan,
   streaming,
@@ -118,6 +136,25 @@ export function MessageList({
   const bawah = useRef<HTMLDivElement>(null);
   const dekatBawah = useRef(true);
   const [tampilTurun, setTampilTurun] = useState(false);
+  const [berbicaraId, setBerbicaraId] = useState<string | null>(null);
+
+  // Suara tidak boleh lanjut setelah pindah halaman/mode.
+  useEffect(() => () => hentikanSuara(), []);
+
+  function bacakan(m: PesanTampil) {
+    if (berbicaraId === m.id) {
+      hentikanSuara();
+      setBerbicaraId(null);
+      return;
+    }
+    const teks = teksUntukSuara(m.content);
+    if (!teks) return;
+    setBerbicaraId(m.id);
+    const jalan = bicarakan(teks, {
+      selesai: () => setBerbicaraId((id) => (id === m.id ? null : id)),
+    });
+    if (!jalan) setBerbicaraId(null);
+  }
 
   // Gulir otomatis hanya kalau pengguna memang berada di dasar; kalau sedang
   // membaca ke atas, jangan ditarik turun tiap potongan balasan masuk.
@@ -180,6 +217,7 @@ export function MessageList({
                   {durasi(m.durasiMs) ? ` · ${durasi(m.durasiMs)}` : ""} · {waktu(m.createdAt)}
                 </p>
                 <TombolSalin teks={m.content} />
+                <TombolSuara aktif={berbicaraId === m.id} onKlik={() => bacakan(m)} />
                 {bisaUlangi && m.id === akhirAsisten && (
                   <button
                     onClick={onUlangi}

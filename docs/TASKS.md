@@ -19,6 +19,7 @@ Status: `todo` / `doing` / `blocked` / `review` / `done`
 | M10 | Gerak UI lanjutan: GSAP + ScrollTrigger, sinkron Lenis↔ScrollTrigger, poles UX chat, animasi AI & aliran jawaban halus, perbaikan chat macet memuat | T-1001..T-1004 | done |
 | M11 | Ruang main: opsi game di chat — Tic Tac Toe, Empat Berderet, Kartu Ingatan | T-1101..T-1103 | done |
 | M12 | Ruang main dipoles: kontras keping, animasi maksimal, reaksi/ekspresi Kirby, lagu on/off | T-1201..T-1204 | done |
+| M13 | Cari riwayat chat sampai isi pesan + Kirby bersuara (TTS) | T-1301..T-1303 | done |
 
 Gerbang: milestone selesai hanya kalau **semua** task `done` dan `pnpm build` exit 0.
 Jangan lompat milestone.
@@ -642,6 +643,46 @@ dengan tombol nyala/mati. Ditambahkan 2026-11-23. Tetap tanpa API/DB/dependency.
 - **Cakupan**: `lib/game.ts` (`langkahMenangTTT`, `bisaMenangCO` diekspor), `lib/game.test.ts`
 - **Kriteria penerimaan**: `langkahMenangTTT` mengembalikan sel penentu kemenangan; semua nada lagu divalidasi.
 - **Verifikasi**: `pnpm test` **11 file / 84 lulus** EXIT=0.
+
+---
+
+## M13 - Cari riwayat + Kirby bersuara
+
+Latar: pemilik memilih dua pengembangan dari daftar usulan — pencarian riwayat
+sampai isi pesan (B1) dan Kirby bersuara/TTS (B3). Ditambahkan 2026-11-23.
+Tanpa dependency baru, tanpa perubahan skema DB.
+
+### T-1301 — Cari riwayat sampai isi pesan
+
+- **Status**: done
+- **Dependency**: M10
+- **Cakupan**: `app/api/conversations/route.ts`, `lib/api.ts`, `components/chat/Sidebar.tsx`, `app/page.tsx`
+- **Kriteria penerimaan**:
+  - `GET /api/conversations?cari=<kata>` mencocokkan judul **dan** isi pesan (ILIKE), hasil menyertakan `cuplikan` dari pesan pertama yang cocok.
+  - Kata kunci kosong mengembalikan daftar penuh seperti sebelumnya; maksimal 50 hasil, urut `updatedAt` terbaru.
+  - Sidebar: kotak cari dengan jeda 280 ms, jumlah hasil, baris hasil menampilkan cuplikan; tombol bersihkan memuat daftar penuh lagi.
+  - `%`, `_`, `\` dinetralkan supaya tidak menjadi wildcard.
+- **Verifikasi**: `curl` dengan cookie sesi → `cari=kamu` mengembalikan 3 baris berisi `cuplikan`; `cari=%` hanya memuat baris tanpa `cuplikan` (bukan seluruh isi DB). `pnpm lint` EXIT=0.
+
+### T-1302 — Kirby bersuara (TTS)
+
+- **Status**: done
+- **Dependency**: M10
+- **Cakupan**: `lib/suara.ts`, `components/chat/MessageList.tsx`, `lib/suara.test.ts`
+- **Kriteria penerimaan**:
+  - Tombol speaker di setiap balasan asisten; klik membacakan teks (Web Speech API `id-ID` bila tersedia, pitch sedikit tinggi), klik lagi menghentikan.
+  - Markdown dibersihkan sebelum dibaca: blok kode dan gambar dilewati, penanda tebal/miring/tautan/daftar dibuang.
+  - Suara berhenti saat komponen dilepas (pindah halaman/mode).
+  - Tanpa dependency, tanpa file audio; browser tanpa `speechSynthesis` tidak error (tombol tidak melakukan apa pun).
+- **Verifikasi**: `pnpm test` — `lib/suara.test.ts` 3 uji lulus (markdown, blok kode/gambar, daftar/kutipan).
+
+### T-1303 — Uji & verifikasi
+
+- **Status**: done
+- **Dependency**: T-1301, T-1302
+- **Cakupan**: `lib/suara.test.ts`
+- **Kriteria penerimaan**: `teksUntukSuara` diuji untuk tiga bentuk markdown umum.
+- **Verifikasi**: `pnpm test` **12 file / 87 lulus** EXIT=0; `pnpm build` EXIT=0.
 
 ---
 

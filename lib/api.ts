@@ -6,6 +6,8 @@ export type Percakapan = {
   mode: Mode;
   createdAt: string;
   updatedAt: string;
+  /** Potongan pesan yang cocok dengan pencarian (hanya saat mencari). */
+  cuplikan?: string | null;
 };
 
 export type Pesan = {
@@ -46,8 +48,11 @@ async function baca<T>(res: Response): Promise<T> {
   return data as T;
 }
 
-export async function daftarPercakapan(mode?: Mode): Promise<Percakapan[]> {
-  const q = mode ? `?mode=${mode}` : "";
+export async function daftarPercakapan(mode?: Mode, cari?: string): Promise<Percakapan[]> {
+  const params = new URLSearchParams();
+  if (mode) params.set("mode", mode);
+  if (cari?.trim()) params.set("cari", cari.trim());
+  const q = params.size > 0 ? `?${params.toString()}` : "";
   const res = await fetch(`/api/conversations${q}`, { cache: "no-store" });
   const data = await baca<{ percakapan: Percakapan[] }>(res);
   return data.percakapan;
